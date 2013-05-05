@@ -408,7 +408,9 @@ class DirectoryREST implements TavernaServerDirectoryREST, DirectoryBean {
 
 	@Override
 	public Response copy(List<PathSegment> path, String destination,
-			String depth, String overwrite) {
+			String depth, String overwrite, UriInfo ui)
+			throws NoUpdateException, FilesystemAccessException,
+			NoDirectoryEntryException {
 		support.permitUpdate(run);
 		int d;
 		try {
@@ -422,13 +424,41 @@ class DirectoryREST implements TavernaServerDirectoryREST, DirectoryBean {
 		} catch (NumberFormatException e) {
 			return Response.status(400).build();
 		}
-		// TODO Auto-generated method stub
-		return TODO;
+
+		// TODO - handle depth
+		URI uri;
+		try {
+			uri = ui.getAbsolutePath().resolve(destination);
+		} catch (IllegalArgumentException e) {
+			return status(422).entity(
+					"Problem with destination: " + e.getMessage()).build();
+		}
+
+		Holder<Boolean> isNew = new Holder<Boolean>(true);
+		File f = getFileForWrite(path, isNew);
+
+		try {
+			support.copyDataToFile(uri, f);
+		} catch (MalformedURLException ex) {
+			// Should not happen; called uri.toURL() successfully above
+			throw new NoUpdateException("failed to parse URI", ex);
+		} catch (IOException ex) {
+			throw new FilesystemAccessException(
+					"failed to transfer data from URI", ex);
+		}
+
+		// TODO - Is this the correct result?
+		if (isNew.value)
+			return created(ui.getAbsolutePath()).build();
+		else
+			return noContent().build();
 	}
 
 	@Override
 	public Response move(List<PathSegment> path, String destination,
-			String depth, String overwrite) {
+			String depth, String overwrite, UriInfo ui)
+			throws FilesystemAccessException, NoDirectoryEntryException,
+			NoUpdateException {
 		support.permitUpdate(run);
 		int d;
 		try {
@@ -442,8 +472,35 @@ class DirectoryREST implements TavernaServerDirectoryREST, DirectoryBean {
 		} catch (NumberFormatException e) {
 			return Response.status(400).build();
 		}
-		// TODO Auto-generated method stub
-		return TODO;
+
+		// TODO - handle depth
+		URI uri;
+		try {
+			uri = ui.getAbsolutePath().resolve(destination);
+		} catch (IllegalArgumentException e) {
+			return status(422).entity(
+					"Problem with destination: " + e.getMessage()).build();
+		}
+
+		Holder<Boolean> isNew = new Holder<Boolean>(true);
+		File f = getFileForWrite(path, isNew);
+
+		try {
+			support.copyDataToFile(uri, f);
+			fileUtils.getDirEntry(run, path).destroy();
+		} catch (MalformedURLException ex) {
+			// Should not happen; called uri.toURL() successfully above
+			throw new NoUpdateException("failed to parse URI", ex);
+		} catch (IOException ex) {
+			throw new FilesystemAccessException(
+					"failed to transfer data from URI", ex);
+		}
+
+		// TODO - Is this the correct result?
+		if (isNew.value)
+			return created(ui.getAbsolutePath()).build();
+		else
+			return noContent().build();
 	}
 
 	@Override
@@ -474,13 +531,13 @@ class DirectoryREST implements TavernaServerDirectoryREST, DirectoryBean {
 		} catch (NumberFormatException e) {
 			return Response.status(400).build();
 		}
-		// TODO Auto-generated method stub
 		return TODO;
 		// TODO - figure out how to support this
 	}
 
 	@Override
-	public Response patchProperty(List<PathSegment> path) throws NoUpdateException {
+	public Response patchProperty(List<PathSegment> path)
+			throws NoUpdateException {
 		support.permitUpdate(run);
 		return Response.status(FORBIDDEN)
 				.entity("property storage not supported").build();

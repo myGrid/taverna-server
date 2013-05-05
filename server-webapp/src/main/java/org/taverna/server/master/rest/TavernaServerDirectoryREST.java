@@ -230,7 +230,7 @@ public interface TavernaServerDirectoryREST {
 	Response copy(@PathParam("path") List<PathSegment> path,
 			@HeaderParam("Destination") String destination,
 			@HeaderParam("Depth") @DefaultValue("infinity") String depth,
-			@HeaderParam("Overwrite") String overwrite)
+			@HeaderParam("Overwrite") String overwrite, @Context UriInfo ui)
 			throws NoDirectoryEntryException, FilesystemAccessException,
 			NoUpdateException;
 
@@ -239,7 +239,7 @@ public interface TavernaServerDirectoryREST {
 	Response move(@PathParam("path") List<PathSegment> path,
 			@HeaderParam("Destination") String destination,
 			@HeaderParam("Depth") @DefaultValue("infinity") String depth,
-			@HeaderParam("Overwrite") String overwrite)
+			@HeaderParam("Overwrite") String overwrite, @Context UriInfo ui)
 			throws NoDirectoryEntryException, FilesystemAccessException,
 			NoUpdateException;
 
