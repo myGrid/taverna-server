@@ -377,10 +377,10 @@ class DirectoryREST implements TavernaServerDirectoryREST, DirectoryBean {
 		try {
 			support.permitUpdate(run);
 			return Response.ok("").header("Allow", WebDAVMethod.FULL_LIST)
-					.build();
+					.header("DAV", "1").build();
 		} catch (NoUpdateException e) {
 			return Response.ok("").header("Allow", WebDAVMethod.READ_LIST)
-					.build();
+					.header("DAV", "1").build();
 		}
 	}
 
