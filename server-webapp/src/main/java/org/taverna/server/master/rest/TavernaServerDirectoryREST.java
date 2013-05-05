@@ -16,7 +16,10 @@ import java.util.List;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
+import javax.ws.rs.OPTIONS;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -35,6 +38,14 @@ import org.taverna.server.master.exceptions.NoDirectoryEntryException;
 import org.taverna.server.master.exceptions.NoUpdateException;
 import org.taverna.server.master.interfaces.Directory;
 import org.taverna.server.master.interfaces.File;
+import org.taverna.server.master.rest.webdav.COPY;
+import org.taverna.server.master.rest.webdav.LOCK;
+import org.taverna.server.master.rest.webdav.MKCOL;
+import org.taverna.server.master.rest.webdav.MOVE;
+import org.taverna.server.master.rest.webdav.PROPFIND;
+import org.taverna.server.master.rest.webdav.PROPPATCH;
+import org.taverna.server.master.rest.webdav.UNLOCK;
+import org.w3c.dom.Element;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 
@@ -85,7 +96,7 @@ public interface TavernaServerDirectoryREST {
 	 */
 	@GET
 	@Path("{path:.+}")
-	@Produces({ "application/xml", "application/json",
+	@Produces({ "application/xml", "application/json", "text/uri-list",
 			"application/octet-stream", "application/zip", "*/*" })
 	@Description("Gives a description of the named entity in or beneath the working directory of the workflow run (either a Directory or File).")
 	@NonNull
@@ -154,7 +165,7 @@ public interface TavernaServerDirectoryREST {
 			throws NoDirectoryEntryException, NoUpdateException,
 			FilesystemAccessException;
 
-    /**
+	/**
 	 * Creates or updates a file in a particular location beneath the working
 	 * directory of the workflow run.
 	 * 
@@ -203,6 +214,60 @@ public interface TavernaServerDirectoryREST {
 	Response destroyDirectoryEntry(@PathParam("path") List<PathSegment> path)
 			throws NoUpdateException, FilesystemAccessException,
 			NoDirectoryEntryException;
+
+	@OPTIONS
+	@Path("{path:.*}")
+	Response getHttpOptions(@PathParam("path") List<PathSegment> path);
+
+	@MKCOL
+	@Path("{path:.*}")
+	Response makeDirectory(@PathParam("path") List<PathSegment> path,
+			@Context UriInfo ui) throws FilesystemAccessException,
+			NoDirectoryEntryException, NoUpdateException;
+
+	@COPY
+	@Path("{path:.*}")
+	Response copy(@PathParam("path") List<PathSegment> path,
+			@HeaderParam("Destination") String destination,
+			@HeaderParam("Depth") @DefaultValue("infinity") String depth,
+			@HeaderParam("Overwrite") String overwrite)
+			throws NoDirectoryEntryException, FilesystemAccessException,
+			NoUpdateException;
+
+	@MOVE
+	@Path("{path:.*}")
+	Response move(@PathParam("path") List<PathSegment> path,
+			@HeaderParam("Destination") String destination,
+			@HeaderParam("Depth") @DefaultValue("infinity") String depth,
+			@HeaderParam("Overwrite") String overwrite)
+			throws NoDirectoryEntryException, FilesystemAccessException,
+			NoUpdateException;
+
+	@LOCK
+	@Path("{path:.*}")
+	@Consumes("application/xml")
+	@Produces("application/xml")
+	Response lockFileOrDirectory(@PathParam("path") List<PathSegment> path,
+			Element lockinfo) throws NoDirectoryEntryException,
+			NoUpdateException;
+
+	@UNLOCK
+	@Path("{path:.*}")
+	Response unlockFileOrDirectory(@PathParam("path") List<PathSegment> path,
+			@HeaderParam("Lock-Token") String lockToken)
+			throws NoDirectoryEntryException, NoUpdateException;
+
+	@PROPFIND
+	@Path("{path:.*}")
+	Response findProperty(@PathParam("path") List<PathSegment> path,
+			@HeaderParam("Depth") @DefaultValue("infinity") String depth)
+			throws FilesystemAccessException, NoDirectoryEntryException;
+
+	@PROPPATCH
+	@Path("{path:.*}")
+	Response patchProperty(@PathParam("path") List<PathSegment> path)
+			throws NoDirectoryEntryException, FilesystemAccessException,
+			NoUpdateException;
 
 	/**
 	 * Exception thrown to indicate a failure by the client to provide an

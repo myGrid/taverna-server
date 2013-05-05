@@ -45,6 +45,9 @@ public class URIListHandler implements MessageBodyReader<List<URI>>,
 	/** The content type we handle. */
 	public static final String URI_LIST = "text/uri-list";
 	private static final MediaType URILIST = new MediaType("text", "uri-list");
+	public static boolean canHandle(MediaType type) {
+		return URILIST.isCompatible(type) && !type.isWildcardType() && !type.isWildcardSubtype();
+	}
 
 	@Override
 	public boolean isReadable(Class<?> type, Type genericType,
@@ -54,7 +57,7 @@ public class URIListHandler implements MessageBodyReader<List<URI>>,
 				&& ((Class<?>) ((ParameterizedType) genericType)
 						.getActualTypeArguments()[0])
 						.isAssignableFrom(URI.class)
-				&& URILIST.isCompatible(mediaType);
+						&& canHandle(mediaType);
 	}
 
 	@Override

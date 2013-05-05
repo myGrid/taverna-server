@@ -11,6 +11,7 @@ import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.ok;
 import static javax.ws.rs.core.Response.seeOther;
 import static javax.ws.rs.core.Response.status;
+import static javax.ws.rs.core.Response.Status.FORBIDDEN;
 import static org.taverna.server.master.ContentTypes.APPLICATION_ZIP_TYPE;
 import static org.taverna.server.master.ContentTypes.DIRECTORY_VARIANTS;
 import static org.taverna.server.master.ContentTypes.INITIAL_FILE_VARIANTS;
@@ -24,10 +25,19 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.HeaderParam;
+import javax.ws.rs.OPTIONS;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.ResponseBuilder;
+import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.core.Variant;
@@ -47,8 +57,18 @@ import org.taverna.server.master.rest.FileSegment;
 import org.taverna.server.master.rest.MakeOrUpdateDirEntry;
 import org.taverna.server.master.rest.MakeOrUpdateDirEntry.MakeDirectory;
 import org.taverna.server.master.rest.TavernaServerDirectoryREST;
+import org.taverna.server.master.rest.handler.URIListHandler;
+import org.taverna.server.master.rest.webdav.COPY;
+import org.taverna.server.master.rest.webdav.LOCK;
+import org.taverna.server.master.rest.webdav.MKCOL;
+import org.taverna.server.master.rest.webdav.MOVE;
+import org.taverna.server.master.rest.webdav.PROPFIND;
+import org.taverna.server.master.rest.webdav.PROPPATCH;
+import org.taverna.server.master.rest.webdav.UNLOCK;
+import org.taverna.server.master.rest.webdav.WebDAVMethod;
 import org.taverna.server.master.utils.FilenameUtils;
 import org.taverna.server.master.utils.InvocationCounter.CallCounted;
+import org.w3c.dom.Element;
 
 /**
  * RESTful access to the filesystem.
@@ -209,7 +229,13 @@ class DirectoryREST implements TavernaServerDirectoryREST, DirectoryBean {
 					&& wanted.getSubtype().equals(
 							APPLICATION_ZIP_TYPE.getSubtype()))
 				result = d.getContentsAsZip();
-			else
+			else if (URIListHandler.canHandle(wanted)) {
+				UriBuilder ub = ui.getAbsolutePathBuilder().path("{item}");
+				ArrayList<URI> r = new ArrayList<URI>();
+				for (DirectoryEntry item : d.getContents())
+					r.add(ub.build(item.getName()));
+				result = r;
+			} else
 				// XML or JSON; let CXF pick what to do
 				result = new DirectoryContents(ui, d.getContents());
 		}
@@ -344,6 +370,121 @@ class DirectoryREST implements TavernaServerDirectoryREST, DirectoryBean {
 			return created(ui.getAbsolutePath()).build();
 		else
 			return noContent().build();
+	}
+
+	@Override
+	public Response getHttpOptions(List<PathSegment> path) {
+		try {
+			support.permitUpdate(run);
+			return Response.ok("").header("Allow", WebDAVMethod.FULL_LIST)
+					.build();
+		} catch (NoUpdateException e) {
+			return Response.ok("").header("Allow", WebDAVMethod.READ_LIST)
+					.build();
+		}
+	}
+
+	@Override
+	public Response makeDirectory(List<PathSegment> path, UriInfo ui)
+			throws FilesystemAccessException, NoDirectoryEntryException,
+			NoUpdateException {
+		support.permitUpdate(run);
+		if (path == null || path.isEmpty())
+			throw new FilesystemAccessException("no parent");
+		List<PathSegment> parent = new ArrayList<PathSegment>(path);
+		parent.remove(parent.size() - 1);
+		String name = path.get(path.size() - 1).getPath();
+		DirectoryEntry container = fileUtils.getDirEntry(run, parent);
+		if (!(container instanceof Directory))
+			throw new FilesystemAccessException("You may not "
+					+ "make a subdirectory of" + " a file.");
+		if (name == null || name.isEmpty())
+			throw new FilesystemAccessException("missing directory name");
+		Directory d = (Directory) container;
+		UriBuilder ub = secure(ui).path("{name}");
+		Directory target = d.makeSubdirectory(support.getPrincipal(), name);
+		return created(ub.build(target.getName())).build();
+	}
+
+	@Override
+	public Response copy(List<PathSegment> path, String destination,
+			String depth, String overwrite) {
+		support.permitUpdate(run);
+		int d;
+		try {
+			if ("infinity".equalsIgnoreCase(depth))
+				d = Integer.MAX_VALUE;
+			else {
+				d = Integer.parseInt(depth);
+				if (d != 0 || d != 1)
+					return Response.status(400).build();
+			}
+		} catch (NumberFormatException e) {
+			return Response.status(400).build();
+		}
+		// TODO Auto-generated method stub
+		return TODO;
+	}
+
+	@Override
+	public Response move(List<PathSegment> path, String destination,
+			String depth, String overwrite) {
+		support.permitUpdate(run);
+		int d;
+		try {
+			if ("infinity".equalsIgnoreCase(depth))
+				d = Integer.MAX_VALUE;
+			else {
+				d = Integer.parseInt(depth);
+				if (d != 0 || d != 1)
+					return Response.status(400).build();
+			}
+		} catch (NumberFormatException e) {
+			return Response.status(400).build();
+		}
+		// TODO Auto-generated method stub
+		return TODO;
+	}
+
+	@Override
+	public Response lockFileOrDirectory(List<PathSegment> path, Element lockinfo)
+			throws NoUpdateException {
+		support.permitUpdate(run);
+		return Response.status(FORBIDDEN).entity("locking not supported")
+				.build();
+	}
+
+	@Override
+	public Response unlockFileOrDirectory(List<PathSegment> path,
+			String lockToken) throws NoUpdateException {
+		support.permitUpdate(run);
+		return Response.status(FORBIDDEN).entity("locking not supported")
+				.build();
+	}
+
+	@Override
+	public Response findProperty(List<PathSegment> path, String depth) {
+		int d;
+		try {
+			if ("infinity".equalsIgnoreCase(depth))
+				return Response.status(403).build();
+			d = Integer.parseInt(depth);
+			if (d != 0 || d != 1)
+				return Response.status(400).build();
+		} catch (NumberFormatException e) {
+			return Response.status(400).build();
+		}
+		// TODO Auto-generated method stub
+		return TODO;
+		// TODO - figure out how to support this
+	}
+
+	@Override
+	public Response patchProperty(List<PathSegment> path) throws NoUpdateException {
+		support.permitUpdate(run);
+		return Response.status(FORBIDDEN)
+				.entity("property storage not supported").build();
+		// TODO - figure out how to support this
 	}
 }
 
