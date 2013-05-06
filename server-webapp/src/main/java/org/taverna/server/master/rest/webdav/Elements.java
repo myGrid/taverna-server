@@ -8,9 +8,10 @@ package org.taverna.server.master.rest.webdav;
 import java.net.URI;
 import java.util.List;
 
-import javax.xml.bind.annotation.XmlAccessorOrder;
 import javax.xml.bind.annotation.XmlAnyElement;
 import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlElementRef;
+import javax.xml.bind.annotation.XmlElementRefs;
 import javax.xml.bind.annotation.XmlElements;
 import javax.xml.bind.annotation.XmlMixed;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -18,15 +19,12 @@ import javax.xml.bind.annotation.XmlSchemaType;
 import javax.xml.bind.annotation.XmlType;
 import javax.xml.bind.annotation.XmlValue;
 
-import org.w3c.dom.Element;
-
 /**
  * Holder for various XML elements used in WebDAV.
  * 
  * @author Donal Fellows
  */
 public class Elements {
-
 	/**
 	 * Holder for various requests defined in the WebDAV specification.
 	 * 
@@ -35,7 +33,7 @@ public class Elements {
 	 */
 	public static class Requests {
 		@XmlRootElement(name = "lockinfo")
-		@XmlType(name = "LockInfo")
+		@XmlType(name = "")
 		public static class LockInfo {
 			@XmlElement(name = "lockscope", required = true)
 			public LockScope scope;
@@ -46,30 +44,29 @@ public class Elements {
 		}
 
 		@XmlRootElement(name = "propertyupdate")
-		@XmlType(name = "PropertyUpdate")
+		@XmlType(name = "")
 		public static class PropertyUpdate {
-			@XmlElements({ @XmlElement(name = "remove", type = Remove.class),
-					@XmlElement(name = "set", type = Set.class) })
-			public List<Operation> updates;
+			@XmlElementRefs({ @XmlElementRef(type = Remove.class),
+					@XmlElementRef(type = Set.class) })
+			public List<Object> updates;
 
-			@XmlType(name = "PropertyOperation")
-			public static abstract class Operation {
+			@XmlRootElement(name = "remove")
+			@XmlType(name = "")
+			public static class Remove {
 				@XmlElement(name = "prop")
 				public Property value;
 			}
 
+			@XmlRootElement(name = "set")
 			@XmlType(name = "")
-			public static class Remove extends Operation {
-			}
-
-			@XmlType(name = "")
-			public static class Set extends Operation {
+			public static class Set {
+				@XmlElement(name = "prop")
+				public Property value;
 			}
 		}
 
 		@XmlRootElement(name = "propfind")
-		@XmlType(name = "PropFind")
-		@XmlAccessorOrder
+		@XmlType(name = "")
 		public static class PropertyFind {
 			@XmlElements({
 					@XmlElement(name = "propname", type = PropertyName.class),
@@ -91,7 +88,7 @@ public class Elements {
 			@XmlType(name = "")
 			public static class Include {
 				@XmlAnyElement(lax = true)
-				List<Element> content;
+				List<Object> content;
 			}
 		}
 	}
@@ -104,7 +101,7 @@ public class Elements {
 	 */
 	public static class Responses {
 		@XmlRootElement(name = "multistatus")
-		@XmlType(name = "MultiStatus")
+		@XmlType(name = "")
 		public static class MultiStatus {
 			@XmlElement(name = "response")
 			public List<Response> responses;
@@ -116,36 +113,48 @@ public class Elements {
 		@XmlType(name = "Error")
 		public static class Error {
 			@XmlAnyElement(lax = true)
-			List<Element> content;
+			@XmlElementRefs({ @XmlElementRef(type = Error.FiniteDepth.class),
+					@XmlElementRef(type = Error.NoConflict.class),
+					@XmlElementRef(type = Error.NoEntities.class),
+					@XmlElementRef(type = Error.Protected.class),
+					@XmlElementRef(type = Error.TokenMatchesURI.class),
+					@XmlElementRef(type = Error.TokenSubmitted.class), })
+			List<Object> content;
 
 			@XmlRootElement(name = "lock-token-matches-request-uri")
+			@XmlType(name = "")
 			public static class TokenMatchesURI {
 				// Nothing
 			}
 
 			@XmlRootElement(name = "lock-token-submitted")
+			@XmlType(name = "")
 			public static class TokenSubmitted {
 				@XmlElement(name = "href", required = true)
 				public List<HRef> references;
 			}
 
 			@XmlRootElement(name = "no-conflicting-lock")
+			@XmlType(name = "")
 			public static class NoConflict {
 				@XmlElement(name = "href", required = false)
 				public List<HRef> references;
 			}
 
 			@XmlRootElement(name = "no-external-entities")
+			@XmlType(name = "")
 			public static class NoEntities {
 				// Nothing
 			}
 
 			@XmlRootElement(name = "propfind-finite-depth")
+			@XmlType(name = "")
 			public static class FiniteDepth {
 				// Nothing
 			}
 
 			@XmlRootElement(name = "cannot-modify-protected-property")
+			@XmlType(name = "")
 			public static class Protected {
 				// Nothing
 			}
@@ -187,7 +196,7 @@ public class Elements {
 		}
 	}
 
-	@XmlType
+	@XmlType(name = "HRef")
 	public static class HRef {
 		@XmlValue
 		@XmlSchemaType(name = "anyURI")
@@ -201,8 +210,8 @@ public class Elements {
 				@XmlElement(name = "shared", type = Shared.class, required = true) })
 		public Scope value;
 
-		@XmlType
-		public static class Scope {
+		@XmlType(name = "LockScopeType")
+		public static abstract class Scope {
 			// Nothing
 		}
 
@@ -223,7 +232,7 @@ public class Elements {
 		public Type type;
 
 		@XmlType(name = "LockTypeType")
-		public static class Type {
+		public static abstract class Type {
 			// Nothing
 		}
 
@@ -237,14 +246,31 @@ public class Elements {
 	public static class Owner {
 		@XmlAnyElement
 		@XmlMixed
-		List<?> content;
+		List<Object> content;
 	}
 
+	/**
+	 * Note that this is potentially found as both a request and response
+	 * message.
+	 * 
+	 * @author Donal Fellows
+	 */
 	@XmlRootElement(name = "prop")
 	@XmlType(name = "Property")
 	public static class Property {
 		@XmlAnyElement(lax = true)
-		List<Element> content;
+		@XmlElementRefs({
+				@XmlElementRef(type = Properties.ContentLanguage.class),
+				@XmlElementRef(type = Properties.ContentLength.class),
+				@XmlElementRef(type = Properties.ContentType.class),
+				@XmlElementRef(type = Properties.CreationDate.class),
+				@XmlElementRef(type = Properties.DisplayName.class),
+				@XmlElementRef(type = Properties.ETag.class),
+				@XmlElementRef(type = Properties.LastModified.class),
+				@XmlElementRef(type = Properties.LockDiscovery.class),
+				@XmlElementRef(type = Properties.ResourceType.class),
+				@XmlElementRef(type = Properties.SupportedLock.class) })
+		List<Object> content;
 	}
 
 	/**
@@ -254,48 +280,56 @@ public class Elements {
 	 */
 	public static class Properties {
 		@XmlRootElement(name = "creationdate")
+		@XmlType(name = "")
 		public static class CreationDate {
 			@XmlValue
 			public String value;// TODO (rfc1123, Section 3.3.1 of [RFC2616])
 		}
 
 		@XmlRootElement(name = "displayname")
+		@XmlType(name = "")
 		public static class DisplayName {
 			@XmlValue
 			public String value;
 		}
 
 		@XmlRootElement(name = "getcontentlanguage")
+		@XmlType(name = "")
 		public static class ContentLanguage {
 			@XmlValue
 			public String value;
 		}
 
 		@XmlRootElement(name = "getcontentlength")
+		@XmlType(name = "")
 		public static class ContentLength {
 			@XmlValue
 			public long value;
 		}
 
 		@XmlRootElement(name = "getcontenttype")
+		@XmlType(name = "")
 		public static class ContentType {
 			@XmlValue
 			public String value;
 		}
 
 		@XmlRootElement(name = "getetag")
+		@XmlType(name = "")
 		public static class ETag {
 			@XmlValue
 			public String value;
 		}
 
 		@XmlRootElement(name = "getlastmodified")
+		@XmlType(name = "")
 		public static class LastModified {
 			@XmlValue
 			public String value;// TODO (rfc1123, Section 3.3.1 of [RFC2616])
 		}
 
 		@XmlRootElement(name = "lockdiscovery")
+		@XmlType(name = "")
 		public static class LockDiscovery {
 			@XmlElement(name = "activelock")
 			public List<Active> content;
@@ -320,8 +354,10 @@ public class Elements {
 		}
 
 		@XmlRootElement(name = "resourcetype")
+		@XmlType(name = "")
 		public static class ResourceType {
 			@XmlAnyElement(lax = true)
+			@XmlElementRef(type = ResourceType.Collection.class)
 			public List<Object> content;
 
 			@XmlRootElement(name = "collection")
@@ -332,6 +368,7 @@ public class Elements {
 		}
 
 		@XmlRootElement(name = "supportedlock")
+		@XmlType(name = "")
 		public static class SupportedLock {
 			@XmlElement(name = "lockentry")
 			public List<Entry> content;
