@@ -21,6 +21,10 @@ public interface Namespaces {
 	 */
 	public static final String XSIG = "http://www.w3.org/2000/09/xmldsig#";
 	/**
+	 * The WebDAV specification's namespace name.
+	 */
+	public static final String WEBDAV = "DAV:";
+	/**
 	 * The Usage Record specification's namespace name.
 	 */
 	public static final String UR = "http://schema.ogf.org/urf/2003/09/urf";
