@@ -43,13 +43,14 @@ public class LoadBalancedRunFactory implements RunFactory, FactoryBean {
 	UsageRecordRecorder usageRecordSink; // TODO
 
 	@Override
-	public TavernaRun create(UsernamePrincipal creator, Workflow workflow)
+	public final TavernaRun create(UsernamePrincipal creator, Workflow workflow)
 			throws NoCreateException {
 		try {
 			Date now = new Date();
+			RemoteRunFactory realFactory = pickLocation(creator, workflow);
 			UUID id = issueID();
-			RemoteSingleRun rsr = getRealRun(creator, workflow,
-					makeURReceiver(creator), id);
+			RemoteSingleRun rsr = realFactory.make(serializeWorkflow(workflow),
+					creator.getName(), makeURReceiver(creator), id);
 			RemoteRunDelegate run = new RemoteRunDelegate(now, workflow, rsr,
 					getDefaultLifetime(), runDB, id, this);
 			run.setSecurityContext(securityFactory.create(run, creator));
@@ -107,14 +108,6 @@ public class LoadBalancedRunFactory implements RunFactory, FactoryBean {
 			log.warn("failed to build usage record receiver", e);
 			return null;
 		}
-	}
-
-	private RemoteSingleRun getRealRun(UsernamePrincipal creator,
-			Workflow workflow, UsageRecordReceiver usageRecordReceiver, UUID id)
-			throws RemoteException, JAXBException {
-		return pickLocation(creator, workflow).make(
-				serializeWorkflow(workflow), creator.getName(),
-				usageRecordReceiver, id);
 	}
 
 	private String serializeWorkflow(Workflow workflow) throws JAXBException {
