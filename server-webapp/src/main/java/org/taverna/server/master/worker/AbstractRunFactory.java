@@ -107,7 +107,7 @@ public abstract class AbstractRunFactory implements RunFactory, FactoryBean {
 	protected abstract int getDefaultLifetime();
 
 	protected abstract RemoteRunFactory pickLocation(UsernamePrincipal creator,
-			Workflow workflow);
+			Workflow workflow) throws RemoteException;
 
 	@Autowired(required = true)
 	public void setMasterEventFeed(EventDAO masterEventFeed) {
