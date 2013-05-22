@@ -17,6 +17,7 @@ import static org.taverna.server.master.ContentTypes.DIRECTORY_VARIANTS;
 import static org.taverna.server.master.ContentTypes.INITIAL_FILE_VARIANTS;
 import static org.taverna.server.master.TavernaServerImpl.log;
 import static org.taverna.server.master.common.Uri.secure;
+import static org.taverna.server.master.utils.RestUtils.opt;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -113,6 +114,12 @@ class DirectoryREST implements TavernaServerDirectoryREST, DirectoryBean {
 			throws FilesystemAccessException {
 		return new DirectoryContents(ui, run.getWorkingDirectory()
 				.getContents());
+	}
+
+	@Override
+	@CallCounted
+	public Response options(List<PathSegment> path) {
+		return opt("PUT", "POST", "DELETE");
 	}
 
 	/*

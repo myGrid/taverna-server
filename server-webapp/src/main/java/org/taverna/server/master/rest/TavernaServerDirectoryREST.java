@@ -74,6 +74,12 @@ public interface TavernaServerDirectoryREST {
 	DirectoryContents getDescription(@NonNull @Context UriInfo ui)
 			throws FilesystemAccessException;
 
+	/** Get an outline of the operations supported. */
+	@OPTIONS
+	@Path("{path:.*}")
+	@Description("Produces the description of the files/directories' baclava operations.")
+	Response options(@PathParam("path") List<PathSegment> path);
+
 	/**
 	 * Gets a description of the named entity in or beneath the working
 	 * directory of the workflow run, which may be either a {@link Directory} or

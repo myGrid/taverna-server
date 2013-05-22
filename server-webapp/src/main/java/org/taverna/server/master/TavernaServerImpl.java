@@ -22,6 +22,7 @@ import static org.taverna.server.master.common.Status.Initialized;
 import static org.taverna.server.master.common.Uri.secure;
 import static org.taverna.server.master.rest.handler.T2FlowDocumentHandler.T2FLOW;
 import static org.taverna.server.master.soap.DirEntry.convert;
+import static org.taverna.server.master.utils.RestUtils.opt;
 
 import java.io.IOException;
 import java.net.URI;
@@ -274,6 +275,18 @@ public abstract class TavernaServerImpl implements TavernaServerSOAP,
 	@CallCounted
 	public abstract PolicyView getPolicyDescription();
 
+	@Override
+	@CallCounted
+	public Response serviceOptions() {
+		return opt();
+	}
+
+	@Override
+	@CallCounted
+	public Response runsOptions() {
+		return opt("POST");
+	}
+
 	/**
 	 * Construct a RESTful interface to a run.
 	 * 
@@ -400,12 +413,20 @@ public abstract class TavernaServerImpl implements TavernaServerSOAP,
 		if (s == Status.Operating && w.getStatus() == Status.Initialized) {
 			if (!support.getAllowStartWorkflowRuns())
 				throw new OverloadedException();
-			String issue = w.setStatus(s);
-			if (issue == null)
-				return "";
-			if (issue.isEmpty())
-				return "unknown reason for partial change";
-			return issue;
+			try {
+				String issue = w.setStatus(s);
+				if (issue == null)
+					return "";
+				if (issue.isEmpty())
+					return "unknown reason for partial change";
+				return issue;
+			} catch (RuntimeException re) {
+				log.info("failed to start run " + runName, re);
+				throw re;
+			} catch (NoUpdateException nue) {
+				log.info("failed to start run " + runName, nue);
+				throw nue;
+			}
 		} else {
 			w.setStatus(s);
 			return "";
