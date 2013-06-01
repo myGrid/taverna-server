@@ -30,7 +30,6 @@ import javax.xml.bind.JAXBException;
 
 import org.apache.commons.logging.Log;
 import org.springframework.beans.factory.annotation.Required;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jmx.export.annotation.ManagedAttribute;
 import org.springframework.jmx.export.annotation.ManagedMetric;
 import org.springframework.jmx.export.annotation.ManagedResource;
@@ -40,6 +39,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.taverna.server.master.common.Permission;
 import org.taverna.server.master.common.VersionedElement;
 import org.taverna.server.master.common.Workflow;
+import org.taverna.server.master.common.version.Version;
 import org.taverna.server.master.exceptions.FilesystemAccessException;
 import org.taverna.server.master.exceptions.NoCreateException;
 import org.taverna.server.master.exceptions.NoDestroyException;
@@ -68,7 +68,8 @@ import edu.umd.cs.findbugs.annotations.SuppressWarnings;
  * 
  * @author Donal Fellows
  */
-@ManagedResource(objectName = JMX_ROOT + "Webapp", description = "The main web-application interface to Taverna Server.")
+@ManagedResource(objectName = JMX_ROOT + "Webapp", description = "The main Taverna Server "
+		+ Version.JAVA + " web-application interface.")
 public class TavernaServerSupport {
 	/** The main webapp log. */
 	public static final Log log = getLog("Taverna.Server.Webapp");
@@ -590,6 +591,13 @@ public class TavernaServerSupport {
 			TavernaSecurityContext c = run.getSecurityContext();
 			c.initializeSecurityFromContext(SecurityContextHolder.getContext());
 			webapp.initObsoleteSecurity(c);
+			String name = "";
+			try {
+				name = workflow.getName() + " " + run.getCreationTimestamp();
+			} catch (Exception e) {
+				// Ignore; it's just a name, not something important.
+			}
+			run.setName(name);
 		} catch (Exception e) {
 			log.error("failed to build workflow run worker", e);
 			throw new NoCreateException("failed to build workflow run worker");

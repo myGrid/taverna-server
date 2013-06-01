@@ -24,6 +24,7 @@ import org.taverna.server.master.common.RunReference;
 import org.taverna.server.master.common.Status;
 import org.taverna.server.master.common.Trust;
 import org.taverna.server.master.common.Workflow;
+import org.taverna.server.master.common.version.Version;
 import org.taverna.server.master.exceptions.BadPropertyValueException;
 import org.taverna.server.master.exceptions.BadStateChangeException;
 import org.taverna.server.master.exceptions.FilesystemAccessException;
@@ -39,14 +40,15 @@ import org.taverna.server.master.rest.TavernaServerREST;
 import org.taverna.server.port_description.OutputDescription;
 
 /**
- * The SOAP service interface to Taverna 2.4 Server Release 2.
+ * The SOAP service interface to Taverna 2.5&alpha; Server.
  * 
  * @author Donal Fellows
  * @see TavernaServerREST
  */
 @RolesAllowed(USER)
 @WebService(name = "tavernaService", targetNamespace = SERVER_SOAP)
-@WSDLDocumentation("The SOAP service interface to Taverna 2.4 Server Release 2.")
+@WSDLDocumentation("The SOAP service interface to Taverna " + Version.JAVA
+		+ " Server.")
 public interface TavernaServerSOAP {
 	/**
 	 * Make a run for a particular workflow.
@@ -147,6 +149,42 @@ public interface TavernaServerSOAP {
 	@WSDLDocumentation("Get the workflow document used to create the given run.")
 	Workflow getRunWorkflow(@WebParam(name = "runName") String runName)
 			throws UnknownRunException;
+
+	/**
+	 * Get the descriptive name of the workflow run. The descriptive name
+	 * carries no deep information.
+	 * 
+	 * @param runName
+	 *            The handle of the run.
+	 * @return The descriptive name of the run.
+	 * @throws UnknownRunException
+	 *             If the server doesn't know about the run or if the user is
+	 *             not permitted to see it.
+	 */
+	@WebResult(name = "DescriptiveName")
+	@WSDLDocumentation("Get the descriptive name of the workflow run. Carries no deep information.")
+	String getRunDescriptiveName(@WebParam(name = "runName") String runName)
+			throws UnknownRunException;
+
+	/**
+	 * Set the descriptive name of the workflow run. The descriptive name
+	 * carries no deep information.
+	 * 
+	 * @param runName
+	 *            The handle of the run.
+	 * @param descriptiveName
+	 *            The new descriptive name to set. Note that the implementation
+	 *            is allowed to arbitrarily truncate this value.
+	 * @throws UnknownRunException
+	 *             If the server doesn't know about the run or if the user is
+	 *             not permitted to see it.
+	 * @throws NoUpdateException
+	 *             If the user is not permitted to update this run.
+	 */
+	@WSDLDocumentation("Set the descriptive name of the workflow run. Carries no deep information.")
+	void setRunDescriptiveName(@WebParam(name = "runName") String runName,
+			@WebParam(name = "descriptiveName") String descriptiveName)
+			throws UnknownRunException, NoUpdateException;
 
 	/**
 	 * Get the description of the inputs to the workflow run.
