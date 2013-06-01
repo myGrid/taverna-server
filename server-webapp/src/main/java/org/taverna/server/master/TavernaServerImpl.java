@@ -48,7 +48,6 @@ import org.apache.commons.logging.Log;
 import org.apache.cxf.annotations.WSDLDocumentation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Required;
-import org.springframework.beans.factory.annotation.Value;
 import org.taverna.server.master.TavernaServerImpl.SupportAware;
 import org.taverna.server.master.common.Credential;
 import org.taverna.server.master.common.InputDescription;
@@ -57,6 +56,7 @@ import org.taverna.server.master.common.RunReference;
 import org.taverna.server.master.common.Status;
 import org.taverna.server.master.common.Trust;
 import org.taverna.server.master.common.Workflow;
+import org.taverna.server.master.common.version.Version;
 import org.taverna.server.master.exceptions.BadStateChangeException;
 import org.taverna.server.master.exceptions.FilesystemAccessException;
 import org.taverna.server.master.exceptions.InvalidCredentialException;
@@ -96,6 +96,7 @@ import org.taverna.server.master.utils.FilenameUtils;
 import org.taverna.server.master.utils.InvocationCounter.CallCounted;
 import org.taverna.server.port_description.OutputDescription;
 
+import edu.umd.cs.findbugs.annotations.Nullable;
 import edu.umd.cs.findbugs.annotations.SuppressWarnings;
 
 /**
@@ -106,13 +107,13 @@ import edu.umd.cs.findbugs.annotations.SuppressWarnings;
 @Path("/")
 @DeclareRoles({ USER, ADMIN })
 @WebService(endpointInterface = "org.taverna.server.master.soap.TavernaServerSOAP", serviceName = "TavernaServer", targetNamespace = SERVER_SOAP)
-@WSDLDocumentation("An instance of Taverna 2.4 Server Release 2.")
+@WSDLDocumentation("An instance of Taverna " + Version.JAVA + " Server.")
 public abstract class TavernaServerImpl implements TavernaServerSOAP,
 		TavernaServerREST, TavernaServer {
 	/**
 	 * The root of descriptions of the server in JMX.
 	 */
-	public static final String JMX_ROOT = "Taverna:group=Server-v2,name=";
+	public static final String JMX_ROOT = "Taverna:group=Server-"+Version.JAVA+",name=";
 
 	/** The logger for the server framework. */
 	public static final Log log = getLog("Taverna.Server.Webapp");
@@ -197,7 +198,16 @@ public abstract class TavernaServerImpl implements TavernaServerSOAP,
 		this.eventSource = eventSource;
 	}
 
-	@Value("${taverna.interaction.feed_path}")
+	/**
+	 * The location of a service-wide interaction feed, derived from a
+	 * properties file. Expected to be <i>actually</i> not set (to a real
+	 * value).
+	 * 
+	 * @param interactionFeed
+	 *            The URL, which will be resolved relative to the location of
+	 *            the webapp, or the string "<tt>none</tt>" (which corresponds
+	 *            to a <tt>null</tt>).
+	 */
 	public void setInteractionFeed(String interactionFeed) {
 		if ("none".equals(interactionFeed))
 			interactionFeed = null;
@@ -359,6 +369,22 @@ public abstract class TavernaServerImpl implements TavernaServerSOAP,
 	public void destroyRun(String runName) throws UnknownRunException,
 			NoUpdateException {
 		support.unregisterRun(runName, null);
+	}
+
+	@Override
+	@CallCounted
+	public String getRunDescriptiveName(String runName)
+			throws UnknownRunException {
+		return support.getRun(runName).getName();
+	}
+
+	@Override
+	@CallCounted
+	public void setRunDescriptiveName(String runName, String descriptiveName)
+			throws UnknownRunException, NoUpdateException {
+		TavernaRun run = support.getRun(runName);
+		support.permitUpdate(run);
+		run.setName(descriptiveName);
 	}
 
 	@Override
@@ -961,7 +987,10 @@ public abstract class TavernaServerImpl implements TavernaServerSOAP,
 	}
 
 	@Override
-	public String resolve(String uri) {
+	@Nullable
+	public String resolve(@Nullable String uri) {
+		if (uri == null)
+			return null;
 		return getBaseUriBuilder().build().resolve(uri).toString();
 	}
 
