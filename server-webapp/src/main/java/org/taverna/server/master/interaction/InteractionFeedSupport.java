@@ -23,6 +23,7 @@ import org.apache.abdera.i18n.iri.IRI;
 import org.apache.abdera.model.Document;
 import org.apache.abdera.model.Entry;
 import org.apache.abdera.model.Feed;
+import org.apache.abdera.parser.ParseException;
 import org.apache.abdera.parser.Parser;
 import org.apache.abdera.writer.Writer;
 import org.springframework.beans.factory.annotation.Required;
@@ -36,6 +37,8 @@ import org.taverna.server.master.interfaces.File;
 import org.taverna.server.master.interfaces.TavernaRun;
 import org.taverna.server.master.interfaces.UriBuilderFactory;
 import org.taverna.server.master.utils.FilenameUtils;
+
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
  * Bean that supports interaction feeds. This glues together the Abdera
@@ -102,7 +105,9 @@ public class InteractionFeedSupport {
 	 *            The workflow run that defines which feed we are operating on.
 	 * @return The URI of the feed
 	 */
-	public URI getFeedURI(TavernaRun run) {
+	@SuppressWarnings("null")
+	@NonNull
+	public URI getFeedURI(@NonNull TavernaRun run) {
 		return uriBuilder.getRunUriBuilder(run).path(FEED_URL_DIR).build();
 	}
 
@@ -113,12 +118,17 @@ public class InteractionFeedSupport {
 	 *            The ID of the entry.
 	 * @return The URI of the entry.
 	 */
-	public URI getEntryURI(TavernaRun run, String id) {
+	@SuppressWarnings("null")
+	@NonNull
+	public URI getEntryURI(@NonNull TavernaRun run, @NonNull String id) {
 		return uriBuilder.getRunUriBuilder(run)
 				.path(FEED_URL_DIR + "/{entryID}").build(id);
 	}
 
-	private Entry getEntryFromFile(File f) throws FilesystemAccessException {
+	@SuppressWarnings("null")
+	@NonNull
+	private Entry getEntryFromFile(@NonNull File f)
+			throws FilesystemAccessException, ParseException {
 		long size = f.getSize();
 		if (size > MAX_ENTRY_SIZE)
 			throw new FilesystemAccessException("entry larger than 50kB");
@@ -127,8 +137,10 @@ public class InteractionFeedSupport {
 		return doc.getRoot();
 	}
 
-	private void putEntryInFile(Directory dir, String name, Entry contents)
-			throws FilesystemAccessException, NoUpdateException {
+	@SuppressWarnings("null")
+	private void putEntryInFile(@NonNull Directory dir, @NonNull String name,
+			@NonNull Entry contents) throws FilesystemAccessException,
+			NoUpdateException {
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		try {
 			writer.writeTo(contents, baos);
@@ -139,7 +151,8 @@ public class InteractionFeedSupport {
 		f.appendContents(baos.toByteArray());
 	}
 
-	private List<DirectoryEntry> listPossibleEntries(TavernaRun run)
+	@NonNull
+	private List<DirectoryEntry> listPossibleEntries(@NonNull TavernaRun run)
 			throws FilesystemAccessException, NoDirectoryEntryException {
 		List<DirectoryEntry> entries = new ArrayList<DirectoryEntry>(utils
 				.getDirectory(run, FEED_DIR).getContentsByDate());
@@ -147,7 +160,9 @@ public class InteractionFeedSupport {
 		return entries;
 	}
 
-	private String getRunURL(TavernaRun run) {
+	@SuppressWarnings("null")
+	@NonNull
+	private String getRunURL(@NonNull TavernaRun run) {
 		return new IRI(uriBuilder.getRunUriBuilder(run).build()).toString();
 	}
 
@@ -163,8 +178,9 @@ public class InteractionFeedSupport {
 	 *             If the feed directory doesn't exist or an entry is
 	 *             unexpectedly removed.
 	 */
-	public Feed getRunFeed(TavernaRun run) throws FilesystemAccessException,
-			NoDirectoryEntryException {
+	@NonNull
+	public Feed getRunFeed(@NonNull TavernaRun run)
+			throws FilesystemAccessException, NoDirectoryEntryException {
 		URI feedURI = getFeedURI(run);
 		Feed feed = factory.newFeed();
 		feed.setTitle("Interactions for Taverna Run \"" + run.getName() + "\"");
@@ -208,8 +224,11 @@ public class InteractionFeedSupport {
 	 * @throws NoDirectoryEntryException
 	 *             If the entry can't be found.
 	 */
-	public Entry getRunFeedEntry(TavernaRun run, String entryID)
-			throws FilesystemAccessException, NoDirectoryEntryException {
+	@NonNull
+	public Entry getRunFeedEntry(@NonNull TavernaRun run,
+			@NonNull String entryID) throws FilesystemAccessException,
+			NoDirectoryEntryException {
+		@NonNull
 		File entryFile = utils.getFile(run, FEED_DIR + "/" + entryID + EXT);
 		return getEntryFromFile(entryFile);
 	}
@@ -233,7 +252,8 @@ public class InteractionFeedSupport {
 	 * @throws MalformedURLException
 	 *             If a generated URL is illegal (shouldn't happen).
 	 */
-	public Entry addRunFeedEntry(TavernaRun run, Entry entry)
+	@NonNull
+	public Entry addRunFeedEntry(@NonNull TavernaRun run, @NonNull Entry entry)
 			throws FilesystemAccessException, NoDirectoryEntryException,
 			NoUpdateException {
 		support.permitUpdate(run);
@@ -265,9 +285,9 @@ public class InteractionFeedSupport {
 	 *             If the current user is not permitted to modify the run's
 	 *             characteristics.
 	 */
-	public void removeRunFeedEntry(TavernaRun run, String entryID)
-			throws FilesystemAccessException, NoDirectoryEntryException,
-			NoUpdateException {
+	public void removeRunFeedEntry(@NonNull TavernaRun run,
+			@NonNull String entryID) throws FilesystemAccessException,
+			NoDirectoryEntryException, NoUpdateException {
 		support.permitUpdate(run);
 		utils.getFile(run, FEED_DIR + "/" + entryID + EXT).destroy();
 	}

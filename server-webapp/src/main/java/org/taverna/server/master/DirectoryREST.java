@@ -51,6 +51,8 @@ import org.taverna.server.master.rest.TavernaServerDirectoryREST;
 import org.taverna.server.master.utils.FilenameUtils;
 import org.taverna.server.master.utils.InvocationCounter.CallCounted;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+
 /**
  * RESTful access to the filesystem.
  * 
@@ -79,6 +81,7 @@ class DirectoryREST implements TavernaServerDirectoryREST, DirectoryBean {
 	}
 
 	@Override
+	@NonNull
 	@CallCounted
 	public Response destroyDirectoryEntry(List<PathSegment> path)
 			throws NoUpdateException, FilesystemAccessException,
@@ -89,8 +92,9 @@ class DirectoryREST implements TavernaServerDirectoryREST, DirectoryBean {
 	}
 
 	@Override
+	@NonNull
 	@CallCounted
-	public DirectoryContents getDescription(UriInfo ui)
+	public DirectoryContents getDescription(@NonNull UriInfo ui)
 			throws FilesystemAccessException {
 		return new DirectoryContents(ui, run.getWorkingDirectory()
 				.getContents());
@@ -189,10 +193,12 @@ class DirectoryREST implements TavernaServerDirectoryREST, DirectoryBean {
 	}
 
 	@Override
+	@NonNull
 	@CallCounted
-	public Response getDirectoryOrFileContents(List<PathSegment> path,
-			UriInfo ui, HttpHeaders headers) throws FilesystemAccessException,
-			NoDirectoryEntryException, NegotiationFailedException {
+	public Response getDirectoryOrFileContents(@NonNull List<PathSegment> path,
+			@NonNull UriInfo ui, @NonNull HttpHeaders headers)
+			throws FilesystemAccessException, NoDirectoryEntryException,
+			NegotiationFailedException {
 		DirectoryEntry de = fileUtils.getDirEntry(run, path);
 
 		// How did the user want the result?
@@ -224,10 +230,13 @@ class DirectoryREST implements TavernaServerDirectoryREST, DirectoryBean {
 	}
 
 	@Override
+	@NonNull
 	@CallCounted
-	public Response makeDirectoryOrUpdateFile(List<PathSegment> parent,
-			MakeOrUpdateDirEntry op, UriInfo ui) throws NoUpdateException,
-			FilesystemAccessException, NoDirectoryEntryException {
+	public Response makeDirectoryOrUpdateFile(
+			@NonNull List<PathSegment> parent,
+			@NonNull MakeOrUpdateDirEntry op, @NonNull UriInfo ui)
+			throws NoUpdateException, FilesystemAccessException,
+			NoDirectoryEntryException {
 		support.permitUpdate(run);
 		DirectoryEntry container = fileUtils.getDirEntry(run, parent);
 		if (!(container instanceof Directory))
@@ -306,6 +315,7 @@ class DirectoryREST implements TavernaServerDirectoryREST, DirectoryBean {
 	}
 
 	@Override
+	@NonNull
 	@CallCounted
 	public Response setFileContents(List<PathSegment> filePath,
 			InputStream contents, UriInfo ui) throws NoDirectoryEntryException,
@@ -320,6 +330,7 @@ class DirectoryREST implements TavernaServerDirectoryREST, DirectoryBean {
 	}
 
 	@Override
+	@NonNull
 	public Response setFileContentsFromURL(List<PathSegment> filePath,
 			List<URI> referenceList, UriInfo ui)
 			throws NoDirectoryEntryException, NoUpdateException,

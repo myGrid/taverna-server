@@ -19,6 +19,7 @@ import org.taverna.server.master.mocks.MockPolicy;
 import org.taverna.server.master.mocks.SimpleListenerFactory;
 import org.taverna.server.master.mocks.SimpleNonpersistentRunStore;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.SuppressWarnings;
 
 @SuppressWarnings
@@ -39,34 +40,40 @@ public class TavernaServerImplTest {
 		lrunconf = config;
 		return new Listener() {
 			@Override
+			@NonNull
 			public String getConfiguration() {
 				return config;
 			}
 
 			@Override
+			@NonNull
 			public String getName() {
 				return "bar";
 			}
 
 			@Override
-			public String getProperty(String propName)
+			@NonNull
+			public String getProperty(@NonNull String propName)
 					throws NoListenerException {
 				throw new NoListenerException();
 			}
 
 			@Override
+			@NonNull
 			public String getType() {
 				return "foo";
 			}
 
 			@Override
+			@NonNull
 			public String[] listProperties() {
 				return new String[0];
 			}
 
 			@Override
-			public void setProperty(String propName, String value)
-					throws NoListenerException, BadPropertyValueException {
+			public void setProperty(@NonNull String propName,
+					@NonNull String value) throws NoListenerException,
+					BadPropertyValueException {
 				throw new NoListenerException();
 			}
 		};
@@ -84,6 +91,7 @@ public class TavernaServerImplTest {
 					protected ListenersREST makeListenersInterface() {
 						return new ListenersREST() {
 							@Override
+							@NonNull
 							protected SingleListenerREST makeListenerInterface() {
 								return new SingleListenerREST() {
 									@Override
@@ -122,6 +130,7 @@ public class TavernaServerImplTest {
 			}
 
 			@Override
+			@NonNull
 			public PolicyView getPolicyDescription() {
 				return new PolicyREST();
 			}
@@ -178,7 +187,9 @@ public class TavernaServerImplTest {
 				"foo",
 				(SimpleListenerFactory.Builder) new SimpleListenerFactory.Builder() {
 					@Override
-					public Listener build(TavernaRun run, String configuration)
+					@NonNull
+					public Listener build(@NonNull TavernaRun run,
+							@NonNull String configuration)
 							throws NoListenerException {
 						return makeListener(run, configuration);
 					}

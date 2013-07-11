@@ -17,6 +17,8 @@ import org.springframework.context.ApplicationContextAware;
 import org.taverna.server.master.interfaces.LocalIdentityMapper;
 import org.taverna.server.master.utils.UsernamePrincipal;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+
 /**
  * An identity mapper that composes the results from other mappers, using the
  * identity mappers in order until one can provide a non-<tt>null</tt> answer.
@@ -44,7 +46,7 @@ public class CompositeIDMapper implements LocalIdentityMapper,
 	}
 
 	@Override
-	public String getUsernameForPrincipal(UsernamePrincipal user) {
+	public String getUsernameForPrincipal(@NonNull UsernamePrincipal user) {
 		if (mappers == null)
 			return null;
 		for (LocalIdentityMapper m : mappers) {

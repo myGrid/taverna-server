@@ -6,9 +6,11 @@
 package org.taverna.server.master.interfaces;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 /**
  * The interface supported by all notification message dispatchers.
+ * 
  * @author Donal Fellows
  */
 public interface MessageDispatcher {
@@ -23,6 +25,7 @@ public interface MessageDispatcher {
 	 *         supported by it (for a non-universal dispatcher) and the name of
 	 *         the message generator used to produce the message.
 	 */
+	@NonNull
 	String getName();
 
 	/**
@@ -41,5 +44,5 @@ public interface MessageDispatcher {
 	 */
 	void dispatch(@NonNull TavernaRun originator,
 			@NonNull String messageSubject, @NonNull String messageContent,
-			@NonNull String targetParameter) throws Exception;
+			@Nullable String targetParameter) throws Exception;
 }

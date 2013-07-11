@@ -42,6 +42,9 @@ import org.taverna.server.master.rest.TavernaServerSecurityREST;
 import org.taverna.server.master.utils.InvocationCounter.CallCounted;
 import org.taverna.server.port_description.OutputDescription;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
+
 /**
  * RESTful interface to a single workflow run.
  * 
@@ -76,13 +79,15 @@ abstract class RunREST implements TavernaServerRunREST, RunBean {
 	}
 
 	@Override
+	@NonNull
 	@CallCounted
-	public RunDescription getDescription(UriInfo ui) {
+	public RunDescription getDescription(@NonNull UriInfo ui) {
 		return new RunDescription(run, ui);
 	}
 
 	@Override
 	@CallCounted
+	@NonNull
 	public Response destroy() throws NoUpdateException {
 		try {
 			support.unregisterRun(runName, run);
@@ -94,12 +99,14 @@ abstract class RunREST implements TavernaServerRunREST, RunBean {
 
 	@Override
 	@CallCounted
+	@NonNull
 	public TavernaServerListenersREST getListeners() {
 		return makeListenersInterface().connect(run);
 	}
 
 	@Override
 	@CallCounted
+	@NonNull
 	public TavernaServerSecurityREST getSecurity() throws NotOwnerException {
 		TavernaSecurityContext secContext = run.getSecurityContext();
 		if (!support.getPrincipal().equals(secContext.getOwner()))
@@ -111,18 +118,21 @@ abstract class RunREST implements TavernaServerRunREST, RunBean {
 
 	@Override
 	@CallCounted
+	@NonNull
 	public String getExpiryTime() {
 		return dateTime().print(new DateTime(run.getExpiry()));
 	}
 
 	@Override
 	@CallCounted
+	@NonNull
 	public String getCreateTime() {
 		return dateTime().print(new DateTime(run.getCreationTimestamp()));
 	}
 
 	@Override
 	@CallCounted
+	@NonNull
 	public String getFinishTime() {
 		Date f = run.getFinishTimestamp();
 		return f == null ? "" : dateTime().print(new DateTime(f));
@@ -130,6 +140,7 @@ abstract class RunREST implements TavernaServerRunREST, RunBean {
 
 	@Override
 	@CallCounted
+	@NonNull
 	public String getStartTime() {
 		Date f = run.getStartTimestamp();
 		return f == null ? "" : dateTime().print(new DateTime(f));
@@ -137,26 +148,30 @@ abstract class RunREST implements TavernaServerRunREST, RunBean {
 
 	@Override
 	@CallCounted
+	@NonNull
 	public String getStatus() {
 		return run.getStatus().toString();
 	}
 
 	@Override
 	@CallCounted
+	@NonNull
 	public Workflow getWorkflow() {
 		return run.getWorkflow();
 	}
 
 	@Override
 	@CallCounted
+	@NonNull
 	public DirectoryREST getWorkingDirectory() {
 		return makeDirectoryInterface().connect(run);
 	}
 
 	@Override
 	@CallCounted
-	public String setExpiryTime(String expiry) throws NoUpdateException,
-			IllegalArgumentException {
+	@NonNull
+	public String setExpiryTime(@NonNull String expiry)
+			throws NoUpdateException, IllegalArgumentException {
 		DateTime wanted = dateTimeParser().parseDateTime(expiry.trim());
 		Date achieved = support.updateExpiry(run, wanted.toDate());
 		return dateTime().print(new DateTime(achieved));
@@ -164,7 +179,8 @@ abstract class RunREST implements TavernaServerRunREST, RunBean {
 
 	@Override
 	@CallCounted
-	public Response setStatus(String status) throws NoUpdateException {
+	@NonNull
+	public Response setStatus(@NonNull String status) throws NoUpdateException {
 		Status newStatus = Status.valueOf(status.trim());
 		support.permitUpdate(run);
 		if (newStatus == Operating && run.getStatus() == Initialized) {
@@ -181,12 +197,14 @@ abstract class RunREST implements TavernaServerRunREST, RunBean {
 
 	@Override
 	@CallCounted
-	public TavernaServerInputREST getInputs(UriInfo ui) {
+	@NonNull
+	public TavernaServerInputREST getInputs(@NonNull UriInfo ui) {
 		return makeInputInterface().connect(run, ui);
 	}
 
 	@Override
 	@CallCounted
+	@NonNull
 	public String getOutputFile() {
 		String o = run.getOutputBaclavaFile();
 		return o == null ? "" : o;
@@ -194,19 +212,24 @@ abstract class RunREST implements TavernaServerRunREST, RunBean {
 
 	@Override
 	@CallCounted
-	public String setOutputFile(String filename) throws NoUpdateException,
-			FilesystemAccessException, BadStateChangeException {
+	@NonNull
+	public String setOutputFile(@NonNull String filename)
+			throws NoUpdateException, FilesystemAccessException,
+			BadStateChangeException {
 		support.permitUpdate(run);
+		@Nullable
+		String fn = filename;
 		if (filename != null && filename.length() == 0)
-			filename = null;
-		run.setOutputBaclavaFile(filename);
+			fn = null;
+		run.setOutputBaclavaFile(fn);
 		String o = run.getOutputBaclavaFile();
 		return o == null ? "" : o;
 	}
 
 	@Override
 	@CallCounted
-	public OutputDescription getOutputDescription(UriInfo ui)
+	@NonNull
+	public OutputDescription getOutputDescription(@NonNull UriInfo ui)
 			throws BadStateChangeException, FilesystemAccessException,
 			NoDirectoryEntryException {
 		if (run.getStatus() == Initialized)
@@ -217,6 +240,7 @@ abstract class RunREST implements TavernaServerRunREST, RunBean {
 
 	@Override
 	@CallCounted
+	@NonNull
 	public InteractionFeedREST getInteractionFeed() {
 		return makeInteractionFeed().connect(run);
 	}
@@ -305,19 +329,22 @@ abstract class RunREST implements TavernaServerRunREST, RunBean {
 	}
 
 	@Override
-	public String getName() {
+	public @NonNull
+	String getName() {
 		return run.getName();
 	}
 
 	@Override
-	public String setName(String name) throws NoUpdateException {
+	public @NonNull
+	String setName(String name) throws NoUpdateException {
 		support.permitUpdate(run);
 		run.setName(name);
 		return run.getName();
 	}
 
 	@Override
-	public Response nameOptions() {
+	public @NonNull
+	Response nameOptions() {
 		return opt("PUT");
 	}
 }

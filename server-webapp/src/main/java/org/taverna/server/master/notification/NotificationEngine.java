@@ -18,6 +18,8 @@ import org.springframework.beans.factory.annotation.Required;
 import org.taverna.server.master.interfaces.MessageDispatcher;
 import org.taverna.server.master.interfaces.TavernaRun;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+
 /**
  * A common object for handling dispatch of event-driven messages.
  * 
@@ -48,8 +50,8 @@ public class NotificationEngine {
 		this.universalDispatchers = dispatcherList;
 	}
 
-	private void dispatchToChosenTarget(TavernaRun originator, String scheme,
-			String target, Message message) throws Exception {
+	private void dispatchToChosenTarget(@NonNull TavernaRun originator, @NonNull String scheme,
+			@NonNull String target, @NonNull Message message) throws Exception {
 		try {
 			MessageDispatcher d = dispatchers.get(scheme);
 			if (d != null && d.isAvailable())

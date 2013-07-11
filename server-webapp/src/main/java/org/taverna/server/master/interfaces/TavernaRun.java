@@ -15,6 +15,8 @@ import org.taverna.server.master.exceptions.BadStateChangeException;
 import org.taverna.server.master.exceptions.FilesystemAccessException;
 import org.taverna.server.master.exceptions.NoDestroyException;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+
 /**
  * The interface to a taverna workflow run, or "run" for short.
  * 
@@ -39,7 +41,7 @@ public interface TavernaRun extends Serializable {
 	/**
 	 * @param name The new name of the run. May be truncated.
 	 */
-	void setName(String name);
+	void setName(@NonNull String name);
 
 	/**
 	 * @return The name of the Baclava file to use for all inputs, or

@@ -52,6 +52,7 @@ public class FileDelegate extends UnicastRemoteObject implements RemoteFile {
 	}
 
 	@Override
+	@NonNull
 	public byte[] getContents(int offset, int length) throws IOException {
 		if (length == -1)
 			length = (int) (file.length() - offset);
@@ -64,7 +65,8 @@ public class FileDelegate extends UnicastRemoteObject implements RemoteFile {
 			fis = new FileInputStream(file);
 			if (offset > 0)
 				if (fis.skip(offset) != offset)
-					throw new IOException("did not move to correct offset in file");
+					throw new IOException(
+							"did not move to correct offset in file");
 			read = fis.read(buffer);
 		} finally {
 			if (fis != null)
@@ -86,7 +88,7 @@ public class FileDelegate extends UnicastRemoteObject implements RemoteFile {
 	}
 
 	@Override
-	public void setContents(byte[] data) throws IOException {
+	public void setContents(@NonNull byte[] data) throws IOException {
 		FileOutputStream fos = null;
 		try {
 			fos = new FileOutputStream(file);
@@ -98,7 +100,7 @@ public class FileDelegate extends UnicastRemoteObject implements RemoteFile {
 	}
 
 	@Override
-	public void appendContents(byte[] data) throws IOException {
+	public void appendContents(@NonNull byte[] data) throws IOException {
 		FileOutputStream fos = null;
 		try {
 			fos = new FileOutputStream(file, true);
@@ -122,12 +124,14 @@ public class FileDelegate extends UnicastRemoteObject implements RemoteFile {
 	}
 
 	@Override
+	@NonNull
 	public String getName() {
 		return file.getName();
 	}
 
 	@Override
-	public void copy(RemoteFile sourceFile) throws RemoteException, IOException {
+	public void copy(@NonNull RemoteFile sourceFile) throws RemoteException,
+			IOException {
 		String sourceHost = sourceFile.getNativeHost();
 		if (!getNativeHost().equals(sourceHost)) {
 			throw new IOException(
@@ -139,11 +143,13 @@ public class FileDelegate extends UnicastRemoteObject implements RemoteFile {
 	}
 
 	@Override
+	@NonNull
 	public String getNativeName() {
 		return file.getAbsolutePath();
 	}
 
 	@Override
+	@NonNull
 	public String getNativeHost() {
 		try {
 			return getLocalHost().getHostAddress();
@@ -154,6 +160,7 @@ public class FileDelegate extends UnicastRemoteObject implements RemoteFile {
 	}
 
 	@Override
+	@NonNull
 	public Date getModificationDate() throws RemoteException {
 		return new Date(file.lastModified());
 	}

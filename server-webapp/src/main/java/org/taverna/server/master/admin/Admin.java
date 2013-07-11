@@ -32,6 +32,7 @@ import org.taverna.server.master.common.Uri;
 import org.taverna.server.master.common.VersionedElement;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 /**
  * The administration interface for Taverna Server.
@@ -642,7 +643,7 @@ public interface Admin {
 	@Path("runasPasswordFile")
 	@Produces("text/plain")
 	@Description("What is the full pathname of the file containing the password used for impersonating other users? (On Unix, this is the password for the deployment user to use \"sudo\".)")
-	@NonNull
+	@Nullable
 	String getRunasPasswordFile();
 
 	/**
@@ -658,7 +659,7 @@ public interface Admin {
 	@Consumes("text/plain")
 	@Produces("text/plain")
 	@Description("What is the full pathname of the file containing the password used for impersonating other users? (On Unix, this is the password for the deployment user to use \"sudo\".)")
-	@NonNull
+	@Nullable
 	String setRunasPasswordFile(@NonNull String runasPasswordFile);
 
 	/** What HTTP methods may we use? */

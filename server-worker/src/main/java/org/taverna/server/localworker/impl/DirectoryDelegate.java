@@ -25,6 +25,7 @@ import org.taverna.server.localworker.remote.RemoteDirectoryEntry;
 import org.taverna.server.localworker.remote.RemoteFile;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 /**
  * This class acts as a remote-aware delegate for the workflow run's working
@@ -38,6 +39,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 public class DirectoryDelegate extends UnicastRemoteObject implements
 		RemoteDirectory {
 	private File dir;
+	@Nullable
 	private DirectoryDelegate parent;
 	private ReferenceMap localCache;
 
@@ -48,7 +50,7 @@ public class DirectoryDelegate extends UnicastRemoteObject implements
 	 *             If registration of the directory fails.
 	 */
 	public DirectoryDelegate(@NonNull File dir,
-			@NonNull DirectoryDelegate parent) throws RemoteException {
+			@Nullable DirectoryDelegate parent) throws RemoteException {
 		super();
 		this.localCache = new ReferenceMap();
 		this.dir = dir;
@@ -56,6 +58,7 @@ public class DirectoryDelegate extends UnicastRemoteObject implements
 	}
 
 	@Override
+	@NonNull
 	public Collection<RemoteDirectoryEntry> getContents()
 			throws RemoteException {
 		ArrayList<RemoteDirectoryEntry> result = new ArrayList<RemoteDirectoryEntry>();
@@ -87,7 +90,8 @@ public class DirectoryDelegate extends UnicastRemoteObject implements
 	}
 
 	@Override
-	public RemoteFile makeEmptyFile(String name) throws IOException {
+	@NonNull
+	public RemoteFile makeEmptyFile(@NonNull String name) throws IOException {
 		File f = getValidatedNewFile(dir, name);
 		touch(f);
 		FileDelegate delegate = new FileDelegate(f, this);
@@ -98,7 +102,9 @@ public class DirectoryDelegate extends UnicastRemoteObject implements
 	}
 
 	@Override
-	public RemoteDirectory makeSubdirectory(String name) throws IOException {
+	@NonNull
+	public RemoteDirectory makeSubdirectory(@NonNull String name)
+			throws IOException {
 		File f = getValidatedNewFile(dir, name);
 		forceMkdir(f);
 		DirectoryDelegate delegate = new DirectoryDelegate(f, this);
@@ -148,6 +154,7 @@ public class DirectoryDelegate extends UnicastRemoteObject implements
 	}
 
 	@Override
+	@NonNull
 	public String getName() {
 		if (parent == null)
 			return "";
@@ -155,6 +162,7 @@ public class DirectoryDelegate extends UnicastRemoteObject implements
 	}
 
 	@Override
+	@NonNull
 	public Date getModificationDate() throws RemoteException {
 		return new Date(dir.lastModified());
 	}

@@ -15,6 +15,8 @@ import java.util.regex.PatternSyntaxException;
 import org.taverna.server.master.interfaces.LocalIdentityMapper;
 import org.taverna.server.master.utils.UsernamePrincipal;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+
 /**
  * A trivial identity mapper that just uses the name out of the
  * {@link Principal}, or uses a regular expression to extract it from the string
@@ -32,12 +34,12 @@ public class NameIDMapper implements LocalIdentityMapper {
 	 * @throws PatternSyntaxException
 	 *             If the pattern is invalid.
 	 */
-	public void setRegexp(String regexp) throws PatternSyntaxException {
+	public void setRegexp(@NonNull String regexp) throws PatternSyntaxException {
 		pat = compile(regexp);
 	}
 
 	@Override
-	public String getUsernameForPrincipal(UsernamePrincipal user) {
+	public String getUsernameForPrincipal(@NonNull UsernamePrincipal user) {
 		if (pat != null) {
 			Matcher m = pat.matcher(user.toString());
 			if (m.find() && m.groupCount() > 0) {

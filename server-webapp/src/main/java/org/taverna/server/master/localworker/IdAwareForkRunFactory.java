@@ -55,6 +55,7 @@ import org.taverna.server.master.interfaces.LocalIdentityMapper;
 import org.taverna.server.master.utils.UsernamePrincipal;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 /**
  * A simple factory for workflow runs that forks runs from a subprocess.
@@ -97,6 +98,7 @@ public class IdAwareForkRunFactory extends AbstractRemoteRunFactory implements
 
 	/** @return Which java executable to run. */
 	@Override
+	@NonNull
 	@ManagedAttribute(description = "Which java executable to run.", currencyTimeLimit = 300)
 	public String getJavaBinary() {
 		return state.getJavaBinary();
@@ -108,7 +110,7 @@ public class IdAwareForkRunFactory extends AbstractRemoteRunFactory implements
 	 */
 	@Override
 	@ManagedAttribute(description = "Which java executable to run.", currencyTimeLimit = 300)
-	public void setJavaBinary(String javaBinary) {
+	public void setJavaBinary(@NonNull String javaBinary) {
 		state.setJavaBinary(javaBinary);
 		reinitFactory();
 	}
@@ -134,6 +136,7 @@ public class IdAwareForkRunFactory extends AbstractRemoteRunFactory implements
 
 	/** @return The location of the JAR implementing the server worker processes. */
 	@Override
+	@NonNull
 	@ManagedAttribute(description = "The location of the JAR implementing the server worker processes.")
 	public String getServerWorkerJar() {
 		return state.getServerWorkerJar();
@@ -146,13 +149,14 @@ public class IdAwareForkRunFactory extends AbstractRemoteRunFactory implements
 	 */
 	@Override
 	@ManagedAttribute(description = "The location of the JAR implementing the server worker processes.")
-	public void setServerWorkerJar(String serverWorkerJar) {
+	public void setServerWorkerJar(@NonNull String serverWorkerJar) {
 		state.setServerWorkerJar(serverWorkerJar);
 		reinitFactory();
 	}
 
 	/** @return The script to run to start running a workflow. */
 	@Override
+	@NonNull
 	@ManagedAttribute(description = "The script to run to start running a workflow.", currencyTimeLimit = 300)
 	public String getExecuteWorkflowScript() {
 		return state.getExecuteWorkflowScript();
@@ -164,7 +168,7 @@ public class IdAwareForkRunFactory extends AbstractRemoteRunFactory implements
 	 */
 	@Override
 	@ManagedAttribute(description = "The script to run to start running a workflow.", currencyTimeLimit = 300)
-	public void setExecuteWorkflowScript(String executeWorkflowScript) {
+	public void setExecuteWorkflowScript(@NonNull String executeWorkflowScript) {
 		state.setExecuteWorkflowScript(executeWorkflowScript);
 		reinitFactory();
 	}
@@ -225,7 +229,7 @@ public class IdAwareForkRunFactory extends AbstractRemoteRunFactory implements
 	 */
 	@Override
 	@ManagedAttribute(description = "A file containing a password to use when running a program as another user (e.g., with sudo).", currencyTimeLimit = 300)
-	public void setPasswordFile(String passwordFile) {
+	public void setPasswordFile(@Nullable String passwordFile) {
 		state.setPasswordFile(passwordFile);
 	}
 
@@ -233,6 +237,7 @@ public class IdAwareForkRunFactory extends AbstractRemoteRunFactory implements
 	 * @return The location of the JAR implementing the secure-fork process.
 	 */
 	@Override
+	@NonNull
 	@ManagedAttribute(description = "The location of the JAR implementing the secure-fork process.", currencyTimeLimit = 300)
 	public String getServerForkerJar() {
 		return state.getServerForkerJar();
@@ -244,7 +249,7 @@ public class IdAwareForkRunFactory extends AbstractRemoteRunFactory implements
 	 */
 	@Override
 	@ManagedAttribute(description = "The location of the JAR implementing the secure-fork process.", currencyTimeLimit = 300)
-	public void setServerForkerJar(String serverForkerJar) {
+	public void setServerForkerJar(@NonNull String serverForkerJar) {
 		state.setServerForkerJar(serverForkerJar);
 	}
 
@@ -278,7 +283,9 @@ public class IdAwareForkRunFactory extends AbstractRemoteRunFactory implements
 	/**
 	 * @return The mapping of user names to RMI factory IDs.
 	 */
+	@SuppressWarnings("null")
 	@Override
+	@NonNull
 	@ManagedAttribute(description = "The mapping of user names to RMI factory IDs.", currencyTimeLimit = 60)
 	public String[] getFactoryProcessMapping() {
 		ArrayList<String> result = new ArrayList<String>();
@@ -444,8 +451,8 @@ public class IdAwareForkRunFactory extends AbstractRemoteRunFactory implements
 	}
 
 	@Override
-	protected RemoteSingleRun getRealRun(UsernamePrincipal creator,
-			Workflow workflow, UUID id) throws Exception {
+	protected RemoteSingleRun getRealRun(@NonNull UsernamePrincipal creator,
+			@NonNull Workflow workflow, @NonNull UUID id) throws Exception {
 		String wf = serializeWorkflow(workflow);
 		String username = mapper == null ? null : mapper
 				.getUsernameForPrincipal(creator);

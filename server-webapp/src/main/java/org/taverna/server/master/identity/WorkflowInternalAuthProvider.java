@@ -40,6 +40,7 @@ import org.taverna.server.master.utils.UsernamePrincipal;
 import org.taverna.server.master.worker.RunDatabaseDAO;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 /**
  * A special authentication provider that allows a workflow to authenticate to
@@ -112,6 +113,7 @@ public class WorkflowInternalAuthProvider extends
 	protected void additionalAuthenticationChecks(UserDetails userRecord,
 			@NonNull Object principal, @NonNull Object credentials)
 			throws Exception {
+		@SuppressWarnings("null")
 		@NonNull
 		HttpServletRequest req = ((ServletRequestAttributes) currentRequestAttributes())
 				.getRequest();
@@ -163,8 +165,9 @@ public class WorkflowInternalAuthProvider extends
 	 *             If something goes wrong. It will be logged and converted into
 	 *             a general AuthenticationException.
 	 */
+	@SuppressWarnings("null")
 	@NonNull
-	protected UserDetails retrieveUser(String username, Object details) throws Exception {
+	protected UserDetails retrieveUser(@NonNull String username, @Nullable Object details) throws Exception {
 		if (details == null || !(details instanceof WebAuthenticationDetails))
 			throw new UsernameNotFoundException("context unsupported");
 		if (!username.startsWith(PREFIX))
@@ -181,6 +184,7 @@ public class WorkflowInternalAuthProvider extends
 						new WorkflowSelfAuthority(wfid)));
 	}
 
+	@SuppressWarnings("null")
 	@Override
 	protected final void additionalAuthenticationChecks(UserDetails userRecord,
 			UsernamePasswordAuthenticationToken token) {
@@ -196,6 +200,7 @@ public class WorkflowInternalAuthProvider extends
 		}
 	}
 
+	@SuppressWarnings("null")
 	@Override
 	@NonNull
 	protected final UserDetails retrieveUser(String username,
@@ -212,11 +217,12 @@ public class WorkflowInternalAuthProvider extends
 
 	@SuppressWarnings("serial")
 	public static class WorkflowSelfAuthority extends LiteralGrantedAuthority {
-		public WorkflowSelfAuthority(String wfid) {
+		public WorkflowSelfAuthority(@NonNull String wfid) {
 			super(wfid);
 		}
 
-		public String getWorkflowID() {
+		@SuppressWarnings("null")
+		public @NonNull String getWorkflowID() {
 			return getAuthority();
 		}
 
@@ -242,7 +248,7 @@ public class WorkflowInternalAuthProvider extends
 		}
 
 		@Override
-		public String getUsernameForPrincipal(UsernamePrincipal user) {
+		public String getUsernameForPrincipal(@NonNull UsernamePrincipal user) {
 			Authentication auth = SecurityContextHolder.getContext()
 					.getAuthentication();
 			if (auth == null || !auth.isAuthenticated())

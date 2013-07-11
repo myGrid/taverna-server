@@ -24,6 +24,7 @@ import org.taverna.server.master.utils.JDOSupport;
 import org.taverna.server.master.utils.UsernamePrincipal;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 /**
  * The database interface that supports the event feed.
@@ -38,6 +39,7 @@ public class EventDAO extends JDOSupport<AbstractEvent> implements
 	}
 
 	@Override
+	@NonNull
 	public String getName() {
 		return "atom";
 	}
@@ -140,8 +142,9 @@ public class EventDAO extends JDOSupport<AbstractEvent> implements
 
 	@Override
 	@WithinSingleTransaction
-	public void dispatch(TavernaRun originator, String messageSubject,
-			String messageContent, String targetParameter) throws Exception {
+	public void dispatch(@NonNull TavernaRun originator,
+			@NonNull String messageSubject, @NonNull String messageContent,
+			@Nullable String targetParameter) throws Exception {
 		UsernamePrincipal owner = originator.getSecurityContext().getOwner();
 		UriBuilder ub = ubf.getRunUriBuilder(originator);
 		persist(new TerminationEvent(ub.build(), owner, messageSubject,

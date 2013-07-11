@@ -27,6 +27,8 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
 import org.springframework.beans.factory.annotation.Required;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+
 /**
  * Dispatch termination messages via SMS.
  * 
@@ -34,6 +36,7 @@ import org.springframework.beans.factory.annotation.Required;
  */
 public class SMSDispatcher extends RateLimitedDispatcher {
 	@Override
+	@NonNull
 	public String getName() {
 		return "sms";
 	}

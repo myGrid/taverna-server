@@ -40,6 +40,7 @@ import org.taverna.server.master.factories.ConfigurableRunFactory;
 import org.taverna.server.master.utils.UsernamePrincipal;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 /**
  * A simple factory for workflow runs that forks runs from a subprocess.
@@ -90,6 +91,7 @@ public class ForkRunFactory extends AbstractRemoteRunFactory implements
 	/** @return Which java executable to run. */
 	@ManagedAttribute(description = "Which java executable to run.", currencyTimeLimit = 300)
 	@Override
+	@NonNull
 	public String getJavaBinary() {
 		return state.getJavaBinary();
 	}
@@ -100,7 +102,7 @@ public class ForkRunFactory extends AbstractRemoteRunFactory implements
 	 */
 	@ManagedAttribute(description = "Which java executable to run.", currencyTimeLimit = 300)
 	@Override
-	public void setJavaBinary(String javaBinary) {
+	public void setJavaBinary(@NonNull String javaBinary) {
 		state.setJavaBinary(javaBinary);
 		reinitFactory();
 	}
@@ -127,6 +129,7 @@ public class ForkRunFactory extends AbstractRemoteRunFactory implements
 	/** @return The location of the JAR implementing the server worker process. */
 	@ManagedAttribute(description = "The location of the JAR implementing the server worker process.")
 	@Override
+	@NonNull
 	public String getServerWorkerJar() {
 		return state.getServerWorkerJar();
 	}
@@ -138,7 +141,7 @@ public class ForkRunFactory extends AbstractRemoteRunFactory implements
 	 */
 	@ManagedAttribute(description = "The location of the JAR implementing the server worker process.")
 	@Override
-	public void setServerWorkerJar(String serverWorkerJar) {
+	public void setServerWorkerJar(@NonNull String serverWorkerJar) {
 		state.setServerWorkerJar(serverWorkerJar);
 		reinitFactory();
 	}
@@ -146,6 +149,7 @@ public class ForkRunFactory extends AbstractRemoteRunFactory implements
 	/** @return The script to run to start running a workflow. */
 	@ManagedAttribute(description = "The script to run to start running a workflow.", currencyTimeLimit = 300)
 	@Override
+	@NonNull
 	public String getExecuteWorkflowScript() {
 		return state.getExecuteWorkflowScript();
 	}
@@ -156,7 +160,7 @@ public class ForkRunFactory extends AbstractRemoteRunFactory implements
 	 */
 	@ManagedAttribute(description = "The script to run to start running a workflow.", currencyTimeLimit = 300)
 	@Override
-	public void setExecuteWorkflowScript(String executeWorkflowScript) {
+	public void setExecuteWorkflowScript(@NonNull String executeWorkflowScript) {
 		state.setExecuteWorkflowScript(executeWorkflowScript);
 		reinitFactory();
 	}
@@ -473,8 +477,8 @@ public class ForkRunFactory extends AbstractRemoteRunFactory implements
 	}
 
 	@Override
-	protected RemoteSingleRun getRealRun(UsernamePrincipal creator,
-			Workflow workflow, UUID id) throws Exception {
+	protected RemoteSingleRun getRealRun(@NonNull UsernamePrincipal creator,
+			@NonNull Workflow workflow, @NonNull UUID id) throws Exception {
 		String wf = serializeWorkflow(workflow);
 		for (int i = 0; i < 3; i++) {
 			initFactory();
@@ -497,21 +501,23 @@ public class ForkRunFactory extends AbstractRemoteRunFactory implements
 	}
 
 	@Override
+	@NonNull
 	public String getServerForkerJar() {
 		return "<NOT-SUPPORTED>";
 	}
 
 	@Override
-	public void setPasswordFile(String newValue) {
+	public void setPasswordFile(@Nullable String newValue) {
 		// Do nothing
 	}
 
 	@Override
-	public void setServerForkerJar(String newValue) {
+	public void setServerForkerJar(@NonNull String newValue) {
 		// Do nothing
 	}
 
 	@Override
+	@NonNull
 	public String[] getFactoryProcessMapping() {
 		return new String[0];
 	}

@@ -64,6 +64,9 @@ import org.taverna.server.master.worker.FactoryBean;
 import org.taverna.server.master.worker.RemoteRunDelegate;
 import org.taverna.server.master.worker.RunDBSupport;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
+
 /**
  * Bridge to remote runs via RMI.
  * 
@@ -141,6 +144,8 @@ public abstract class AbstractRemoteRunFactory implements ListenerFactory,
 		if (interhost != null) {
 			String feed = baseurifactory.resolve(interfeed);
 			String webdav = baseurifactory.resolve(interwebdav);
+			if (feed == null || webdav == null)
+				throw new Error("should be unreachable");
 			factory.setInteractionServiceDetails(interhost, interport, webdav,
 					feed);
 		}
@@ -251,13 +256,14 @@ public abstract class AbstractRemoteRunFactory implements ListenerFactory,
 
 	@ManagedAttribute(description = "The host holding the RMI registry to communicate via.")
 	@Override
+	@NonNull
 	public String getRegistryHost() {
 		return state.getRegistryHost();
 	}
 
 	@ManagedAttribute(description = "The host holding the RMI registry to communicate via.")
 	@Override
-	public void setRegistryHost(String host) {
+	public void setRegistryHost(@Nullable String host) {
 		boolean rebuild = false;
 		if (host == null || host.isEmpty()) {
 			host = null;
@@ -338,6 +344,7 @@ public abstract class AbstractRemoteRunFactory implements ListenerFactory,
 	}
 
 	@Override
+	@NonNull
 	public List<String> getSupportedListenerTypes() {
 		try {
 			RemoteRunDelegate rrd = runDB.pickArbitraryRun();
@@ -351,8 +358,10 @@ public abstract class AbstractRemoteRunFactory implements ListenerFactory,
 	}
 
 	@Override
-	public Listener makeListener(TavernaRun run, String listenerType,
-			String configuration) throws NoListenerException {
+	@NonNull
+	public Listener makeListener(@NonNull TavernaRun run,
+			@NonNull String listenerType, @NonNull String configuration)
+			throws NoListenerException {
 		if (run instanceof RemoteRunDelegate)
 			return ((RemoteRunDelegate) run).makeListener(listenerType,
 					configuration);
@@ -360,8 +369,9 @@ public abstract class AbstractRemoteRunFactory implements ListenerFactory,
 	}
 
 	@Override
-	public TavernaRun create(UsernamePrincipal creator, Workflow workflow)
-			throws NoCreateException {
+	@NonNull
+	public TavernaRun create(@NonNull UsernamePrincipal creator,
+			@NonNull Workflow workflow) throws NoCreateException {
 		try {
 			Date now = new Date();
 			UUID id = randomUUID();
@@ -396,12 +406,15 @@ public abstract class AbstractRemoteRunFactory implements ListenerFactory,
 	 * @throws Exception
 	 *             Just about anything can go wrong...
 	 */
-	protected abstract RemoteSingleRun getRealRun(UsernamePrincipal creator,
-			Workflow workflow, UUID id) throws Exception;
+	protected abstract RemoteSingleRun getRealRun(
+			@NonNull UsernamePrincipal creator, @NonNull Workflow workflow, @NonNull UUID id)
+			throws Exception;
 
 	/** @return The names of the current runs. */
+	@SuppressWarnings("null")
 	@ManagedAttribute(description = "The names of the current runs.", currencyTimeLimit = 5)
 	@Override
+	@NonNull
 	public String[] getCurrentRunNames() {
 		List<String> names = runDB.listRunNames();
 		return names.toArray(new String[names.size()]);
@@ -468,7 +481,10 @@ public abstract class AbstractRemoteRunFactory implements ListenerFactory,
 	 * @throws JAXBException
 	 *             If serialization fails.
 	 */
-	protected String serializeWorkflow(Workflow workflow) throws JAXBException {
+	@SuppressWarnings("null")
+	@NonNull
+	protected String serializeWorkflow(@NonNull Workflow workflow)
+			throws JAXBException {
 		return workflow.marshal();
 	}
 

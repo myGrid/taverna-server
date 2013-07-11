@@ -18,15 +18,15 @@ import javax.ws.rs.core.UriBuilder;
 
 import org.springframework.web.context.ServletContextAware;
 import org.taverna.server.master.TavernaServerSupport;
-import org.taverna.server.master.common.Uri;
 import org.taverna.server.master.interfaces.TavernaRun;
 import org.taverna.server.master.interfaces.UriBuilderFactory;
 import org.taverna.server.master.rest.TavernaServerREST.EventFeed;
 import org.taverna.server.master.rest.TavernaServerREST.Events;
-import org.taverna.server.master.utils.UsernamePrincipal;
 import org.taverna.server.master.utils.InvocationCounter.CallCounted;
+import org.taverna.server.master.utils.UsernamePrincipal;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 /**
  * Simple REST handler that allows an Atom feed to be served up of events
@@ -69,7 +69,9 @@ public class AtomFeed implements EventFeed, UriBuilderFactory,
 	 * @author Donal Fellows
 	 */
 	public static class Feed extends Events {
+		@NonNull
 		private UsernamePrincipal owner;
+		@NonNull
 		private EventDAO eventSource;
 
 		Feed(@NonNull EventDAO eventSource, @NonNull UsernamePrincipal owner) {
@@ -94,6 +96,7 @@ public class AtomFeed implements EventFeed, UriBuilderFactory,
 	}
 
 	@Override
+	@NonNull
 	@CallCounted
 	@RolesAllowed(USER)
 	public Events getFeed() {
@@ -101,25 +104,29 @@ public class AtomFeed implements EventFeed, UriBuilderFactory,
 	}
 
 	@Override
+	@NonNull
 	@CallCounted
 	@RolesAllowed(USER)
-	public AbstractEvent getEvent(String id) {
+	public AbstractEvent getEvent(@NonNull String id) {
 		return eventSource.getEvent(support.getPrincipal(), id);
 	}
 
 	@Override
-	public UriBuilder getRunUriBuilder(TavernaRun run) {
+	@NonNull
+	public UriBuilder getRunUriBuilder(@NonNull TavernaRun run) {
 		return secure(fromUri(getBaseUriBuilder().path("runs/{uuid}").build(
 				run.getId())));
 	}
 
 	@Override
+	@NonNull
 	public UriBuilder getBaseUriBuilder() {
 		return secure(fromUri(baseURI));
 	}
 
 	@Override
-	public String resolve(String uri) {
+	@Nullable
+	public String resolve(@Nullable String uri) {
 		if (uri == null)
 			return null;
 		return secure(baseURI, uri).toString();

@@ -44,23 +44,27 @@ abstract class ListenersREST implements TavernaServerListenersREST,
 	}
 
 	@Override
-	public ListenersREST connect(TavernaRun run) {
+	@NonNull
+	public ListenersREST connect(@NonNull TavernaRun run) {
 		this.run = run;
 		return this;
 	}
 
 	@Override
+	@NonNull
 	@CallCounted
-	public Response addListener(ListenerDefinition typeAndConfiguration,
-			UriInfo ui) throws NoUpdateException, NoListenerException {
+	public Response addListener(
+			@NonNull ListenerDefinition typeAndConfiguration,
+			@NonNull UriInfo ui) throws NoUpdateException, NoListenerException {
 		String name = support.makeListener(run, typeAndConfiguration.type,
 				typeAndConfiguration.configuration).getName();
 		return created(secure(ui).path("{listenerName}").build(name)).build();
 	}
 
 	@Override
+	@NonNull
 	@CallCounted
-	public TavernaServerListenerREST getListener(String name)
+	public TavernaServerListenerREST getListener(@NonNull String name)
 			throws NoListenerException {
 		Listener l = support.getListener(run, name);
 		if (l == null)
@@ -72,8 +76,9 @@ abstract class ListenersREST implements TavernaServerListenersREST,
 	protected abstract SingleListenerREST makeListenerInterface();
 
 	@Override
+	@NonNull
 	@CallCounted
-	public Listeners getDescription(UriInfo ui) {
+	public Listeners getDescription(@NonNull UriInfo ui) {
 		List<ListenerDescription> result = new ArrayList<ListenerDescription>();
 		UriBuilder ub = secure(ui).path("{name}");
 		for (Listener l : run.getListeners())
@@ -83,6 +88,7 @@ abstract class ListenersREST implements TavernaServerListenersREST,
 	}
 
 	@Override
+	@NonNull
 	@CallCounted
 	public Response listenersOptions() {
 		return opt();
@@ -95,5 +101,6 @@ abstract class ListenersREST implements TavernaServerListenersREST,
  * @author Donal Fellows
  */
 interface ListenersBean extends SupportAware {
-	ListenersREST connect(TavernaRun run);
+	@NonNull
+	ListenersREST connect(@NonNull TavernaRun run);
 }

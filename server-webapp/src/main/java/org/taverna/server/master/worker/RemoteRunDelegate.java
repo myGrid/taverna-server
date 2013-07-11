@@ -513,10 +513,13 @@ abstract class DEDelegate implements DirectoryEntry {
 		}
 	}
 
+	@SuppressWarnings("null")
 	@Override
+	@NonNull
 	public String getFullName() {
 		if (full != null)
 			return full;
+		@NonNull
 		String n = getName();
 		RemoteDirectoryEntry re = entry;
 		try {
@@ -534,6 +537,7 @@ abstract class DEDelegate implements DirectoryEntry {
 	}
 
 	@Override
+	@NonNull
 	public String getName() {
 		if (name == null)
 			try {
@@ -545,6 +549,7 @@ abstract class DEDelegate implements DirectoryEntry {
 	}
 
 	@Override
+	@NonNull
 	public Date getModificationDate() {
 		if (cacheModTime == null || currentTimeMillis() - cacheQueryTime < 5000)
 			try {
@@ -582,6 +587,7 @@ class DirectoryDelegate extends DEDelegate implements Directory {
 	}
 
 	@Override
+	@NonNull
 	public Collection<DirectoryEntry> getContents()
 			throws FilesystemAccessException {
 		ArrayList<DirectoryEntry> result = new ArrayList<DirectoryEntry>();
@@ -600,6 +606,7 @@ class DirectoryDelegate extends DEDelegate implements Directory {
 	}
 
 	@Override
+	@NonNull
 	public Collection<DirectoryEntry> getContentsByDate()
 			throws FilesystemAccessException {
 		ArrayList<DirectoryEntry> result = new ArrayList<DirectoryEntry>(
@@ -616,7 +623,8 @@ class DirectoryDelegate extends DEDelegate implements Directory {
 	}
 
 	@Override
-	public File makeEmptyFile(Principal actor, String name)
+	@NonNull
+	public File makeEmptyFile(@NonNull Principal actor, @NonNull String name)
 			throws FilesystemAccessException {
 		try {
 			return new FileDelegate(rd.makeEmptyFile(name));
@@ -626,8 +634,9 @@ class DirectoryDelegate extends DEDelegate implements Directory {
 	}
 
 	@Override
-	public Directory makeSubdirectory(Principal actor, String name)
-			throws FilesystemAccessException {
+	@NonNull
+	public Directory makeSubdirectory(@NonNull Principal actor,
+			@NonNull String name) throws FilesystemAccessException {
 		try {
 			return new DirectoryDelegate(rd.makeSubdirectory(name));
 		} catch (IOException e) {
@@ -637,6 +646,7 @@ class DirectoryDelegate extends DEDelegate implements Directory {
 	}
 
 	@Override
+	@NonNull
 	public ZipStream getContentsAsZip() throws FilesystemAccessException {
 		ZipStream zs = new ZipStream();
 
@@ -711,7 +721,7 @@ class DirectoryDelegate extends DEDelegate implements Directory {
 class FileDelegate extends DEDelegate implements File {
 	RemoteFile rf;
 
-	FileDelegate(RemoteFile f) {
+	FileDelegate(@NonNull RemoteFile f) {
 		super(f);
 		this.rf = f;
 	}
@@ -737,7 +747,8 @@ class FileDelegate extends DEDelegate implements File {
 	}
 
 	@Override
-	public void setContents(byte[] data) throws FilesystemAccessException {
+	public void setContents(@NonNull byte[] data)
+			throws FilesystemAccessException {
 		try {
 			rf.setContents(data);
 		} catch (IOException e) {
@@ -747,7 +758,8 @@ class FileDelegate extends DEDelegate implements File {
 	}
 
 	@Override
-	public void appendContents(byte[] data) throws FilesystemAccessException {
+	public void appendContents(@NonNull byte[] data)
+			throws FilesystemAccessException {
 		try {
 			rf.appendContents(data);
 		} catch (IOException e) {
@@ -757,7 +769,7 @@ class FileDelegate extends DEDelegate implements File {
 	}
 
 	@Override
-	public void copy(File from) throws FilesystemAccessException {
+	public void copy(@NonNull File from) throws FilesystemAccessException {
 		FileDelegate fromFile;
 		try {
 			fromFile = (FileDelegate) from;
@@ -789,6 +801,7 @@ class ListenerDelegate implements Listener {
 	}
 
 	@Override
+	@NonNull
 	public String getConfiguration() {
 		try {
 			if (conf == null)
@@ -800,6 +813,7 @@ class ListenerDelegate implements Listener {
 	}
 
 	@Override
+	@NonNull
 	public String getName() {
 		try {
 			return r.getName();
@@ -810,7 +824,9 @@ class ListenerDelegate implements Listener {
 	}
 
 	@Override
-	public String getProperty(String propName) throws NoListenerException {
+	@NonNull
+	public String getProperty(@NonNull String propName)
+			throws NoListenerException {
 		try {
 			return r.getProperty(propName);
 		} catch (RemoteException e) {
@@ -819,6 +835,7 @@ class ListenerDelegate implements Listener {
 	}
 
 	@Override
+	@NonNull
 	public String getType() {
 		try {
 			return r.getType();
@@ -829,6 +846,7 @@ class ListenerDelegate implements Listener {
 	}
 
 	@Override
+	@NonNull
 	public String[] listProperties() {
 		try {
 			return r.listProperties();
@@ -839,7 +857,7 @@ class ListenerDelegate implements Listener {
 	}
 
 	@Override
-	public void setProperty(String propName, String value)
+	public void setProperty(@NonNull String propName, @NonNull String value)
 			throws NoListenerException, BadPropertyValueException {
 		try {
 			r.setProperty(propName, value);
@@ -874,11 +892,12 @@ class RunInput implements Input {
 	}
 
 	@Override
+	@NonNull
 	public String getName() {
 		try {
 			return i.getName();
 		} catch (RemoteException e) {
-			return null;
+			return "";
 		}
 	}
 
@@ -892,7 +911,7 @@ class RunInput implements Input {
 	}
 
 	@Override
-	public void setFile(String file) throws FilesystemAccessException,
+	public void setFile(@NonNull String file) throws FilesystemAccessException,
 			BadStateChangeException {
 		checkBadFilename(file);
 		try {
@@ -903,7 +922,7 @@ class RunInput implements Input {
 	}
 
 	@Override
-	public void setValue(String value) throws BadStateChangeException {
+	public void setValue(@NonNull String value) throws BadStateChangeException {
 		try {
 			i.setValue(value);
 		} catch (RemoteException e) {

@@ -12,6 +12,7 @@ import org.taverna.server.master.exceptions.NoUpdateException;
 import org.taverna.server.master.interfaces.TavernaRun;
 import org.taverna.server.master.utils.UsernamePrincipal;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.SuppressWarnings;
 
 @SuppressWarnings
@@ -32,37 +33,38 @@ public class MockPolicy extends SimpleServerPolicy {
 	}
 
 	@Override
-	public Integer getMaxRuns(UsernamePrincipal user) {
+	public Integer getMaxRuns(@NonNull UsernamePrincipal user) {
 		return usermaxruns;
 	}
 
 	@Override
-	public List<Workflow> listPermittedWorkflows(UsernamePrincipal user) {
+	public List<Workflow> listPermittedWorkflows(@NonNull UsernamePrincipal user) {
 		return Arrays.asList();
 	}
 
 	@Override
-	public boolean permitAccess(UsernamePrincipal user, TavernaRun run) {
+	public boolean permitAccess(@NonNull UsernamePrincipal user,
+			@NonNull TavernaRun run) {
 		return !denyaccess.contains(run);
 	}
 
 	@Override
-	public void permitCreate(UsernamePrincipal user, Workflow workflow)
-			throws NoCreateException {
+	public void permitCreate(@NonNull UsernamePrincipal user,
+			@NonNull Workflow workflow) throws NoCreateException {
 		if (this.exnOnCreate)
 			throw new NoCreateException();
 	}
 
 	@Override
-	public void permitDestroy(UsernamePrincipal user, TavernaRun run)
-			throws NoDestroyException {
+	public void permitDestroy(@NonNull UsernamePrincipal user,
+			@NonNull TavernaRun run) throws NoDestroyException {
 		if (this.exnOnDelete)
 			throw new NoDestroyException();
 	}
 
 	@Override
-	public void permitUpdate(UsernamePrincipal user, TavernaRun run)
-			throws NoUpdateException {
+	public void permitUpdate(@NonNull UsernamePrincipal user,
+			@NonNull TavernaRun run) throws NoUpdateException {
 		if (this.exnOnUpdate)
 			throw new NoUpdateException();
 	}

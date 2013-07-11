@@ -5,6 +5,9 @@
  */
 package org.taverna.server.master.factories;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
+
 /**
  * Interface to run factories for the purpose of configuration.
  * 
@@ -12,10 +15,11 @@ package org.taverna.server.master.factories;
  */
 public interface ConfigurableRunFactory extends RunFactory {
 	/** Where is the registry? Getter */
+	@NonNull
 	String getRegistryHost();
 
 	/** Where is the registry? Setter */
-	void setRegistryHost(String host);
+	void setRegistryHost(@NonNull String host);
 
 	/** Where is the registry? Getter */
 	int getRegistryPort();
@@ -48,16 +52,18 @@ public interface ConfigurableRunFactory extends RunFactory {
 	void setWaitSeconds(int seconds);
 
 	/** How do we start the workflow engine? Getter */
+	@NonNull
 	String getExecuteWorkflowScript();
 
 	/** How do we start the workflow engine? Setter */
-	void setExecuteWorkflowScript(String executeWorkflowScript);
+	void setExecuteWorkflowScript(@NonNull String executeWorkflowScript);
 
 	/** How do we start the file system access process? Getter */
+	@NonNull
 	String getServerWorkerJar();
 
 	/** How do we start the file system access process? Setter */
-	void setServerWorkerJar(String serverWorkerJar);
+	void setServerWorkerJar(@NonNull String serverWorkerJar);
 
 	/**
 	 * How do we start the file system access process? Extra arguments to pass.
@@ -72,22 +78,25 @@ public interface ConfigurableRunFactory extends RunFactory {
 	void setExtraArguments(String[] firstArguments);
 
 	/** Where is Java? Getter */
+	@NonNull
 	String getJavaBinary();
 
 	/** Where is Java? Setter */
-	void setJavaBinary(String javaBinary);
+	void setJavaBinary(@NonNull String javaBinary);
 
 	/** Where do we get passwords from? Getter */
+	@Nullable
 	String getPasswordFile();
 
 	/** Where do we get passwords from? Setter */
-	void setPasswordFile(String newValue);
+	void setPasswordFile(@Nullable String newValue);
 
 	/** How do we switch users? Getter */
+	@NonNull
 	String getServerForkerJar();
 
 	/** How do we switch users? Setter */
-	void setServerForkerJar(String newValue);
+	void setServerForkerJar(@NonNull String newValue);
 
 	/** How many runs have there been? */
 	int getTotalRuns();
@@ -96,15 +105,18 @@ public interface ConfigurableRunFactory extends RunFactory {
 	int getLastStartupCheckCount();
 
 	/** What are the current runs? */
+	@NonNull
 	String[] getCurrentRunNames();
 
 	/** What is the RMI ID of the factory process? */
 	String getFactoryProcessName();
 
 	/** What was the last observed exit code? */
+	@Nullable
 	Integer getLastExitCode();
 
 	/** What factory process to use for a particular user? */
+	@NonNull
 	String[] getFactoryProcessMapping();
 
 	/** How many runs can be operating at once? Setter */

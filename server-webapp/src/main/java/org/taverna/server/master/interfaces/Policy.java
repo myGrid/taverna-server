@@ -14,6 +14,9 @@ import org.taverna.server.master.exceptions.NoDestroyException;
 import org.taverna.server.master.exceptions.NoUpdateException;
 import org.taverna.server.master.utils.UsernamePrincipal;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
+
 /**
  * Simple policy interface.
  * 
@@ -23,7 +26,7 @@ public interface Policy {
 	/**
 	 * @return The maximum number of runs that the system can support.
 	 */
-	public int getMaxRuns();
+	int getMaxRuns();
 
 	/**
 	 * Get the limit on the number of runs for this user.
@@ -34,7 +37,8 @@ public interface Policy {
 	 *         per-user limit is imposed and only system-wide limits are to be
 	 *         enforced.
 	 */
-	public Integer getMaxRuns(UsernamePrincipal user);
+	@Nullable
+	Integer getMaxRuns(@NonNull UsernamePrincipal user);
 
 	/**
 	 * Test whether the user can create an instance of the given workflow.
@@ -46,8 +50,8 @@ public interface Policy {
 	 * @throws NoCreateException
 	 *             If they may not instantiate it.
 	 */
-	public void permitCreate(UsernamePrincipal user, Workflow workflow)
-			throws NoCreateException;
+	void permitCreate(@NonNull UsernamePrincipal user,
+			@NonNull Workflow workflow) throws NoCreateException;
 
 	/**
 	 * Test whether the user can destroy a workflow instance run or manipulate
@@ -60,7 +64,7 @@ public interface Policy {
 	 * @throws NoDestroyException
 	 *             If they may not destroy it.
 	 */
-	public void permitDestroy(UsernamePrincipal user, TavernaRun run)
+	void permitDestroy(@NonNull UsernamePrincipal user, @NonNull TavernaRun run)
 			throws NoDestroyException;
 
 	/**
@@ -75,7 +79,8 @@ public interface Policy {
 	 *         before testing whether the workflow can be updated or deleted by
 	 *         the user.
 	 */
-	public boolean permitAccess(UsernamePrincipal user, TavernaRun run);
+	boolean permitAccess(@NonNull UsernamePrincipal user,
+			@NonNull TavernaRun run);
 
 	/**
 	 * Test whether the user can modify a workflow run (other than for its
@@ -88,7 +93,7 @@ public interface Policy {
 	 * @throws NoUpdateException
 	 *             If they may not modify it.
 	 */
-	public void permitUpdate(UsernamePrincipal user, TavernaRun run)
+	void permitUpdate(@NonNull UsernamePrincipal user, @NonNull TavernaRun run)
 			throws NoUpdateException;
 
 	/**
@@ -99,7 +104,8 @@ public interface Policy {
 	 * @return A list of workflows that they may instantiate, or <tt>null</tt>
 	 *         if any workflow may be submitted.
 	 */
-	public List<Workflow> listPermittedWorkflows(UsernamePrincipal user);
+	@Nullable
+	List<Workflow> listPermittedWorkflows(@NonNull UsernamePrincipal user);
 
 	/**
 	 * @return The maximum number of {@linkplain Status#Operating operating}

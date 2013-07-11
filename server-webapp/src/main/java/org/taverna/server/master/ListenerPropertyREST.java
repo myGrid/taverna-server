@@ -18,6 +18,8 @@ import org.taverna.server.master.interfaces.TavernaRun;
 import org.taverna.server.master.rest.TavernaServerListenersREST;
 import org.taverna.server.master.utils.InvocationCounter.CallCounted;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+
 /**
  * RESTful interface to a single property of a workflow run.
  * 
@@ -36,6 +38,7 @@ class ListenerPropertyREST implements TavernaServerListenersREST.Property,
 	}
 
 	@Override
+	@NonNull
 	public ListenerPropertyREST connect(Listener listen, TavernaRun run,
 			String propertyName) {
 		this.listen = listen;
@@ -45,6 +48,7 @@ class ListenerPropertyREST implements TavernaServerListenersREST.Property,
 	}
 
 	@Override
+	@NonNull
 	@CallCounted
 	public String getValue() {
 		try {
@@ -52,13 +56,14 @@ class ListenerPropertyREST implements TavernaServerListenersREST.Property,
 		} catch (NoListenerException e) {
 			log.error("unexpected exception; property \"" + propertyName
 					+ "\" should exist", e);
-			return null;
+			return "";
 		}
 	}
 
 	@Override
+	@NonNull
 	@CallCounted
-	public String setValue(String value) throws NoUpdateException,
+	public String setValue(@NonNull String value) throws NoUpdateException,
 			NoListenerException {
 		support.permitUpdate(run);
 		listen.setProperty(propertyName, value);
@@ -78,6 +83,7 @@ class ListenerPropertyREST implements TavernaServerListenersREST.Property,
  * @author Donal Fellows
  */
 interface ListenerPropertyBean extends SupportAware {
+	@NonNull
 	ListenerPropertyREST connect(Listener listen, TavernaRun run,
 			String propertyName);
 }

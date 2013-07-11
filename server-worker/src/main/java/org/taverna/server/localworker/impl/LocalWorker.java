@@ -56,6 +56,8 @@ import org.taverna.server.localworker.remote.RemoteStatus;
 import org.taverna.server.localworker.remote.StillWorkingOnItException;
 import org.taverna.server.localworker.server.UsageRecordReceiver;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import edu.umd.cs.findbugs.annotations.SuppressWarnings;
 
 /**
@@ -311,8 +313,8 @@ public class LocalWorker extends UnicastRemoteObject implements RemoteSingleRun 
 	}
 
 	@Override
-	public void addListener(RemoteListener listener) throws RemoteException,
-			ImplementationException {
+	public void addListener(@Nullable RemoteListener listener)
+			throws RemoteException, ImplementationException {
 		throw new ImplementationException("not implemented");
 	}
 
@@ -322,6 +324,7 @@ public class LocalWorker extends UnicastRemoteObject implements RemoteSingleRun 
 	}
 
 	@Override
+	@NonNull
 	public List<RemoteInput> getInputs() throws RemoteException {
 		ArrayList<RemoteInput> result = new ArrayList<RemoteInput>();
 		for (String name : inputFiles.keySet())
@@ -330,11 +333,13 @@ public class LocalWorker extends UnicastRemoteObject implements RemoteSingleRun 
 	}
 
 	@Override
+	@NonNull
 	public List<String> getListenerTypes() {
 		return emptyList();
 	}
 
 	@Override
+	@NonNull
 	public List<RemoteListener> getListeners() {
 		return singletonList(core.getDefaultListener());
 	}
@@ -435,8 +440,8 @@ public class LocalWorker extends UnicastRemoteObject implements RemoteSingleRun 
 		}
 
 		@Override
-		public void setKeystore(byte[] keystore) throws RemoteException,
-				ImplementationException {
+		public void setKeystore(@NonNull byte[] keystore)
+				throws RemoteException, ImplementationException {
 			if (status != Initialized)
 				throw new RemoteException("not initializing");
 			if (keystore == null)
@@ -445,7 +450,8 @@ public class LocalWorker extends UnicastRemoteObject implements RemoteSingleRun 
 		}
 
 		@Override
-		public void setPassword(char[] password) throws RemoteException {
+		public void setPassword(@NonNull char[] password)
+				throws RemoteException {
 			if (status != Initialized)
 				throw new RemoteException("not initializing");
 			if (password == null)
@@ -454,8 +460,8 @@ public class LocalWorker extends UnicastRemoteObject implements RemoteSingleRun 
 		}
 
 		@Override
-		public void setTruststore(byte[] truststore) throws RemoteException,
-				ImplementationException {
+		public void setTruststore(@NonNull byte[] truststore)
+				throws RemoteException, ImplementationException {
 			if (status != Initialized)
 				throw new RemoteException("not initializing");
 			if (truststore == null)
@@ -464,7 +470,7 @@ public class LocalWorker extends UnicastRemoteObject implements RemoteSingleRun 
 		}
 
 		@Override
-		public void setUriToAliasMap(HashMap<URI, String> uriToAliasMap)
+		public void setUriToAliasMap(@NonNull HashMap<URI, String> uriToAliasMap)
 				throws RemoteException {
 			if (status != Initialized)
 				throw new RemoteException("not initializing");
@@ -477,7 +483,8 @@ public class LocalWorker extends UnicastRemoteObject implements RemoteSingleRun 
 		}
 
 		@Override
-		public void setHelioToken(String helioToken) throws RemoteException {
+		public void setHelioToken(@NonNull String helioToken)
+				throws RemoteException {
 			if (status != Initialized)
 				throw new RemoteException("not initializing");
 			out.println("registering HELIO CIS token for export");
@@ -486,6 +493,7 @@ public class LocalWorker extends UnicastRemoteObject implements RemoteSingleRun 
 	}
 
 	@Override
+	@NonNull
 	public RemoteSecurityContext getSecurityContext() throws RemoteException,
 			ImplementationException {
 		try {
@@ -502,6 +510,7 @@ public class LocalWorker extends UnicastRemoteObject implements RemoteSingleRun 
 	}
 
 	@Override
+	@NonNull
 	public RemoteStatus getStatus() {
 		// only state that can spontaneously change to another
 		if (status == Operating) {
@@ -513,6 +522,7 @@ public class LocalWorker extends UnicastRemoteObject implements RemoteSingleRun 
 	}
 
 	@Override
+	@NonNull
 	public RemoteDirectory getWorkingDirectory() {
 		return baseDir;
 	}
@@ -529,9 +539,10 @@ public class LocalWorker extends UnicastRemoteObject implements RemoteSingleRun 
 
 	@SuppressWarnings("SE_INNER_CLASS")
 	class InputDelegate extends UnicastRemoteObject implements RemoteInput {
+		@NonNull
 		private String name;
 
-		InputDelegate(String name) throws RemoteException {
+		InputDelegate(@NonNull String name) throws RemoteException {
 			super();
 			this.name = name;
 			if (!inputFiles.containsKey(name)) {
@@ -549,6 +560,7 @@ public class LocalWorker extends UnicastRemoteObject implements RemoteSingleRun 
 		}
 
 		@Override
+		@NonNull
 		public String getName() {
 			return name;
 		}
@@ -559,7 +571,7 @@ public class LocalWorker extends UnicastRemoteObject implements RemoteSingleRun 
 		}
 
 		@Override
-		public void setFile(String file) throws RemoteException {
+		public void setFile(@NonNull String file) throws RemoteException {
 			if (status != Initialized)
 				throw new IllegalStateException("not initializing");
 			inputRealFiles.put(name, validateFilename(file));
@@ -569,7 +581,7 @@ public class LocalWorker extends UnicastRemoteObject implements RemoteSingleRun 
 		}
 
 		@Override
-		public void setValue(String value) throws RemoteException {
+		public void setValue(@NonNull String value) throws RemoteException {
 			if (status != Initialized)
 				throw new IllegalStateException("not initializing");
 			inputValues.put(name, value);
@@ -580,18 +592,21 @@ public class LocalWorker extends UnicastRemoteObject implements RemoteSingleRun 
 	}
 
 	@Override
-	public RemoteInput makeInput(String name) throws RemoteException {
+	@NonNull
+	public RemoteInput makeInput(@NonNull String name) throws RemoteException {
 		return new InputDelegate(name);
 	}
 
 	@Override
-	public RemoteListener makeListener(String type, String configuration)
-			throws RemoteException {
+	@NonNull
+	public RemoteListener makeListener(@NonNull String type,
+			@NonNull String configuration) throws RemoteException {
 		throw new RemoteException("listener manufacturing unsupported");
 	}
 
 	@Override
-	public void setInputBaclavaFile(String filename) throws RemoteException {
+	public void setInputBaclavaFile(@NonNull String filename)
+			throws RemoteException {
 		if (status != Initialized)
 			throw new IllegalStateException("not initializing");
 		inputBaclavaFile = validateFilename(filename);
@@ -604,7 +619,8 @@ public class LocalWorker extends UnicastRemoteObject implements RemoteSingleRun 
 	}
 
 	@Override
-	public void setOutputBaclavaFile(String filename) throws RemoteException {
+	public void setOutputBaclavaFile(@Nullable String filename)
+			throws RemoteException {
 		if (status != Initialized)
 			throw new IllegalStateException("not initializing");
 		if (filename != null)
@@ -615,7 +631,7 @@ public class LocalWorker extends UnicastRemoteObject implements RemoteSingleRun 
 	}
 
 	@Override
-	public void setStatus(RemoteStatus newStatus)
+	public void setStatus(@NonNull RemoteStatus newStatus)
 			throws IllegalStateTransitionException, RemoteException,
 			ImplementationException, StillWorkingOnItException {
 		if (status == newStatus)
@@ -720,7 +736,8 @@ public class LocalWorker extends UnicastRemoteObject implements RemoteSingleRun 
 	}
 
 	@Override
-	public void setInteractionServiceDetails(URL feed, URL webdav) {
+	public void setInteractionServiceDetails(@NonNull URL feed,
+			@NonNull URL webdav) {
 		interactionFeedURL = feed;
 		webdavURL = webdav;
 	}

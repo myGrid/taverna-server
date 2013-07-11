@@ -29,6 +29,9 @@ import org.taverna.server.master.notification.NotificationEngine;
 import org.taverna.server.master.notification.NotificationEngine.Message;
 import org.taverna.server.master.utils.UsernamePrincipal;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
+
 /**
  * The main facade bean that interfaces to the database of runs.
  * 
@@ -95,7 +98,7 @@ public class RunDatabase implements RunStore, RunDBSupport {
 	}
 
 	@Override
-	public void flushToDisk(RemoteRunDelegate run) {
+	public void flushToDisk(@NonNull RemoteRunDelegate run) {
 		try {
 			dao.flushToDisk(run);
 		} catch (IOException e) {
@@ -111,13 +114,15 @@ public class RunDatabase implements RunStore, RunDBSupport {
 	}
 
 	@Override
+	@NonNull
 	public List<String> listRunNames() {
 		return dao.listRunNames();
 	}
 
 	@Override
-	public TavernaRun getRun(UsernamePrincipal user, Policy p, String uuid)
-			throws UnknownRunException {
+	@NonNull
+	public TavernaRun getRun(@NonNull UsernamePrincipal user,
+			@NonNull Policy p, @NonNull String uuid) throws UnknownRunException {
 		// Check first to see if the 'uuid' actually looks like a UUID; if
 		// not, throw it out immediately without logging an exception.
 		try {
@@ -133,7 +138,8 @@ public class RunDatabase implements RunStore, RunDBSupport {
 	}
 
 	@Override
-	public TavernaRun getRun(String uuid) throws UnknownRunException {
+	@NonNull
+	public TavernaRun getRun(@NonNull String uuid) throws UnknownRunException {
 		TavernaRun run = dao.get(uuid);
 		if (run != null)
 			return run;
@@ -141,7 +147,9 @@ public class RunDatabase implements RunStore, RunDBSupport {
 	}
 
 	@Override
-	public Map<String, TavernaRun> listRuns(UsernamePrincipal user, Policy p) {
+	@NonNull
+	public Map<String, TavernaRun> listRuns(@Nullable UsernamePrincipal user,
+			@NonNull Policy p) {
 		return dao.listRuns(user, p);
 	}
 
@@ -160,7 +168,8 @@ public class RunDatabase implements RunStore, RunDBSupport {
 	}
 
 	@Override
-	public String registerRun(TavernaRun run) {
+	@NonNull
+	public String registerRun(@NonNull TavernaRun run) {
 		if (!(run instanceof RemoteRunDelegate))
 			throw new IllegalArgumentException(
 					"run must be created by localworker package");
@@ -179,7 +188,7 @@ public class RunDatabase implements RunStore, RunDBSupport {
 	}
 
 	@Override
-	public void unregisterRun(String uuid) {
+	public void unregisterRun(@NonNull String uuid) {
 		try {
 			dao.unpersistRun(uuid);
 		} catch (RuntimeException e) {

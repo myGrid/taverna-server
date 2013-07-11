@@ -22,6 +22,8 @@ import org.taverna.server.master.rest.TavernaServerListenersREST.ListenerDescrip
 import org.taverna.server.master.rest.TavernaServerListenersREST.TavernaServerListenerREST;
 import org.taverna.server.master.utils.InvocationCounter.CallCounted;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+
 /**
  * RESTful interface to a single listener attached to a workflow run.
  * 
@@ -33,6 +35,7 @@ abstract class SingleListenerREST implements TavernaServerListenerREST,
 	private TavernaRun run;
 
 	@Override
+	@NonNull
 	public SingleListenerREST connect(Listener listen, TavernaRun run) {
 		this.listen = listen;
 		this.run = run;
@@ -40,28 +43,33 @@ abstract class SingleListenerREST implements TavernaServerListenerREST,
 	}
 
 	@Override
+	@NonNull
 	@CallCounted
 	public String getConfiguration() {
 		return listen.getConfiguration();
 	}
 
 	@Override
+	@NonNull
 	@CallCounted
-	public ListenerDescription getDescription(UriInfo ui) {
+	public ListenerDescription getDescription(@NonNull UriInfo ui) {
 		return new ListenerDescription(listen, secure(ui));
 	}
 
 	@Override
+	@NonNull
 	@CallCounted
-	public TavernaServerListenersREST.Properties getProperties(UriInfo ui) {
+	public TavernaServerListenersREST.Properties getProperties(
+			@NonNull UriInfo ui) {
 		return new TavernaServerListenersREST.Properties(secure(ui).path(
 				"{prop}"), listen.listProperties());
 	}
 
 	@Override
+	@NonNull
 	@CallCounted
 	public TavernaServerListenersREST.Property getProperty(
-			final String propertyName) throws NoListenerException {
+			@NonNull final String propertyName) throws NoListenerException {
 		List<String> p = asList(listen.listProperties());
 		if (p.contains(propertyName)) {
 			return makePropertyInterface().connect(listen, run, propertyName);
@@ -96,5 +104,6 @@ abstract class SingleListenerREST implements TavernaServerListenerREST,
  * @author Donal Fellows
  */
 interface OneListenerBean {
+	@NonNull
 	SingleListenerREST connect(Listener listen, TavernaRun run);
 }

@@ -12,6 +12,8 @@ import static twitter4j.conf.PropertyConfiguration.OAUTH_CONSUMER_SECRET;
 
 import java.util.Properties;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+
 import twitter4j.Twitter;
 import twitter4j.TwitterFactory;
 import twitter4j.conf.Configuration;
@@ -28,6 +30,7 @@ import twitter4j.auth.AuthorizationFactory;
  */
 public class TwitterDispatcher extends RateLimitedDispatcher {
 	@Override
+	@NonNull
 	public String getName() {
 		return "twitter";
 	}
@@ -46,6 +49,7 @@ public class TwitterDispatcher extends RateLimitedDispatcher {
 		this.secret = valid(secret, "");
 	}
 
+	@NonNull
 	private Properties getConfig() throws NotConfiguredException {
 		if (token.isEmpty() || secret.isEmpty())
 			throw new NotConfiguredException();
@@ -58,6 +62,7 @@ public class TwitterDispatcher extends RateLimitedDispatcher {
 	public static final String ACCESS_TOKEN_PROP = OAUTH_ACCESS_TOKEN;
 	public static final String ACCESS_SECRET_PROP = OAUTH_ACCESS_TOKEN_SECRET;
 
+	@NonNull
 	private Twitter getTwitter(String key, String secret) throws Exception {
 		if (key.isEmpty() || secret.isEmpty())
 			throw new NoCredentialsException();

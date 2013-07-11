@@ -50,6 +50,9 @@ import org.taverna.server.port_description.OutputDescription.OutputPort;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
+
 /**
  * A class that is used to build descriptions of the contents of a workflow
  * run's filesystem.
@@ -345,7 +348,9 @@ public class ContentsDescriptorBuilder {
 		return descriptor;
 	}
 
-	private UriBuilder getRunUriBuilder(TavernaRun run, UriInfo ui) {
+	@NonNull
+	private UriBuilder getRunUriBuilder(@NonNull TavernaRun run,
+			@Nullable UriInfo ui) {
 		if (ui == null)
 			return secure(uriBuilderFactory.getRunUriBuilder(run));
 		else
@@ -362,7 +367,9 @@ public class ContentsDescriptorBuilder {
 	 *            The mechanism for building URIs.
 	 * @return The description of the <i>expected</i> inputs of the run.
 	 */
-	public InputDescription makeInputDescriptor(TavernaRun run, UriInfo ui) {
+	@NonNull
+	public InputDescription makeInputDescriptor(@NonNull TavernaRun run,
+			@Nullable UriInfo ui) {
 		InputDescription desc = new InputDescription();
 		try {
 			UriBuilder ub = getRunUriBuilder(run, ui);

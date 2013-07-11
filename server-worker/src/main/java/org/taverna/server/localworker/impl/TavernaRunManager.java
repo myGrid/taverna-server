@@ -46,6 +46,8 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import edu.umd.cs.findbugs.annotations.SuppressWarnings;
 
 /**
@@ -116,8 +118,9 @@ public class TavernaRunManager extends UnicastRemoteObject implements
 	 *             If anything goes wrong.
 	 */
 	@SuppressWarnings("REC_CATCH_EXCEPTION")
-	private String unwrapWorkflow(String workflow, Holder<String> wfid)
-			throws RemoteException {
+	@NonNull
+	private String unwrapWorkflow(@NonNull String workflow,
+			@NonNull Holder<String> wfid) throws RemoteException {
 		StringReader sr = new StringReader(workflow);
 		StringWriter sw = new StringWriter();
 		try {
@@ -139,8 +142,10 @@ public class TavernaRunManager extends UnicastRemoteObject implements
 	}
 
 	@Override
-	public RemoteSingleRun make(String workflow, String creator,
-			UsageRecordReceiver urReceiver, UUID id) throws RemoteException {
+	@NonNull
+	public RemoteSingleRun make(@NonNull String workflow,
+			@NonNull String creator, @Nullable UsageRecordReceiver urReceiver,
+			@Nullable UUID id) throws RemoteException {
 		if (creator == null)
 			throw new RemoteException("no creator");
 		try {
@@ -255,8 +260,9 @@ public class TavernaRunManager extends UnicastRemoteObject implements
 	}
 
 	@Override
-	public void setInteractionServiceDetails(String host, String port,
-			String webdavPath, String feedPath) throws RemoteException {
+	public void setInteractionServiceDetails(@NonNull String host,
+			@NonNull String port, @NonNull String webdavPath,
+			@NonNull String feedPath) throws RemoteException {
 		if (host == null || port == null || webdavPath == null
 				|| feedPath == null)
 			throw new IllegalArgumentException("all params must be non-null");

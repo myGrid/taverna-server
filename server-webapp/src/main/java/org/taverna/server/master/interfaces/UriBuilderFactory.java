@@ -9,6 +9,9 @@ import java.net.URI;
 
 import javax.ws.rs.core.UriBuilder;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
+
 /**
  * How to manufacture URIs to workflow runs.
  * 
@@ -16,19 +19,21 @@ import javax.ws.rs.core.UriBuilder;
  */
 public interface UriBuilderFactory {
 	/**
-	 * Given a run, get a factory for RESTful URIs to resources associated
-	 * with it.
+	 * Given a run, get a factory for RESTful URIs to resources associated with
+	 * it.
 	 * 
 	 * @param run
 	 *            The run in question.
 	 * @return The {@link URI} factory.
 	 */
-	UriBuilder getRunUriBuilder(TavernaRun run);
+	@NonNull
+	UriBuilder getRunUriBuilder(@NonNull TavernaRun run);
 
 	/**
-	 * @return a URI factory that is preconfigured to point to the base of
-	 *         the webapp.
+	 * @return a URI factory that is preconfigured to point to the base of the
+	 *         webapp.
 	 */
+	@NonNull
 	UriBuilder getBaseUriBuilder();
 
 	/**
@@ -36,8 +41,9 @@ public interface UriBuilderFactory {
 	 * 
 	 * @param uri
 	 *            The URI to resolve, or <tt>null</tt>.
-	 * @return The resolved URI, or <tt>null</tt> if <b>uri</b> is
-	 *         <tt>null</tt>.
+	 * @return The resolved URI, or <tt>null</tt> if <b>uri</b> is <tt>null</tt>
+	 *         .
 	 */
-	String resolve(String uri);
+	@Nullable
+	String resolve(@Nullable String uri);
 }

@@ -7,6 +7,9 @@ package org.taverna.server.master.interfaces;
 
 import org.taverna.server.master.exceptions.FilesystemAccessException;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
+
 /**
  * Represents a file in the working directory of a workflow instance run, or in
  * some sub-directory of it.
@@ -25,8 +28,8 @@ public interface File extends DirectoryEntry {
 	 * @throws FilesystemAccessException
 	 *             If the read of the file goes wrong.
 	 */
-	public byte[] getContents(int offset, int length)
-			throws FilesystemAccessException;
+	@Nullable
+	byte[] getContents(int offset, int length) throws FilesystemAccessException;
 
 	/**
 	 * Write the data to the file, totally replacing what was there before.
@@ -36,7 +39,7 @@ public interface File extends DirectoryEntry {
 	 * @throws FilesystemAccessException
 	 *             If the write to the file goes wrong.
 	 */
-	public void setContents(byte[] data) throws FilesystemAccessException;
+	void setContents(@NonNull byte[] data) throws FilesystemAccessException;
 
 	/**
 	 * Append the data to the file.
@@ -47,14 +50,14 @@ public interface File extends DirectoryEntry {
 	 * @throws FilesystemAccessException
 	 *             If the write to the file goes wrong.
 	 */
-	public void appendContents(byte[] data) throws FilesystemAccessException;
+	void appendContents(@NonNull byte[] data) throws FilesystemAccessException;
 
 	/**
 	 * @return The length of the file, in bytes.
 	 * @throws FilesystemAccessException
 	 *             If the read of the file size goes wrong.
 	 */
-	public long getSize() throws FilesystemAccessException;
+	long getSize() throws FilesystemAccessException;
 
 	/**
 	 * Asks for the argument file to be copied to this one.
@@ -64,5 +67,5 @@ public interface File extends DirectoryEntry {
 	 * @throws FilesystemAccessException
 	 *             If anything goes wrong.
 	 */
-	public void copy(File from) throws FilesystemAccessException;
+	void copy(@NonNull File from) throws FilesystemAccessException;
 }

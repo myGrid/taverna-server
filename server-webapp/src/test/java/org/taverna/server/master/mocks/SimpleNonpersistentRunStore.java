@@ -15,6 +15,9 @@ import org.taverna.server.master.interfaces.RunStore;
 import org.taverna.server.master.interfaces.TavernaRun;
 import org.taverna.server.master.utils.UsernamePrincipal;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
+
 /**
  * Example of a store for Taverna Workflow Runs.
  * 
@@ -85,8 +88,9 @@ public class SimpleNonpersistentRunStore implements RunStore {
 	}
 
 	@Override
-	public TavernaRun getRun(UsernamePrincipal user, Policy p, String uuid)
-			throws UnknownRunException {
+	@NonNull
+	public TavernaRun getRun(@NonNull UsernamePrincipal user,
+			@NonNull Policy p, @NonNull String uuid) throws UnknownRunException {
 		synchronized (lock) {
 			TavernaRun w = store.get(uuid);
 			if (w == null || !p.permitAccess(user, w))
@@ -96,7 +100,8 @@ public class SimpleNonpersistentRunStore implements RunStore {
 	}
 
 	@Override
-	public TavernaRun getRun(String uuid) throws UnknownRunException {
+	@NonNull
+	public TavernaRun getRun(@NonNull String uuid) throws UnknownRunException {
 		synchronized (lock) {
 			TavernaRun w = store.get(uuid);
 			if (w == null)
@@ -106,11 +111,13 @@ public class SimpleNonpersistentRunStore implements RunStore {
 	}
 
 	@Override
-	public Map<String, TavernaRun> listRuns(UsernamePrincipal user, Policy p) {
+	@NonNull
+	public Map<String, TavernaRun> listRuns(@Nullable UsernamePrincipal user,
+			@NonNull Policy p) {
 		HashMap<String, TavernaRun> filtered = new HashMap<String, TavernaRun>();
 		synchronized (lock) {
 			for (Map.Entry<String, TavernaRun> entry : store.entrySet()) {
-				if (p.permitAccess(user, entry.getValue()))
+				if (user != null && p.permitAccess(user, entry.getValue()))
 					filtered.put(entry.getKey(), entry.getValue());
 			}
 		}
@@ -118,7 +125,8 @@ public class SimpleNonpersistentRunStore implements RunStore {
 	}
 
 	@Override
-	public String registerRun(TavernaRun run) {
+	@NonNull
+	public String registerRun(@NonNull TavernaRun run) {
 		synchronized (lock) {
 			store.put(run.getId(), run);
 			return run.getId();
@@ -126,7 +134,7 @@ public class SimpleNonpersistentRunStore implements RunStore {
 	}
 
 	@Override
-	public void unregisterRun(String uuid) {
+	public void unregisterRun(@NonNull String uuid) {
 		synchronized (lock) {
 			store.remove(uuid);
 		}

@@ -33,6 +33,9 @@ import org.taverna.server.master.usage.UsageRecordRecorder;
 import org.taverna.server.master.utils.InvocationCounter;
 import org.taverna.server.master.worker.RunDBSupport;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
+
 /**
  * The administration interface to Taverna Server.
  * 
@@ -94,7 +97,8 @@ public class AdminBean implements Admin {
 
 	@RolesAllowed(ADMIN)
 	@Override
-	public Response getUserInterface() throws IOException {
+	public @NonNull
+	Response getUserInterface() throws IOException {
 		return Response.ok(getResource(adminHtmlFile), "text/html").build();
 	}
 
@@ -128,7 +132,8 @@ public class AdminBean implements Admin {
 
 	@RolesAllowed(ADMIN)
 	@Override
-	public AdminDescription getDescription(UriInfo ui) {
+	public @NonNull
+	AdminDescription getDescription(UriInfo ui) {
 		return new AdminDescription(ui);
 	}
 
@@ -138,7 +143,7 @@ public class AdminBean implements Admin {
 		return opt();
 	}
 
-	///////////////////////////////////////////////////////
+	// /////////////////////////////////////////////////////
 
 	@RolesAllowed(ADMIN)
 	@Override
@@ -159,7 +164,7 @@ public class AdminBean implements Admin {
 		return opt("PUT");
 	}
 
-	///////////////////////////////////////////////////////
+	// /////////////////////////////////////////////////////
 
 	@RolesAllowed(ADMIN)
 	@Override
@@ -180,7 +185,7 @@ public class AdminBean implements Admin {
 		return opt("PUT");
 	}
 
-	///////////////////////////////////////////////////////
+	// /////////////////////////////////////////////////////
 
 	@RolesAllowed(ADMIN)
 	@Override
@@ -201,17 +206,19 @@ public class AdminBean implements Admin {
 		return opt("PUT");
 	}
 
-	///////////////////////////////////////////////////////
+	// /////////////////////////////////////////////////////
 
 	@RolesAllowed(ADMIN)
 	@Override
-	public String getURFile() {
+	public @NonNull
+	String getURFile() {
 		return state.getUsageRecordLogFile();
 	}
 
 	@RolesAllowed(ADMIN)
 	@Override
-	public String setURFile(String newValue) {
+	public @NonNull
+	String setURFile(@NonNull String newValue) {
 		state.setUsageRecordLogFile(newValue);
 		return state.getUsageRecordLogFile();
 	}
@@ -222,7 +229,7 @@ public class AdminBean implements Admin {
 		return opt("PUT");
 	}
 
-	///////////////////////////////////////////////////////
+	// /////////////////////////////////////////////////////
 
 	@RolesAllowed(ADMIN)
 	@Override
@@ -230,7 +237,7 @@ public class AdminBean implements Admin {
 		return counter.getCount();
 	}
 
-	///////////////////////////////////////////////////////
+	// /////////////////////////////////////////////////////
 
 	@RolesAllowed(ADMIN)
 	@Override
@@ -250,17 +257,19 @@ public class AdminBean implements Admin {
 		return opt();
 	}
 
-	///////////////////////////////////////////////////////
+	// /////////////////////////////////////////////////////
 
 	@RolesAllowed(ADMIN)
 	@Override
-	public String getRegistryHost() {
+	public @NonNull
+	String getRegistryHost() {
 		return factory.getRegistryHost();
 	}
 
 	@RolesAllowed(ADMIN)
 	@Override
-	public String setRegistryHost(String newValue) {
+	public @NonNull
+	String setRegistryHost(@NonNull String newValue) {
 		factory.setRegistryHost(newValue);
 		return factory.getRegistryHost();
 	}
@@ -270,7 +279,7 @@ public class AdminBean implements Admin {
 		return opt("PUT");
 	}
 
-	///////////////////////////////////////////////////////
+	// /////////////////////////////////////////////////////
 
 	@RolesAllowed(ADMIN)
 	@Override
@@ -290,7 +299,7 @@ public class AdminBean implements Admin {
 		return opt("PUT");
 	}
 
-	///////////////////////////////////////////////////////
+	// /////////////////////////////////////////////////////
 
 	@RolesAllowed(ADMIN)
 	@Override
@@ -310,7 +319,7 @@ public class AdminBean implements Admin {
 		return opt("PUT");
 	}
 
-	///////////////////////////////////////////////////////
+	// /////////////////////////////////////////////////////
 
 	@RolesAllowed(ADMIN)
 	@Override
@@ -330,7 +339,7 @@ public class AdminBean implements Admin {
 		return opt("PUT");
 	}
 
-	///////////////////////////////////////////////////////
+	// /////////////////////////////////////////////////////
 
 	@RolesAllowed(ADMIN)
 	@Override
@@ -346,17 +355,19 @@ public class AdminBean implements Admin {
 		return opt();
 	}
 
-	///////////////////////////////////////////////////////
+	// /////////////////////////////////////////////////////
 
 	@RolesAllowed(ADMIN)
 	@Override
-	public String getJavaBinary() {
+	public @NonNull
+	String getJavaBinary() {
 		return factory.getJavaBinary();
 	}
 
 	@RolesAllowed(ADMIN)
 	@Override
-	public String setJavaBinary(String newValue) {
+	public @NonNull
+	String setJavaBinary(@NonNull String newValue) {
 		factory.setJavaBinary(newValue);
 		return factory.getJavaBinary();
 	}
@@ -366,11 +377,12 @@ public class AdminBean implements Admin {
 		return opt("PUT");
 	}
 
-	///////////////////////////////////////////////////////
+	// /////////////////////////////////////////////////////
 
 	@RolesAllowed(ADMIN)
 	@Override
-	public StringList getExtraArguments() {
+	public @NonNull
+	StringList getExtraArguments() {
 		String[] xargs = factory.getExtraArguments();
 		StringList result = new StringList();
 		result.string = asList(xargs == null ? new String[0] : xargs);
@@ -379,7 +391,8 @@ public class AdminBean implements Admin {
 
 	@RolesAllowed(ADMIN)
 	@Override
-	public StringList setExtraArguments(StringList newValue) {
+	public @NonNull
+	StringList setExtraArguments(@NonNull StringList newValue) {
 		if (newValue == null || newValue.string == null)
 			factory.setExtraArguments(new String[0]);
 		else
@@ -396,17 +409,19 @@ public class AdminBean implements Admin {
 		return opt("PUT");
 	}
 
-	///////////////////////////////////////////////////////
+	// /////////////////////////////////////////////////////
 
 	@RolesAllowed(ADMIN)
 	@Override
-	public String getServerWorkerJar() {
+	public @NonNull
+	String getServerWorkerJar() {
 		return factory.getServerWorkerJar();
 	}
 
 	@RolesAllowed(ADMIN)
 	@Override
-	public String setServerWorkerJar(String newValue) {
+	public @NonNull
+	String setServerWorkerJar(@NonNull String newValue) {
 		factory.setServerWorkerJar(newValue);
 		return factory.getServerWorkerJar();
 	}
@@ -417,17 +432,19 @@ public class AdminBean implements Admin {
 		return opt("PUT");
 	}
 
-	///////////////////////////////////////////////////////
+	// /////////////////////////////////////////////////////
 
 	@RolesAllowed(ADMIN)
 	@Override
-	public String getExecuteWorkflowScript() {
+	public @NonNull
+	String getExecuteWorkflowScript() {
 		return factory.getExecuteWorkflowScript();
 	}
 
 	@RolesAllowed(ADMIN)
 	@Override
-	public String setExecuteWorkflowScript(String newValue) {
+	public @NonNull
+	String setExecuteWorkflowScript(@NonNull String newValue) {
 		factory.setExecuteWorkflowScript(newValue);
 		return factory.getExecuteWorkflowScript();
 	}
@@ -438,7 +455,7 @@ public class AdminBean implements Admin {
 		return opt("PUT");
 	}
 
-	///////////////////////////////////////////////////////
+	// /////////////////////////////////////////////////////
 
 	@RolesAllowed(ADMIN)
 	@Override
@@ -459,7 +476,7 @@ public class AdminBean implements Admin {
 		return opt("PUT");
 	}
 
-	///////////////////////////////////////////////////////
+	// /////////////////////////////////////////////////////
 
 	@RolesAllowed(ADMIN)
 	@Override
@@ -480,17 +497,19 @@ public class AdminBean implements Admin {
 		return opt("PUT");
 	}
 
-	///////////////////////////////////////////////////////
+	// /////////////////////////////////////////////////////
 
 	@RolesAllowed(ADMIN)
 	@Override
+	@Nullable
 	public String getRunasPasswordFile() {
 		return factory.getPasswordFile();
 	}
 
 	@RolesAllowed(ADMIN)
 	@Override
-	public String setRunasPasswordFile(String newValue) {
+	@Nullable
+	public String setRunasPasswordFile(@NonNull String newValue) {
 		factory.setPasswordFile(newValue);
 		return factory.getPasswordFile();
 	}
@@ -501,17 +520,19 @@ public class AdminBean implements Admin {
 		return opt("PUT");
 	}
 
-	///////////////////////////////////////////////////////
+	// /////////////////////////////////////////////////////
 
 	@RolesAllowed(ADMIN)
 	@Override
-	public String getServerForkerJar() {
+	public @NonNull
+	String getServerForkerJar() {
 		return factory.getServerForkerJar();
 	}
 
 	@RolesAllowed(ADMIN)
 	@Override
-	public String setServerForkerJar(String newValue) {
+	public @NonNull
+	String setServerForkerJar(@NonNull String newValue) {
 		factory.setServerForkerJar(newValue);
 		return factory.getServerForkerJar();
 	}
@@ -522,7 +543,7 @@ public class AdminBean implements Admin {
 		return opt("PUT");
 	}
 
-	///////////////////////////////////////////////////////
+	// /////////////////////////////////////////////////////
 
 	@RolesAllowed(ADMIN)
 	@Override
@@ -536,7 +557,7 @@ public class AdminBean implements Admin {
 		return opt();
 	}
 
-	///////////////////////////////////////////////////////
+	// /////////////////////////////////////////////////////
 
 	@RolesAllowed(ADMIN)
 	@Override
@@ -550,7 +571,7 @@ public class AdminBean implements Admin {
 		return opt();
 	}
 
-	///////////////////////////////////////////////////////
+	// /////////////////////////////////////////////////////
 
 	@RolesAllowed(ADMIN)
 	@Override
@@ -566,7 +587,7 @@ public class AdminBean implements Admin {
 		return opt();
 	}
 
-	///////////////////////////////////////////////////////
+	// /////////////////////////////////////////////////////
 
 	@RolesAllowed(ADMIN)
 	@Override
@@ -582,7 +603,7 @@ public class AdminBean implements Admin {
 		return opt();
 	}
 
-	///////////////////////////////////////////////////////
+	// /////////////////////////////////////////////////////
 
 	@RolesAllowed(ADMIN)
 	@Override
@@ -620,7 +641,7 @@ public class AdminBean implements Admin {
 
 	@RolesAllowed(ADMIN)
 	@Override
-	public Response useradd(UserDesc userdesc, UriInfo ui) {
+	public Response useradd(UserDesc userdesc, @NonNull UriInfo ui) {
 		if (userdesc.username == null)
 			throw new IllegalArgumentException("no user name supplied");
 		if (userdesc.password == null)
@@ -665,7 +686,7 @@ public class AdminBean implements Admin {
 		return noContent().build();
 	}
 
-	///////////////////////////////////////////////////////
+	// /////////////////////////////////////////////////////
 
 	@RolesAllowed(ADMIN)
 	@Override
@@ -683,7 +704,7 @@ public class AdminBean implements Admin {
 		return opt();
 	}
 
-	///////////////////////////////////////////////////////
+	// /////////////////////////////////////////////////////
 
 	@RolesAllowed(ADMIN)
 	@Override

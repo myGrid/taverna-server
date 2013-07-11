@@ -9,6 +9,8 @@ import java.util.Date;
 
 import org.taverna.server.master.exceptions.FilesystemAccessException;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+
 /**
  * An entry in a {@link Directory} representing a file or sub-directory.
  * 
@@ -21,19 +23,22 @@ public interface DirectoryEntry extends Comparable<DirectoryEntry> {
 	 * @return The "local" name of the entry. This will never be "<tt>..</tt>"
 	 *         or contain the character "<tt>/</tt>".
 	 */
-	public String getName();
+	@NonNull
+	String getName();
 
 	/**
 	 * @return The "full" name of the entry. This is computed relative to the
 	 *         workflow run's working directory. It may contain the "<tt>/</tt>"
 	 *         character.
 	 */
-	public String getFullName();
+	@NonNull
+	String getFullName();
 
 	/**
 	 * @return The time that the entry was last modified.
 	 */
-	public Date getModificationDate();
+	@NonNull
+	Date getModificationDate();
 
 	/**
 	 * Destroy this directory entry, deleting the file or sub-directory. The

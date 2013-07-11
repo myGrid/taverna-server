@@ -11,6 +11,8 @@ import java.util.Collection;
 
 import org.taverna.server.master.exceptions.FilesystemAccessException;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+
 /**
  * Represents a directory that is the working directory of a workflow run, or a
  * sub-directory of it.
@@ -24,6 +26,7 @@ public interface Directory extends DirectoryEntry {
 	 * @throws FilesystemAccessException
 	 *             If things go wrong.
 	 */
+	@NonNull
 	Collection<DirectoryEntry> getContents() throws FilesystemAccessException;
 
 	/**
@@ -32,6 +35,7 @@ public interface Directory extends DirectoryEntry {
 	 * @throws FilesystemAccessException
 	 *             If things go wrong.
 	 */
+	@NonNull
 	Collection<DirectoryEntry> getContentsByDate()
 			throws FilesystemAccessException;
 
@@ -40,6 +44,7 @@ public interface Directory extends DirectoryEntry {
 	 * @throws FilesystemAccessException
 	 *             If things go wrong.
 	 */
+	@NonNull
 	ZipStream getContentsAsZip() throws FilesystemAccessException;
 
 	/**
@@ -54,7 +59,8 @@ public interface Directory extends DirectoryEntry {
 	 *             If the name is the same as some existing entry in the
 	 *             directory, or if something else goes wrong during creation.
 	 */
-	Directory makeSubdirectory(Principal actor, String name)
+	@NonNull
+	Directory makeSubdirectory(@NonNull Principal actor, @NonNull String name)
 			throws FilesystemAccessException;
 
 	/**
@@ -69,7 +75,8 @@ public interface Directory extends DirectoryEntry {
 	 *             If the name is the same as some existing entry in the
 	 *             directory, or if something else goes wrong during creation.
 	 */
-	File makeEmptyFile(Principal actor, String name)
+	@NonNull
+	File makeEmptyFile(@NonNull Principal actor, @NonNull String name)
 			throws FilesystemAccessException;
 
 	/**

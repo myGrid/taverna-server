@@ -14,13 +14,15 @@ import org.springframework.mail.MailSender;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+
 /**
  * How to send a plain text message by email to someone.
  * 
  * @author Donal Fellows
  */
 public class EmailDispatcher extends RateLimitedDispatcher {
-	@Override
+	@Override@NonNull
 	public String getName() {
 		return "mailto";
 	}

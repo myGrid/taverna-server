@@ -38,6 +38,8 @@ import org.taverna.server.master.utils.FilenameUtils;
 import org.taverna.server.master.utils.InvocationCounter.CallCounted;
 import org.taverna.server.port_description.InputDescription;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+
 /**
  * RESTful interface to the input descriptor of a single workflow run.
  * 
@@ -75,18 +77,21 @@ class InputREST implements TavernaServerInputREST, InputBean {
 	}
 
 	@Override
+	@NonNull
 	@CallCounted
 	public InputsDescriptor get() {
 		return new InputsDescriptor(ui, run);
 	}
 
 	@Override
+	@NonNull
 	@CallCounted
 	public InputDescription getExpected() {
 		return cdBuilder.makeInputDescriptor(run, ui);
 	}
 
 	@Override
+	@NonNull
 	@CallCounted
 	public String getBaclavaFile() {
 		String i = run.getInputBaclavaFile();
@@ -94,8 +99,10 @@ class InputREST implements TavernaServerInputREST, InputBean {
 	}
 
 	@Override
+	@NonNull
 	@CallCounted
-	public InDesc getInput(String name) throws BadInputPortNameException {
+	public InDesc getInput(@NonNull String name)
+			throws BadInputPortNameException {
 		Input i = support.getInput(run, name);
 		if (i == null)
 			throw new BadInputPortNameException("unknown input port name");
@@ -103,9 +110,11 @@ class InputREST implements TavernaServerInputREST, InputBean {
 	}
 
 	@Override
+	@NonNull
 	@CallCounted
-	public String setBaclavaFile(String filename) throws NoUpdateException,
-			BadStateChangeException, FilesystemAccessException {
+	public String setBaclavaFile(@NonNull String filename)
+			throws NoUpdateException, BadStateChangeException,
+			FilesystemAccessException {
 		support.permitUpdate(run);
 		run.setInputBaclavaFile(filename);
 		String i = run.getInputBaclavaFile();
@@ -113,8 +122,9 @@ class InputREST implements TavernaServerInputREST, InputBean {
 	}
 
 	@Override
+	@NonNull
 	@CallCounted
-	public InDesc setInput(String name, InDesc inputDescriptor)
+	public InDesc setInput(@NonNull String name, @NonNull InDesc inputDescriptor)
 			throws NoUpdateException, BadStateChangeException,
 			FilesystemAccessException, BadInputPortNameException,
 			BadPropertyValueException {
@@ -138,7 +148,8 @@ class InputREST implements TavernaServerInputREST, InputBean {
 		return new InDesc(i);
 	}
 
-	private InDesc setRemoteInput(String name, Reference ref)
+	@NonNull
+	private InDesc setRemoteInput(@NonNull String name, Reference ref)
 			throws BadStateChangeException, BadPropertyValueException,
 			FilesystemAccessException {
 		URITemplate tmpl = new URITemplate(ui.getBaseUri()
@@ -183,11 +194,13 @@ class InputREST implements TavernaServerInputREST, InputBean {
 		private Date d;
 
 		@Override
+		@NonNull
 		public String getName() {
-			return null;
+			return "";
 		}
 
 		@Override
+		@NonNull
 		public String getFullName() {
 			return p;
 		}
@@ -202,6 +215,7 @@ class InputREST implements TavernaServerInputREST, InputBean {
 		}
 
 		@Override
+		@NonNull
 		public Date getModificationDate() {
 			return d;
 		}

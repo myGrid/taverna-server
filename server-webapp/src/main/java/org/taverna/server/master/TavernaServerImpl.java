@@ -98,6 +98,7 @@ import org.taverna.server.master.utils.FilenameUtils;
 import org.taverna.server.master.utils.InvocationCounter.CallCounted;
 import org.taverna.server.port_description.OutputDescription;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import edu.umd.cs.findbugs.annotations.SuppressWarnings;
 
@@ -115,7 +116,8 @@ public abstract class TavernaServerImpl implements TavernaServerSOAP,
 	/**
 	 * The root of descriptions of the server in JMX.
 	 */
-	public static final String JMX_ROOT = "Taverna:group=Server-"+Version.JAVA+",name=";
+	public static final String JMX_ROOT = "Taverna:group=Server-"
+			+ Version.JAVA + ",name=";
 
 	/** The logger for the server framework. */
 	public static final Log log = getLog("Taverna.Server.Webapp");
@@ -156,19 +158,21 @@ public abstract class TavernaServerImpl implements TavernaServerSOAP,
 
 	@Override
 	@Required
-	public void setFileUtils(FilenameUtils converter) {
+	public void setFileUtils(@NonNull FilenameUtils converter) {
 		this.fileUtils = converter;
 	}
 
 	@Override
 	@Required
-	public void setContentsDescriptorBuilder(ContentsDescriptorBuilder cdBuilder) {
+	public void setContentsDescriptorBuilder(
+			@NonNull ContentsDescriptorBuilder cdBuilder) {
 		this.cdBuilder = cdBuilder;
 	}
 
 	@Override
 	@Required
-	public void setNotificationEngine(NotificationEngine notificationEngine) {
+	public void setNotificationEngine(
+			@NonNull NotificationEngine notificationEngine) {
 		this.notificationEngine = notificationEngine;
 	}
 
@@ -178,25 +182,25 @@ public abstract class TavernaServerImpl implements TavernaServerSOAP,
 	 */
 	@Override
 	@Required
-	public void setSupport(TavernaServerSupport support) {
+	public void setSupport(@NonNull TavernaServerSupport support) {
 		this.support = support;
 	}
 
 	@Override
 	@Required
-	public void setRunStore(RunStore runStore) {
+	public void setRunStore(@NonNull RunStore runStore) {
 		this.runStore = runStore;
 	}
 
 	@Override
 	@Required
-	public void setPolicy(Policy policy) {
+	public void setPolicy(@NonNull Policy policy) {
 		this.policy = policy;
 	}
 
 	@Override
 	@Required
-	public void setEventSource(EventDAO eventSource) {
+	public void setEventSource(@NonNull EventDAO eventSource) {
 		this.eventSource = eventSource;
 	}
 
@@ -222,23 +226,26 @@ public abstract class TavernaServerImpl implements TavernaServerSOAP,
 	// REST INTERFACE
 
 	@Override
+	@NonNull
 	@CallCounted
-	public ServerDescription describeService(UriInfo ui) {
+	public ServerDescription describeService(@NonNull UriInfo ui) {
 		jaxrsUriInfo.set(new WeakReference<UriInfo>(ui));
 		return new ServerDescription(ui, resolve(interactionFeed));
 	}
 
 	@Override
+	@NonNull
 	@CallCounted
-	public RunList listUsersRuns(UriInfo ui) {
+	public RunList listUsersRuns(@NonNull UriInfo ui) {
 		jaxrsUriInfo.set(new WeakReference<UriInfo>(ui));
 		return new RunList(runs(), secure(ui).path("{name}"));
 	}
 
 	@Override
+	@NonNull
 	@CallCounted
-	public Response submitWorkflow(Workflow workflow, UriInfo ui)
-			throws NoUpdateException {
+	public Response submitWorkflow(@NonNull Workflow workflow,
+			@NonNull UriInfo ui) throws NoUpdateException {
 		jaxrsUriInfo.set(new WeakReference<UriInfo>(ui));
 		String name = support.buildWorkflow(workflow);
 		return created(secure(ui).path("{uuid}").build(name)).build();
@@ -248,9 +255,10 @@ public abstract class TavernaServerImpl implements TavernaServerSOAP,
 	private T2FlowDocumentHandler t2flowHandler;
 
 	@Override
+	@NonNull
 	@CallCounted
-	public Response submitWorkflowByURL(List<URI> referenceList, UriInfo ui)
-			throws NoCreateException {
+	public Response submitWorkflowByURL(@NonNull List<URI> referenceList,
+			@NonNull UriInfo ui) throws NoCreateException {
 		jaxrsUriInfo.set(new WeakReference<UriInfo>(ui));
 		if (referenceList == null || referenceList.size() == 0)
 			throw new NoCreateException("no workflow URI supplied");
@@ -278,9 +286,10 @@ public abstract class TavernaServerImpl implements TavernaServerSOAP,
 	}
 
 	@Override
+	@NonNull
 	@CallCounted
-	public TavernaServerRunREST getRunResource(final String runName, UriInfo ui)
-			throws UnknownRunException {
+	public TavernaServerRunREST getRunResource(@NonNull String runName,
+			@NonNull UriInfo ui) throws UnknownRunException {
 		jaxrsUriInfo.set(new WeakReference<UriInfo>(ui));
 		RunREST rr = makeRunInterface();
 		rr.setRun(support.getRun(runName));
@@ -297,6 +306,7 @@ public abstract class TavernaServerImpl implements TavernaServerSOAP,
 	}
 
 	@Override
+	@NonNull
 	@CallCounted
 	public abstract PolicyView getPolicyDescription();
 
@@ -940,7 +950,7 @@ public abstract class TavernaServerImpl implements TavernaServerSOAP,
 	// SUPPORT METHODS
 
 	@Override
-	public void initObsoleteSecurity(TavernaSecurityContext c) {
+	public void initObsoleteSecurity(@NonNull TavernaSecurityContext c) {
 		/*
 		 * These next pieces of security initialisation are (hopefully) obsolete
 		 * now that we use Spring Security, but we keep them Just In Case.
@@ -973,7 +983,8 @@ public abstract class TavernaServerImpl implements TavernaServerSOAP,
 	}
 
 	@Override
-	public UriBuilder getRunUriBuilder(TavernaRun run) {
+	@NonNull
+	public UriBuilder getRunUriBuilder(@NonNull TavernaRun run) {
 		return fromUri(getRunUriBuilder().build(run.getId()));
 	}
 
@@ -1008,6 +1019,7 @@ public abstract class TavernaServerImpl implements TavernaServerSOAP,
 	}
 
 	@Override
+	@NonNull
 	public UriBuilder getBaseUriBuilder() {
 		return secure(fromUri(getPossiblyInsecureBaseUri()));
 	}
@@ -1057,7 +1069,8 @@ class PolicyREST implements PolicyView, SupportAware {
 	}
 
 	@Override
-	public PolicyDescription getDescription(UriInfo ui) {
+	@NonNull
+	public PolicyDescription getDescription(@NonNull UriInfo ui) {
 		return new PolicyDescription(ui);
 	}
 
@@ -1071,6 +1084,7 @@ class PolicyREST implements PolicyView, SupportAware {
 	}
 
 	@Override
+	@NonNull
 	@CallCounted
 	public PermittedListeners getPermittedListeners() {
 		return new PermittedListeners(
@@ -1078,6 +1092,7 @@ class PolicyREST implements PolicyView, SupportAware {
 	}
 
 	@Override
+	@NonNull
 	@CallCounted
 	public PermittedWorkflows getPermittedWorkflows() {
 		return new PermittedWorkflows(policy.listPermittedWorkflows(support
@@ -1086,6 +1101,7 @@ class PolicyREST implements PolicyView, SupportAware {
 
 	@Override
 	@CallCounted
+	@NonNull
 	public EnabledNotificationFabrics getEnabledNotifiers() {
 		return new EnabledNotificationFabrics(
 				notificationEngine.listAvailableDispatchers());

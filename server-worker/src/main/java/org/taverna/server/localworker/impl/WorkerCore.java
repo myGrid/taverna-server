@@ -61,6 +61,7 @@ import org.taverna.server.localworker.remote.RemoteListener;
 import org.taverna.server.localworker.remote.RemoteStatus;
 import org.taverna.server.localworker.server.UsageRecordReceiver;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.SuppressWarnings;
 
 /**
@@ -467,6 +468,7 @@ public class WorkerCore extends UnicastRemoteObject implements Worker,
 			return interactionHost;
 		return url.getProtocol() + "://" + url.getHost();
 	}
+
 	private static String makeInterPort(URL url) {
 		if (url == null)
 			return interactionPort;
@@ -475,6 +477,7 @@ public class WorkerCore extends UnicastRemoteObject implements Worker,
 			port = url.getDefaultPort();
 		return Integer.toString(port);
 	}
+
 	private static String makeInterPath(URL url) {
 		if (url == null)
 			return interactionFeedPath;
@@ -589,18 +592,21 @@ public class WorkerCore extends UnicastRemoteObject implements Worker,
 	}
 
 	@Override
+	@NonNull
 	public String getConfiguration() {
 		return "";
 	}
 
 	@Override
+	@NonNull
 	public String getName() {
 		return DEFAULT_LISTENER_NAME;
 	}
 
 	@Override
+	@NonNull
 	@SuppressWarnings("REC_CATCH_EXCEPTION")
-	public String getProperty(String propName) throws RemoteException {
+	public String getProperty(@NonNull String propName) throws RemoteException {
 		switch (Property.is(propName)) {
 		case STDOUT:
 			return stdout.toString();
@@ -639,17 +645,19 @@ public class WorkerCore extends UnicastRemoteObject implements Worker,
 	}
 
 	@Override
+	@NonNull
 	public String getType() {
 		return DEFAULT_LISTENER_NAME;
 	}
 
 	@Override
+	@NonNull
 	public String[] listProperties() {
 		return Property.names();
 	}
 
 	@Override
-	public void setProperty(String propName, String value)
+	public void setProperty(@NonNull String propName, @NonNull String value)
 			throws RemoteException {
 		switch (Property.is(propName)) {
 		case EMAIL:

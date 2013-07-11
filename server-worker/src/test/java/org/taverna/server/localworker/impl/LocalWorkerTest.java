@@ -35,6 +35,7 @@ import org.taverna.server.localworker.remote.RemoteListener;
 import org.taverna.server.localworker.remote.RemoteStatus;
 import org.taverna.server.localworker.server.UsageRecordReceiver;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.SuppressWarnings;
 
 @SuppressWarnings
@@ -49,32 +50,37 @@ public class LocalWorkerTest {
 		public RemoteListener getDefaultListener() {
 			return new RemoteListener() {
 				@Override
+				@NonNull
 				public String getConfiguration() {
 					return "RLCONFIG";
 				}
 
 				@Override
+				@NonNull
 				public String getName() {
 					return "RLNAME";
 				}
 
 				@Override
-				public String getProperty(String propName) {
+				@NonNull
+				public String getProperty(@NonNull String propName) {
 					return "RLPROP[" + propName + "]";
 				}
 
 				@Override
+				@NonNull
 				public String getType() {
 					return "RLTYPE";
 				}
 
 				@Override
+				@NonNull
 				public String[] listProperties() {
 					return new String[] { "RLP1", "RLP2" };
 				}
 
 				@Override
-				public void setProperty(String propName, String value) {
+				public void setProperty(@NonNull String propName,@NonNull  String value) {
 					events.add("setProperty[");
 					events.add(propName);
 					events.add(value);

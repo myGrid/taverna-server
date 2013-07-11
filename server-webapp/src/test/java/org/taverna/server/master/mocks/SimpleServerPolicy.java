@@ -12,6 +12,8 @@ import org.taverna.server.master.interfaces.Policy;
 import org.taverna.server.master.interfaces.TavernaRun;
 import org.taverna.server.master.utils.UsernamePrincipal;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+
 /**
  * A very simple (and unsafe) security model. The number of runs is configurable
  * through Spring (or 10 if unconfigured) with no per-user limits supported, all
@@ -39,7 +41,7 @@ public class SimpleServerPolicy implements Policy {
 	}
 
 	@Override
-	public Integer getMaxRuns(UsernamePrincipal p) {
+	public Integer getMaxRuns(@NonNull UsernamePrincipal p) {
 		return null; // No per-user limits
 	}
 
@@ -60,19 +62,20 @@ public class SimpleServerPolicy implements Policy {
 	}
 
 	@Override
-	public List<Workflow> listPermittedWorkflows(UsernamePrincipal p) {
+	public List<Workflow> listPermittedWorkflows(@NonNull UsernamePrincipal p) {
 		return emptyList();
 	}
 
 	@Override
-	public boolean permitAccess(UsernamePrincipal p, TavernaRun run) {
+	public boolean permitAccess(@NonNull UsernamePrincipal p,
+			@NonNull TavernaRun run) {
 		// No secrets here!
 		return true;
 	}
 
 	@Override
-	public void permitCreate(UsernamePrincipal p, Workflow workflow)
-			throws NoCreateException {
+	public void permitCreate(@NonNull UsernamePrincipal p,
+			@NonNull Workflow workflow) throws NoCreateException {
 		// Only identified users may create
 		if (p == null)
 			throw new NoCreateException();
@@ -83,16 +86,16 @@ public class SimpleServerPolicy implements Policy {
 	}
 
 	@Override
-	public void permitDestroy(UsernamePrincipal p, TavernaRun run)
-			throws NoDestroyException {
+	public void permitDestroy(@NonNull UsernamePrincipal p,
+			@NonNull TavernaRun run) throws NoDestroyException {
 		// Only the creator may destroy
 		if (p == null || !p.equals(run.getSecurityContext().getOwner()))
 			throw new NoDestroyException();
 	}
 
 	@Override
-	public void permitUpdate(UsernamePrincipal p, TavernaRun run)
-			throws NoUpdateException {
+	public void permitUpdate(@NonNull UsernamePrincipal p,
+			@NonNull TavernaRun run) throws NoUpdateException {
 		// Only the creator may change
 		if (p == null || !p.equals(run.getSecurityContext().getOwner()))
 			throw new NoUpdateException();

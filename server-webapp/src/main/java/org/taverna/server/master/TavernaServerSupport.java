@@ -311,7 +311,8 @@ public class TavernaServerSupport {
 			return; // Superusers are fully authorized to access others things
 		}
 		if (getSelfAuthority() != null) {
-			// At this point, must already be accessing self as that is checked in getRun().
+			// At this point, must already be accessing self as that is checked
+			// in getRun().
 			return;
 		}
 		policy.permitUpdate(getPrincipal(), run);
@@ -555,7 +556,7 @@ public class TavernaServerSupport {
 	 *             If the run is unknown (e.g., because it is already
 	 *             destroyed).
 	 */
-	public void unregisterRun(@NonNull String runName, @NonNull TavernaRun run)
+	public void unregisterRun(@NonNull String runName, @Nullable TavernaRun run)
 			throws NoDestroyException, UnknownRunException {
 		if (run == null)
 			run = getRun(runName);
@@ -598,7 +599,8 @@ public class TavernaServerSupport {
 	public String buildWorkflow(Workflow workflow) throws NoCreateException {
 		UsernamePrincipal p = getPrincipal();
 		if (getSelfAuthority() != null)
-			throw new NoCreateException("runs may not create workflows on their host server");
+			throw new NoCreateException(
+					"runs may not create workflows on their host server");
 		if (!stateModel.getAllowNewWorkflowRuns())
 			throw new NoCreateException("run creation not currently enabled");
 		try {

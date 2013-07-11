@@ -27,6 +27,7 @@ import org.taverna.server.master.utils.FilenameUtils;
 import org.taverna.server.master.utils.UsernamePrincipal;
 import org.taverna.server.master.utils.X500Utils;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.SuppressWarnings;
 
 /**
@@ -132,12 +133,13 @@ public class SecurityContextFactory implements
 
 	@Required
 	public void setHttpRealm(String realm) {
-		this.httpRealm = realm; //${http.realmName}
+		this.httpRealm = realm; // ${http.realmName}
 	}
 
 	@Override
-	public SecurityContextDelegate create(TavernaRun run,
-			UsernamePrincipal owner) throws Exception {
+	@NonNull
+	public SecurityContextDelegate create(@NonNull TavernaRun run,
+			@NonNull UsernamePrincipal owner) throws Exception {
 		log().debug("constructing security context delegate for " + owner);
 		RemoteRunDelegate rrd = (RemoteRunDelegate) run;
 		return new HelioSecurityContextDelegateImpl(rrd, owner, this);

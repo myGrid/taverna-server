@@ -26,6 +26,7 @@ import org.taverna.server.master.interfaces.TavernaRun;
 import org.taverna.server.master.interfaces.TavernaSecurityContext;
 import org.taverna.server.master.utils.UsernamePrincipal;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.SuppressWarnings;
 
 /**
@@ -57,7 +58,7 @@ class PolicyImpl implements Policy {
 	}
 
 	@Override
-	public Integer getMaxRuns(UsernamePrincipal user) {
+	public Integer getMaxRuns(@NonNull UsernamePrincipal user) {
 		return null;
 	}
 
@@ -67,7 +68,7 @@ class PolicyImpl implements Policy {
 	}
 
 	@Override
-	public List<Workflow> listPermittedWorkflows(UsernamePrincipal user) {
+	public List<Workflow> listPermittedWorkflows(@NonNull UsernamePrincipal user) {
 		return emptyList();
 	}
 
@@ -90,7 +91,8 @@ class PolicyImpl implements Policy {
 	}
 
 	@Override
-	public boolean permitAccess(UsernamePrincipal user, TavernaRun run) {
+	public boolean permitAccess(@NonNull UsernamePrincipal user,
+			@NonNull TavernaRun run) {
 		String username = user.getName();
 		TavernaSecurityContext context = run.getSecurityContext();
 		if (context.getOwner().getName().equals(username)) {
@@ -111,8 +113,8 @@ class PolicyImpl implements Policy {
 	}
 
 	@Override
-	public void permitCreate(UsernamePrincipal user, Workflow workflow)
-			throws NoCreateException {
+	public void permitCreate(@NonNull UsernamePrincipal user,
+			@NonNull Workflow workflow) throws NoCreateException {
 		if (user == null)
 			throw new NoCreateException(
 					"anonymous workflow creation not allowed");
@@ -121,8 +123,8 @@ class PolicyImpl implements Policy {
 	}
 
 	@Override
-	public synchronized void permitDestroy(UsernamePrincipal user, TavernaRun run)
-			throws NoDestroyException {
+	public synchronized void permitDestroy(@NonNull UsernamePrincipal user,
+			@NonNull TavernaRun run) throws NoDestroyException {
 		if (user == null)
 			throw new NoDestroyException();
 		String username = user.getName();
@@ -135,8 +137,8 @@ class PolicyImpl implements Policy {
 	}
 
 	@Override
-	public void permitUpdate(UsernamePrincipal user, TavernaRun run)
-			throws NoUpdateException {
+	public void permitUpdate(@NonNull UsernamePrincipal user,
+			@NonNull TavernaRun run) throws NoUpdateException {
 		if (user == null)
 			throw new NoUpdateException(
 					"workflow run not owned by you and you're not granted access");

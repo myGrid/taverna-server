@@ -18,14 +18,39 @@ import edu.umd.cs.findbugs.annotations.NonNull;
  * @author Donal Fellows
  */
 public interface RemoteSecurityContext extends Remote {
+	/**
+	 * Sets the content of the keystore for a run's security configuration.
+	 * @param keystore The serialized bytes of the keystore.
+	 * @throws RemoteException If anything goes wrong with the communications.
+	 * @throws ImplementationException If anything goes wrong with the operation.
+	 */
 	void setKeystore(@NonNull byte[] keystore) throws RemoteException, ImplementationException;
 
+	/**
+	 * Sets the password to use to unlock the keystore for a run's security configuration.
+	 * @param password The characters of the password.
+	 * @throws RemoteException If anything goes wrong with the communications.
+	 * @throws ImplementationException If anything goes wrong with the operation.
+	 */
 	void setPassword(@NonNull char[] password) throws RemoteException, ImplementationException;
 
+	/**
+	 * Sets the content of the truststore for a run's security configuration.
+	 * @param truststore The serialized bytes of the truststore.
+	 * @throws RemoteException If anything goes wrong with the communications.
+	 * @throws ImplementationException If anything goes wrong with the operation.
+	 */
 	void setTruststore(@NonNull byte[] truststore) throws RemoteException, ImplementationException;
 
+	/**
+	 * Sets the mapping from URIs to string aliases to use. <i>Probably not used.</i>
+	 * @param keystore The mapping.
+	 * @throws RemoteException If anything goes wrong with the communications.
+	 * @throws ImplementationException If anything goes wrong with the operation.
+	 */
 	void setUriToAliasMap(@NonNull HashMap<URI, String> uriToAliasMap)
 			throws RemoteException;
 
+	// Undocumented hack
 	void setHelioToken(@NonNull String helioToken) throws RemoteException;
 }

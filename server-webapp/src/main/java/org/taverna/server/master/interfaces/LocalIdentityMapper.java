@@ -7,6 +7,9 @@ package org.taverna.server.master.interfaces;
 
 import org.taverna.server.master.utils.UsernamePrincipal;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
+
 /**
  * This interface describes how to map from the identity understood by the
  * webapp to the identity understood by the local execution system.
@@ -17,13 +20,15 @@ public interface LocalIdentityMapper {
 	/**
 	 * Given a user's identity, get the local identity to use for executing
 	 * their workflows. Note that it is assumed that there will never be a
-	 * failure from this interface; it is <i>not</i> a security policy
-	 * decision or enforcement point.
+	 * failure from this interface; it is <i>not</i> a security policy decision
+	 * or enforcement point.
 	 * 
 	 * @param user
 	 *            An identity token.
 	 * @return A user name, which must be defined in the context that workflows
-	 *         will be running in.
+	 *         will be running in, or <tt>null</tt> if this mapper does not wish
+	 *         to supply a mapping.
 	 */
-	public String getUsernameForPrincipal(UsernamePrincipal user);
+	@Nullable
+	String getUsernameForPrincipal(@NonNull UsernamePrincipal user);
 }

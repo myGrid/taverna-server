@@ -6,6 +6,7 @@
 package org.taverna.server.master.mocks;
 
 import static java.util.Calendar.MINUTE;
+import static java.util.Collections.emptySet;
 import static java.util.Collections.unmodifiableList;
 import static java.util.UUID.randomUUID;
 import static org.taverna.server.master.common.Status.Initialized;
@@ -15,6 +16,7 @@ import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.List;
@@ -41,6 +43,7 @@ import org.taverna.server.master.interfaces.TavernaRun;
 import org.taverna.server.master.interfaces.TavernaSecurityContext;
 import org.taverna.server.master.utils.UsernamePrincipal;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.SuppressWarnings;
 
 @SuppressWarnings
@@ -123,6 +126,7 @@ public class ExampleRun implements TavernaRun, TavernaSecurityContext {
 	}
 
 	@Override
+	@NonNull
 	public UsernamePrincipal getOwner() {
 		return owner;
 	}
@@ -135,7 +139,9 @@ public class ExampleRun implements TavernaRun, TavernaSecurityContext {
 		}
 
 		@Override
-		public TavernaRun create(UsernamePrincipal creator, Workflow workflow) {
+		@NonNull
+		public TavernaRun create(@NonNull UsernamePrincipal creator,
+				@NonNull Workflow workflow) {
 			Calendar c = GregorianCalendar.getInstance();
 			c.add(MINUTE, lifetime);
 			return new ExampleRun(creator, workflow, c.getTime());
@@ -151,32 +157,38 @@ public class ExampleRun implements TavernaRun, TavernaSecurityContext {
 
 	class DefaultListener implements Listener {
 		@Override
+		@NonNull
 		public String getConfiguration() {
 			return "";
 		}
 
 		@Override
+		@NonNull
 		public String getName() {
 			return "default";
 		}
 
 		@Override
+		@NonNull
 		public String getType() {
 			return "default";
 		}
 
 		@Override
+		@NonNull
 		public String[] listProperties() {
 			return emptyArray;
 		}
 
 		@Override
-		public String getProperty(String propName) throws NoListenerException {
+		@NonNull
+		public String getProperty(@NonNull String propName)
+				throws NoListenerException {
 			throw new NoListenerException("no such property");
 		}
 
 		@Override
-		public void setProperty(String propName, String value)
+		public void setProperty(@NonNull String propName, @NonNull String value)
 				throws NoListenerException {
 			throw new NoListenerException("no such property");
 		}
@@ -212,6 +224,7 @@ public class ExampleRun implements TavernaRun, TavernaSecurityContext {
 		}
 
 		@Override
+		@NonNull
 		public String getName() {
 			return name;
 		}
@@ -222,8 +235,8 @@ public class ExampleRun implements TavernaRun, TavernaSecurityContext {
 		}
 
 		@Override
-		public void setFile(String file) throws FilesystemAccessException,
-				BadStateChangeException {
+		public void setFile(@NonNull String file)
+				throws FilesystemAccessException, BadStateChangeException {
 			if (status != Status.Initialized)
 				throw new BadStateChangeException();
 			checkBadFilename(file);
@@ -233,7 +246,8 @@ public class ExampleRun implements TavernaRun, TavernaSecurityContext {
 		}
 
 		@Override
-		public void setValue(String value) throws BadStateChangeException {
+		public void setValue(@NonNull String value)
+				throws BadStateChangeException {
 			if (status != Status.Initialized)
 				throw new BadStateChangeException();
 			this.value = value;
@@ -305,18 +319,19 @@ public class ExampleRun implements TavernaRun, TavernaSecurityContext {
 	}
 
 	@Override
+	@NonNull
 	public Credential[] getCredentials() {
 		// TODO Auto-generated method stub
 		return new Credential[0];
 	}
 
 	@Override
-	public void addCredential(Credential toAdd) {
+	public void addCredential(@NonNull Credential toAdd) {
 		// TODO Auto-generated method stub
 	}
 
 	@Override
-	public void deleteCredential(Credential toDelete) {
+	public void deleteCredential(@NonNull Credential toDelete) {
 		// TODO Auto-generated method stub
 	}
 
@@ -327,33 +342,35 @@ public class ExampleRun implements TavernaRun, TavernaSecurityContext {
 	}
 
 	@Override
-	public void addTrusted(Trust toAdd) {
+	public void addTrusted(@NonNull Trust toAdd) {
 		// TODO Auto-generated method stub
 	}
 
 	@Override
-	public void deleteTrusted(Trust toDelete) {
+	public void deleteTrusted(@NonNull Trust toDelete) {
 		// TODO Auto-generated method stub
 	}
 
 	@Override
-	public void validateCredential(Credential c)
+	public void validateCredential(@NonNull Credential c)
 			throws InvalidCredentialException {
 		// TODO Auto-generated method stub
 	}
 
 	@Override
-	public void validateTrusted(Trust t) throws InvalidCredentialException {
+	public void validateTrusted(@NonNull Trust t)
+			throws InvalidCredentialException {
 		// TODO Auto-generated method stub
 	}
 
 	@Override
-	public void initializeSecurityFromSOAPContext(MessageContext context) {
+	public void initializeSecurityFromSOAPContext(
+			@NonNull MessageContext context) {
 		// Do nothing
 	}
 
 	@Override
-	public void initializeSecurityFromRESTContext(HttpHeaders headers) {
+	public void initializeSecurityFromRESTContext(@NonNull HttpHeaders headers) {
 		// Do nothing
 	}
 
@@ -363,41 +380,51 @@ public class ExampleRun implements TavernaRun, TavernaSecurityContext {
 	}
 
 	@Override
+	@NonNull
 	public SecurityContextFactory getFactory() {
-		// TODO Auto-generated method stub
-		return null;
+		return new SecurityContextFactory() {
+			@Override
+			@NonNull
+			public TavernaSecurityContext create(@NonNull TavernaRun run,
+					@NonNull UsernamePrincipal owner) throws Exception {
+				throw new Exception("no");
+			}
+		};
 	}
 
 	@Override
+	@NonNull
 	public Set<String> getPermittedDestroyers() {
 		// TODO Auto-generated method stub
-		return null;
+		return emptySet();
 	}
 
 	@Override
-	public void setPermittedDestroyers(Set<String> destroyers) {
+	public void setPermittedDestroyers(@NonNull Set<String> destroyers) {
 		// TODO Auto-generated method stub
 	}
 
 	@Override
+	@NonNull
 	public Set<String> getPermittedUpdaters() {
 		// TODO Auto-generated method stub
-		return null;
+		return emptySet();
 	}
 
 	@Override
-	public void setPermittedUpdaters(Set<String> updaters) {
+	public void setPermittedUpdaters(@NonNull Set<String> updaters) {
 		// TODO Auto-generated method stub
 	}
 
 	@Override
+	@NonNull
 	public Set<String> getPermittedReaders() {
 		// TODO Auto-generated method stub
-		return null;
+		return emptySet();
 	}
 
 	@Override
-	public void setPermittedReaders(Set<String> readers) {
+	public void setPermittedReaders(@NonNull Set<String> readers) {
 		// TODO Auto-generated method stub
 	}
 
@@ -407,8 +434,8 @@ public class ExampleRun implements TavernaRun, TavernaSecurityContext {
 	}
 
 	@Override
-	public void initializeSecurityFromContext(SecurityContext securityContext)
-			throws Exception {
+	public void initializeSecurityFromContext(
+			@NonNull SecurityContext securityContext) throws Exception {
 		// TODO Auto-generated method stub
 	}
 
@@ -418,7 +445,7 @@ public class ExampleRun implements TavernaRun, TavernaSecurityContext {
 	}
 
 	@Override
-	public void setName(String name) {
+	public void setName(@NonNull String name) {
 		this.name = (name.length() > 5 ? name.substring(0, 5) : name);
 	}
 }

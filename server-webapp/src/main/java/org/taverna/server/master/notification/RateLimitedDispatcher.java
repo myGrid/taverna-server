@@ -14,6 +14,9 @@ import org.joda.time.DateTime;
 import org.taverna.server.master.interfaces.MessageDispatcher;
 import org.taverna.server.master.interfaces.TavernaRun;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
+
 /**
  * Rate-limiting support. Some message fabrics simply should not be used to send
  * a lot of messages.
@@ -66,8 +69,9 @@ public abstract class RateLimitedDispatcher implements MessageDispatcher {
 	}
 
 	@Override
-	public void dispatch(TavernaRun ignored, String messageSubject,
-			String messageContent, String target) throws Exception {
+	public void dispatch(@NonNull TavernaRun ignored,
+			@NonNull String messageSubject, @NonNull String messageContent,
+			@Nullable String target) throws Exception {
 		if (isSendAllowed(target))
 			dispatch(messageSubject, messageContent, target);
 	}

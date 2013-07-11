@@ -11,6 +11,8 @@ import java.security.Principal;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+
 /**
  * A simple serializable principal that just records the name.
  * 
@@ -18,19 +20,21 @@ import org.springframework.security.core.userdetails.UserDetails;
  */
 public class UsernamePrincipal implements Principal, Serializable {
 	private static final long serialVersionUID = 2703493248562435L;
-	public UsernamePrincipal(String username) {
+
+	public UsernamePrincipal(@NonNull String username) {
 		this.name = username;
 	}
 
-	public UsernamePrincipal(Principal other) {
+	public UsernamePrincipal(@NonNull Principal other) {
 		this.name = other.getName();
 	}
 
-	public UsernamePrincipal(Authentication auth) {
+	@SuppressWarnings("null")
+	public UsernamePrincipal(@NonNull Authentication auth) {
 		this(auth.getPrincipal());
 	}
 
-	public UsernamePrincipal(Object principal) {
+	public UsernamePrincipal(@NonNull Object principal) {
 		if (principal instanceof Principal)
 			this.name = ((Principal) principal).getName();
 		else if (principal instanceof String)
@@ -41,14 +45,17 @@ public class UsernamePrincipal implements Principal, Serializable {
 			this.name = principal.toString();
 	}
 
+	@NonNull
 	private String name;
 
 	@Override
+	@NonNull
 	public String getName() {
 		return name;
 	}
 
 	@Override
+	@NonNull
 	public String toString() {
 		return "Principal<" + name + ">";
 	}
