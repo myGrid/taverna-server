@@ -133,7 +133,7 @@ public class FilenameUtils {
 	 *             If there is no such entry.
 	 */
 	@SuppressWarnings("null")
-	@Nullable
+	@NonNull
 	public DirectoryEntry getDirEntry(@NonNull TavernaRun run,
 			@NonNull DirEntryReference d) throws FilesystemAccessException,
 			NoDirectoryEntryException {

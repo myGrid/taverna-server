@@ -5,6 +5,40 @@
  */
 package org.taverna.server.master.admin;
 
+import static org.taverna.server.master.admin.Paths.ALLOW_NEW;
+import static org.taverna.server.master.admin.Paths.ARGS;
+import static org.taverna.server.master.admin.Paths.EXEC_WF;
+import static org.taverna.server.master.admin.Paths.EXITCODE;
+import static org.taverna.server.master.admin.Paths.FACTORIES;
+import static org.taverna.server.master.admin.Paths.INVOKES;
+import static org.taverna.server.master.admin.Paths.JAR_FORKER;
+import static org.taverna.server.master.admin.Paths.JAR_WORKER;
+import static org.taverna.server.master.admin.Paths.JAVA;
+import static org.taverna.server.master.admin.Paths.LIFE;
+import static org.taverna.server.master.admin.Paths.LOG_EXN;
+import static org.taverna.server.master.admin.Paths.LOG_WFS;
+import static org.taverna.server.master.admin.Paths.OPERATING;
+import static org.taverna.server.master.admin.Paths.OP_LIMIT;
+import static org.taverna.server.master.admin.Paths.PASSFILE;
+import static org.taverna.server.master.admin.Paths.PERM_WF;
+import static org.taverna.server.master.admin.Paths.REG_HOST;
+import static org.taverna.server.master.admin.Paths.REG_JAR;
+import static org.taverna.server.master.admin.Paths.REG_POLL;
+import static org.taverna.server.master.admin.Paths.REG_PORT;
+import static org.taverna.server.master.admin.Paths.REG_WAIT;
+import static org.taverna.server.master.admin.Paths.ROOT;
+import static org.taverna.server.master.admin.Paths.RUNS;
+import static org.taverna.server.master.admin.Paths.STARTUP;
+import static org.taverna.server.master.admin.Paths.TOTAL_RUNS;
+import static org.taverna.server.master.admin.Paths.RUN_LIMIT;
+import static org.taverna.server.master.admin.Paths.URS;
+import static org.taverna.server.master.admin.Paths.UR_FILE;
+import static org.taverna.server.master.admin.Paths.USER;
+import static org.taverna.server.master.admin.Paths.USERS;
+import static org.taverna.server.master.admin.Types.JSON;
+import static org.taverna.server.master.admin.Types.PLAIN;
+import static org.taverna.server.master.admin.Types.XML;
+
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
@@ -48,7 +82,7 @@ public interface Admin {
 	 * @throws IOException
 	 */
 	@GET
-	@Path("/")
+	@Path(ROOT)
 	@Produces("text/html")
 	@NonNull
 	Response getUserInterface() throws IOException;
@@ -64,25 +98,25 @@ public interface Admin {
 	@GET
 	@Path("static/{file}")
 	@Produces("*/*")
-	Response getStaticResource(@PathParam("file") String file)
+	Response getStaticResource(@NonNull @PathParam("file") String file)
 			throws IOException;
 
 	/**
-	 * Get a description of the adminstration interface.
+	 * Get a description of the administration interface.
 	 * 
 	 * @param ui
 	 *            What URI was used to access this resource?
 	 * @return The description document.
 	 */
 	@GET
-	@Path("/")
-	@Produces({ "application/xml", "application/json" })
+	@Path(ROOT)
+	@Produces({ XML, JSON })
 	@NonNull
-	AdminDescription getDescription(@Context UriInfo ui);
+	AdminDescription getDescription(@NonNull @Context UriInfo ui);
 
 	/** What HTTP methods may we use? */
 	@OPTIONS
-	@Path("/")
+	@Path(ROOT)
 	Response optionsRoot();
 
 	/**
@@ -91,8 +125,8 @@ public interface Admin {
 	 * @return The current setting.
 	 */
 	@GET
-	@Path("allowNew")
-	@Produces("text/plain")
+	@Path(ALLOW_NEW)
+	@Produces(PLAIN)
 	@Description("Whether to allow new workflow runs to be created.")
 	boolean getAllowNew();
 
@@ -104,15 +138,15 @@ public interface Admin {
 	 * @return The new setting.
 	 */
 	@PUT
-	@Path("allowNew")
-	@Consumes("text/plain")
-	@Produces("text/plain")
+	@Path(ALLOW_NEW)
+	@Consumes(PLAIN)
+	@Produces(PLAIN)
 	@Description("Whether to allow new workflow runs to be created.")
 	boolean setAllowNew(boolean newValue);
 
 	/** What HTTP methods may we use? */
 	@OPTIONS
-	@Path("allowNew")
+	@Path(ALLOW_NEW)
 	@Description("Whether to allow new workflow runs to be created.")
 	Response optionsAllowNew();
 
@@ -122,8 +156,8 @@ public interface Admin {
 	 * @return The current setting.
 	 */
 	@GET
-	@Path("logWorkflows")
-	@Produces("text/plain")
+	@Path(LOG_WFS)
+	@Produces(PLAIN)
 	@Description("Whether to log the workflows submitted.")
 	boolean getLogWorkflows();
 
@@ -135,15 +169,15 @@ public interface Admin {
 	 * @return The new setting.
 	 */
 	@PUT
-	@Path("logWorkflows")
-	@Consumes("text/plain")
-	@Produces("text/plain")
+	@Path(LOG_WFS)
+	@Consumes(PLAIN)
+	@Produces(PLAIN)
 	@Description("Whether to log the workflows submitted.")
 	boolean setLogWorkflows(boolean logWorkflows);
 
 	/** What HTTP methods may we use? */
 	@OPTIONS
-	@Path("logWorkflows")
+	@Path(LOG_WFS)
 	@Description("Whether to log the workflows submitted.")
 	Response optionsLogWorkflows();
 
@@ -153,8 +187,8 @@ public interface Admin {
 	 * @return The current setting.
 	 */
 	@GET
-	@Path("logFaults")
-	@Produces("text/plain")
+	@Path(LOG_EXN)
+	@Produces(PLAIN)
 	@Description("Whether to log the user-directed faults.")
 	boolean getLogFaults();
 
@@ -166,15 +200,15 @@ public interface Admin {
 	 * @return The new setting.
 	 */
 	@PUT
-	@Path("logFaults")
-	@Consumes("text/plain")
-	@Produces("text/plain")
+	@Path(LOG_EXN)
+	@Consumes(PLAIN)
+	@Produces(PLAIN)
 	@Description("Whether to log the user-directed faults.")
 	boolean setLogFaults(boolean logFaults);
 
 	/** What HTTP methods may we use? */
 	@OPTIONS
-	@Path("logFaults")
+	@Path(LOG_EXN)
 	@Description("Whether to log the user-directed faults.")
 	Response optionsLogFaults();
 
@@ -184,8 +218,8 @@ public interface Admin {
 	 * @return The current setting.
 	 */
 	@GET
-	@Path("usageRecordDumpFile")
-	@Produces("text/plain")
+	@Path(UR_FILE)
+	@Produces(PLAIN)
 	@Description("What file to dump usage records to.")
 	@NonNull
 	String getURFile();
@@ -198,16 +232,16 @@ public interface Admin {
 	 * @return The new setting.
 	 */
 	@PUT
-	@Path("usageRecordDumpFile")
-	@Consumes("text/plain")
-	@Produces("text/plain")
+	@Path(UR_FILE)
+	@Consumes(PLAIN)
+	@Produces(PLAIN)
 	@Description("What file to dump usage records to.")
 	@NonNull
 	String setURFile(@NonNull String urFile);
 
 	/** What HTTP methods may we use? */
 	@OPTIONS
-	@Path("usageRecordDumpFile")
+	@Path(UR_FILE)
 	@Description("What file to dump usage records to.")
 	Response optionsURFile();
 
@@ -218,14 +252,14 @@ public interface Admin {
 	 * @return The property value (read-only).
 	 */
 	@GET
-	@Path("invokationCount")
-	@Produces("text/plain")
+	@Path(INVOKES)
+	@Produces(PLAIN)
 	@Description("How many times have the service methods been invoked.")
 	int invokeCount();
 
 	/** What HTTP methods may we use? */
 	@OPTIONS
-	@Path("invokationCount")
+	@Path(INVOKES)
 	@Description("How many times have the service methods been invoked.")
 	Response optionsInvokationCount();
 
@@ -235,14 +269,14 @@ public interface Admin {
 	 * @return The property value (read-only).
 	 */
 	@GET
-	@Path("runCount")
-	@Produces("text/plain")
+	@Path(TOTAL_RUNS)
+	@Produces(PLAIN)
 	@Description("How many runs are currently in existence.")
 	int runCount();
 
 	/** What HTTP methods may we use? */
 	@OPTIONS
-	@Path("runCount")
+	@Path(TOTAL_RUNS)
 	@Description("How many runs are currently in existence.")
 	Response optionsRunCount();
 
@@ -252,16 +286,49 @@ public interface Admin {
 	 * @return The property value (read-only).
 	 */
 	@GET
-	@Path("operatingCount")
-	@Produces("text/plain")
+	@Path(OPERATING)
+	@Produces(PLAIN)
 	@Description("How many runs are currently actually running.")
 	int operatingCount();
 
 	/** What HTTP methods may we use? */
 	@OPTIONS
-	@Path("operatingCount")
+	@Path(OPERATING)
 	@Description("How many runs are currently actually running.")
 	Response optionsOperatingCount();
+
+	/**
+	 * Get the full pathname of the RMI registry's JAR.
+	 * 
+	 * @return The current setting.
+	 */
+	@GET
+	@Path(REG_JAR)
+	@Produces(PLAIN)
+	@Description("What is the full pathname of the server's custom RMI registry executable JAR file?")
+	@NonNull
+	String getRegistryJar();
+
+	/**
+	 * Set the full pathname of the RMI registry's JAR.
+	 * 
+	 * @param registryJar
+	 *            What to set it to.
+	 * @return The new setting.
+	 */
+	@PUT
+	@Path(REG_JAR)
+	@Consumes(PLAIN)
+	@Produces(PLAIN)
+	@Description("What is the full pathname of the server's custom RMI registry executable JAR file?")
+	@NonNull
+	String setRegistryJar(@NonNull String registryJar);
+
+	/** What HTTP methods may we use? */
+	@OPTIONS
+	@Path(REG_JAR)
+	@Description("What is the full pathname of the server's special custom RMI registry executable JAR file?")
+	Response optionsRegistryJar();
 
 	/**
 	 * Get the location of the RMI registry.
@@ -269,8 +336,8 @@ public interface Admin {
 	 * @return The current setting.
 	 */
 	@GET
-	@Path("registryHost")
-	@Produces("text/plain")
+	@Path(REG_HOST)
+	@Produces(PLAIN)
 	@Description("Where is the RMI registry?")
 	@NonNull
 	String getRegistryHost();
@@ -283,16 +350,16 @@ public interface Admin {
 	 * @return The new setting.
 	 */
 	@PUT
-	@Path("registryHost")
-	@Consumes("text/plain")
-	@Produces("text/plain")
+	@Path(REG_HOST)
+	@Consumes(PLAIN)
+	@Produces(PLAIN)
 	@Description("Where is the RMI registry?")
 	@NonNull
 	String setRegistryHost(@NonNull String registryHost);
 
 	/** What HTTP methods may we use? */
 	@OPTIONS
-	@Path("registryHost")
+	@Path(REG_HOST)
 	@Description("Where is the RMI registry?")
 	Response optionsRegistryHost();
 
@@ -302,8 +369,8 @@ public interface Admin {
 	 * @return The current setting.
 	 */
 	@GET
-	@Path("registryPort")
-	@Produces("text/plain")
+	@Path(REG_PORT)
+	@Produces(PLAIN)
 	@Description("On what port is the RMI registry?")
 	int getRegistryPort();
 
@@ -315,15 +382,15 @@ public interface Admin {
 	 * @return The new setting.
 	 */
 	@PUT
-	@Path("registryPort")
-	@Consumes("text/plain")
-	@Produces("text/plain")
+	@Path(REG_PORT)
+	@Consumes(PLAIN)
+	@Produces(PLAIN)
 	@Description("On what port is the RMI registry?")
 	int setRegistryPort(int registryPort);
 
 	/** What HTTP methods may we use? */
 	@OPTIONS
-	@Path("registryPort")
+	@Path(REG_PORT)
 	@Description("On what port is the RMI registry?")
 	Response optionsRegistryPort();
 
@@ -333,8 +400,8 @@ public interface Admin {
 	 * @return The current setting.
 	 */
 	@GET
-	@Path("runLimit")
-	@Produces("text/plain")
+	@Path(RUN_LIMIT)
+	@Produces(PLAIN)
 	@Description("What is the maximum number of simultaneous runs?")
 	int getRunLimit();
 
@@ -346,15 +413,15 @@ public interface Admin {
 	 * @return The new setting.
 	 */
 	@PUT
-	@Path("runLimit")
-	@Consumes("text/plain")
-	@Produces("text/plain")
+	@Path(RUN_LIMIT)
+	@Consumes(PLAIN)
+	@Produces(PLAIN)
 	@Description("What is the maximum number of simultaneous runs?")
 	int setRunLimit(int runLimit);
 
 	/** What HTTP methods may we use? */
 	@OPTIONS
-	@Path("runLimit")
+	@Path(RUN_LIMIT)
 	@Description("What is the maximum number of simultaneous runs?")
 	Response optionsRunLimit();
 
@@ -364,8 +431,8 @@ public interface Admin {
 	 * @return The current setting.
 	 */
 	@GET
-	@Path("operatingLimit")
-	@Produces("text/plain")
+	@Path(OP_LIMIT)
+	@Produces(PLAIN)
 	@Description("What is the maximum number of simultaneous executing runs?")
 	int getOperatingLimit();
 
@@ -377,15 +444,15 @@ public interface Admin {
 	 * @return The new setting.
 	 */
 	@PUT
-	@Path("operatingLimit")
-	@Consumes("text/plain")
-	@Produces("text/plain")
+	@Path(OP_LIMIT)
+	@Consumes(PLAIN)
+	@Produces(PLAIN)
 	@Description("What is the maximum number of simultaneous executing runs?")
 	int setOperatingLimit(int operatingLimit);
 
 	/** What HTTP methods may we use? */
 	@OPTIONS
-	@Path("operatingLimit")
+	@Path(OP_LIMIT)
 	@Description("What is the maximum number of simultaneous executing runs?")
 	Response optionsOperatingLimit();
 
@@ -395,8 +462,8 @@ public interface Admin {
 	 * @return The current setting.
 	 */
 	@GET
-	@Path("defaultLifetime")
-	@Produces("text/plain")
+	@Path(LIFE)
+	@Produces(PLAIN)
 	@Description("What is the default lifetime of workflow runs, in seconds?")
 	int getDefaultLifetime();
 
@@ -408,15 +475,15 @@ public interface Admin {
 	 * @return The new setting.
 	 */
 	@PUT
-	@Path("defaultLifetime")
-	@Consumes("text/plain")
-	@Produces("text/plain")
+	@Path(LIFE)
+	@Consumes(PLAIN)
+	@Produces(PLAIN)
 	@Description("What is the default lifetime of workflow runs, in seconds?")
 	int setDefaultLifetime(int defaultLifetime);
 
 	/** What HTTP methods may we use? */
 	@OPTIONS
-	@Path("defaultLifetime")
+	@Path(LIFE)
 	@Description("What is the default lifetime of workflow runs, in seconds?")
 	Response optionsDefaultLifetime();
 
@@ -426,14 +493,15 @@ public interface Admin {
 	 * @return The property value (read-only).
 	 */
 	@GET
-	@Path("currentRuns")
-	@Produces({ "application/xml", "application/json" })
+	@Path(RUNS)
+	@Produces({ XML, JSON })
 	@Description("List the IDs of all current runs.")
+	@NonNull
 	StringList currentRuns();
 
 	/** What HTTP methods may we use? */
 	@OPTIONS
-	@Path("currentRuns")
+	@Path(RUNS)
 	@Description("List the IDs of all current runs.")
 	Response optionsCurrentRuns();
 
@@ -443,8 +511,8 @@ public interface Admin {
 	 * @return The current setting.
 	 */
 	@GET
-	@Path("javaBinary")
-	@Produces("text/plain")
+	@Path(JAVA)
+	@Produces(PLAIN)
 	@Description("Which Java binary should be used for execution of subprocesses?")
 	@NonNull
 	String getJavaBinary();
@@ -457,16 +525,16 @@ public interface Admin {
 	 * @return The new setting.
 	 */
 	@PUT
-	@Path("javaBinary")
-	@Consumes("text/plain")
-	@Produces("text/plain")
+	@Path(JAVA)
+	@Consumes(PLAIN)
+	@Produces(PLAIN)
 	@Description("Which Java binary should be used for execution of subprocesses?")
 	@NonNull
 	String setJavaBinary(@NonNull String javaBinary);
 
 	/** What HTTP methods may we use? */
 	@OPTIONS
-	@Path("javaBinary")
+	@Path(JAVA)
 	@Description("Which Java binary should be used for execution of subprocesses?")
 	Response optionsJavaBinary();
 
@@ -476,8 +544,8 @@ public interface Admin {
 	 * @return The current setting.
 	 */
 	@GET
-	@Path("extraArguments")
-	@Produces({ "application/xml", "application/json" })
+	@Path(ARGS)
+	@Produces({ XML, JSON })
 	@Description("What extra arguments should be supplied to Java subprocesses?")
 	@NonNull
 	StringList getExtraArguments();
@@ -490,16 +558,16 @@ public interface Admin {
 	 * @return The new setting.
 	 */
 	@PUT
-	@Path("extraArguments")
-	@Consumes("application/xml")
-	@Produces({ "application/xml", "application/json" })
+	@Path(ARGS)
+	@Consumes(XML)
+	@Produces({ XML, JSON })
 	@Description("What extra arguments should be supplied to Java subprocesses?")
 	@NonNull
 	StringList setExtraArguments(@NonNull StringList extraArguments);
 
 	/** What HTTP methods may we use? */
 	@OPTIONS
-	@Path("extraArguments")
+	@Path(ARGS)
 	@Description("What extra arguments should be supplied to Java subprocesses?")
 	Response optionsExtraArguments();
 
@@ -509,8 +577,8 @@ public interface Admin {
 	 * @return The current setting.
 	 */
 	@GET
-	@Path("serverWorkerJar")
-	@Produces("text/plain")
+	@Path(JAR_WORKER)
+	@Produces(PLAIN)
 	@Description("What is the full pathname of the server's per-user worker executable JAR file?")
 	@NonNull
 	String getServerWorkerJar();
@@ -523,16 +591,16 @@ public interface Admin {
 	 * @return The new setting.
 	 */
 	@PUT
-	@Path("serverWorkerJar")
-	@Consumes("text/plain")
-	@Produces("text/plain")
+	@Path(JAR_WORKER)
+	@Consumes(PLAIN)
+	@Produces(PLAIN)
 	@Description("What is the full pathname of the server's per-user worker executable JAR file?")
 	@NonNull
 	String setServerWorkerJar(@NonNull String serverWorkerJar);
 
 	/** What HTTP methods may we use? */
 	@OPTIONS
-	@Path("serverWorkerJar")
+	@Path(JAR_WORKER)
 	@Description("What is the full pathname of the server's per-user worker executable JAR file?")
 	Response optionsServerWorkerJar();
 
@@ -542,8 +610,8 @@ public interface Admin {
 	 * @return The current setting.
 	 */
 	@GET
-	@Path("executeWorkflowScript")
-	@Produces("text/plain")
+	@Path(EXEC_WF)
+	@Produces(PLAIN)
 	@Description("What is the full pathname of the core Taverna executeWorkflow script?")
 	@NonNull
 	String getExecuteWorkflowScript();
@@ -556,16 +624,16 @@ public interface Admin {
 	 * @return The new setting.
 	 */
 	@PUT
-	@Path("executeWorkflowScript")
-	@Consumes("text/plain")
-	@Produces("text/plain")
+	@Path(EXEC_WF)
+	@Consumes(PLAIN)
+	@Produces(PLAIN)
 	@Description("What is the full pathname of the core Taverna executeWorkflow script?")
 	@NonNull
 	String setExecuteWorkflowScript(@NonNull String executeWorkflowScript);
 
 	/** What HTTP methods may we use? */
 	@OPTIONS
-	@Path("executeWorkflowScript")
+	@Path(EXEC_WF)
 	@Description("What is the full pathname of the core Taverna executeWorkflow script?")
 	Response optionsExecuteWorkflowScript();
 
@@ -576,8 +644,8 @@ public interface Admin {
 	 * @return The current setting.
 	 */
 	@GET
-	@Path("registrationWaitSeconds")
-	@Produces("text/plain")
+	@Path(REG_WAIT)
+	@Produces(PLAIN)
 	@Description("How long in total should the core wait for registration of the \"forker\" process, in seconds.")
 	int getRegistrationWaitSeconds();
 
@@ -590,15 +658,15 @@ public interface Admin {
 	 * @return The new setting.
 	 */
 	@PUT
-	@Path("registrationWaitSeconds")
-	@Consumes("text/plain")
-	@Produces("text/plain")
+	@Path(REG_WAIT)
+	@Consumes(PLAIN)
+	@Produces(PLAIN)
 	@Description("How long in total should the core wait for registration of the \"forker\" process, in seconds.")
 	int setRegistrationWaitSeconds(int registrationWaitSeconds);
 
 	/** What HTTP methods may we use? */
 	@OPTIONS
-	@Path("registrationWaitSeconds")
+	@Path(REG_WAIT)
 	@Description("How long in total should the core wait for registration of the \"forker\" process, in seconds.")
 	Response optionsRegistrationWaitSeconds();
 
@@ -608,8 +676,8 @@ public interface Admin {
 	 * @return The current setting.
 	 */
 	@GET
-	@Path("registrationPollMillis")
-	@Produces("text/plain")
+	@Path(REG_POLL)
+	@Produces(PLAIN)
 	@Description("What is the interval between checks for registration of the \"forker\" process, in milliseconds.")
 	int getRegistrationPollMillis();
 
@@ -621,15 +689,15 @@ public interface Admin {
 	 * @return The new setting.
 	 */
 	@PUT
-	@Path("registrationPollMillis")
-	@Consumes("text/plain")
-	@Produces("text/plain")
+	@Path(REG_POLL)
+	@Consumes(PLAIN)
+	@Produces(PLAIN)
 	@Description("What is the interval between checks for registration of the \"forker\" process, in milliseconds.")
 	int setRegistrationPollMillis(int registrationPollMillis);
 
 	/** What HTTP methods may we use? */
 	@OPTIONS
-	@Path("registrationPollMillis")
+	@Path(REG_POLL)
 	@Description("What is the interval between checks for registration of the \"forker\" process, in milliseconds.")
 	Response optionsRegistrationPollMillis();
 
@@ -640,8 +708,8 @@ public interface Admin {
 	 * @return The current setting.
 	 */
 	@GET
-	@Path("runasPasswordFile")
-	@Produces("text/plain")
+	@Path(PASSFILE)
+	@Produces(PLAIN)
 	@Description("What is the full pathname of the file containing the password used for impersonating other users? (On Unix, this is the password for the deployment user to use \"sudo\".)")
 	@Nullable
 	String getRunasPasswordFile();
@@ -655,16 +723,16 @@ public interface Admin {
 	 * @return The new setting.
 	 */
 	@PUT
-	@Path("runasPasswordFile")
-	@Consumes("text/plain")
-	@Produces("text/plain")
+	@Path(PASSFILE)
+	@Consumes(PLAIN)
+	@Produces(PLAIN)
 	@Description("What is the full pathname of the file containing the password used for impersonating other users? (On Unix, this is the password for the deployment user to use \"sudo\".)")
 	@Nullable
 	String setRunasPasswordFile(@NonNull String runasPasswordFile);
 
 	/** What HTTP methods may we use? */
 	@OPTIONS
-	@Path("runasPasswordFile")
+	@Path(PASSFILE)
 	@Description("What is the full pathname of the file containing the password used for impersonating other users? (On Unix, this is the password for the deployment user to use \"sudo\".)")
 	Response optionsRunasPasswordFile();
 
@@ -674,8 +742,8 @@ public interface Admin {
 	 * @return The current setting.
 	 */
 	@GET
-	@Path("serverForkerJar")
-	@Produces("text/plain")
+	@Path(JAR_FORKER)
+	@Produces(PLAIN)
 	@Description("What is the full pathname of the server's special authorized \"forker\" executable JAR file?")
 	@NonNull
 	String getServerForkerJar();
@@ -688,16 +756,16 @@ public interface Admin {
 	 * @return The new setting.
 	 */
 	@PUT
-	@Path("serverForkerJar")
-	@Consumes("text/plain")
-	@Produces("text/plain")
+	@Path(JAR_FORKER)
+	@Consumes(PLAIN)
+	@Produces(PLAIN)
 	@Description("What is the full pathname of the server's special authorized \"forker\" executable JAR file?")
 	@NonNull
 	String setServerForkerJar(@NonNull String serverForkerJar);
 
 	/** What HTTP methods may we use? */
 	@OPTIONS
-	@Path("serverForkerJar")
+	@Path(JAR_FORKER)
 	@Description("What is the full pathname of the server's special authorized \"forker\" executable JAR file?")
 	Response optionsServerForkerJar();
 
@@ -707,14 +775,14 @@ public interface Admin {
 	 * @return The property value (read-only).
 	 */
 	@GET
-	@Path("startupTime")
-	@Produces("text/plain")
+	@Path(STARTUP)
+	@Produces(PLAIN)
 	@Description("How long did it take for the back-end \"forker\" to set itself up, in seconds.")
 	int startupTime();
 
 	/** What HTTP methods may we use? */
 	@OPTIONS
-	@Path("startupTime")
+	@Path(STARTUP)
 	@Description("How long did it take for the back-end \"forker\" to set itself up, in seconds.")
 	Response optionsStartupTime();
 
@@ -724,14 +792,14 @@ public interface Admin {
 	 * @return The property value (read-only).
 	 */
 	@GET
-	@Path("lastExitCode")
-	@Produces("text/plain")
+	@Path(EXITCODE)
+	@Produces(PLAIN)
 	@Description("What was the last exit code of the \"forker\"? If null, no exit has ever been recorded.")
 	Integer lastExitCode();
 
 	/** What HTTP methods may we use? */
 	@OPTIONS
-	@Path("lastExitCode")
+	@Path(EXITCODE)
 	@Description("What was the last exit code of the \"forker\"? If null, no exit has ever been recorded.")
 	Response optionsLastExitCode();
 
@@ -741,14 +809,14 @@ public interface Admin {
 	 * @return The property value (read-only).
 	 */
 	@GET
-	@Path("factoryProcessMapping")
-	@Produces({ "application/xml", "application/json" })
+	@Path(FACTORIES)
+	@Produces({ XML, JSON })
 	@Description("What is the mapping of local usernames to factory process RMI IDs?")
 	StringList factoryProcessMapping();
 
 	/** What HTTP methods may we use? */
 	@OPTIONS
-	@Path("factoryProcessMapping")
+	@Path(FACTORIES)
 	@Description("What is the mapping of local usernames to factory process RMI IDs?")
 	Response optionsFactoryProcessMapping();
 
@@ -758,59 +826,93 @@ public interface Admin {
 	 * @return The property value (read-only).
 	 */
 	@GET
-	@Path("usageRecords")
-	@Produces("application/xml")
+	@Path(URS)
+	@Produces(XML)
 	@Description("What is the list of usage records that have been collected?")
 	URList usageRecords();
 
 	/** What HTTP methods may we use? */
 	@OPTIONS
-	@Path("usageRecords")
+	@Path(URS)
 	@Description("What is the list of usage records that have been collected?")
 	Response optionsUsageRecords();
 
+	/**
+	 * What are the current list of workflow URIs that may be started? Empty
+	 * means allow any, including user-supplied workflows.
+	 * 
+	 * @return List of URIs, encoded as strings.
+	 */
 	@GET
-	@Path("users")
-	@Produces({ "application/xml", "application/json" })
-	@Description("What users are known to the server?")
-	UserList users(@Context UriInfo ui);
+	@Path(PERM_WF)
+	@Produces({ XML, JSON })
+	@Description("What are the current list of workflow URIs that may be started? Empty means allow any, including user-supplied workflows.")
+	StringList getPermittedWorkflowURIs();
 
-	@GET
-	@Path("users/{id}")
-	@Produces({ "application/xml", "application/json" })
-	@Description("What do we know about a particular user?")
-	UserDesc user(@PathParam("id") String username);
-
-	@POST
-	@Path("users")
-	@Consumes("application/xml")
-	@Description("Create a user.")
-	Response useradd(UserDesc userdesc, @NonNull @Context UriInfo ui);
-
+	/**
+	 * What are the current list of workflow URIs that may be started? Empty
+	 * means allow any, including user-supplied workflows.
+	 * 
+	 * @param permitted
+	 *            List of URIs, encoded as strings.
+	 * @return List of URIs, encoded as strings.
+	 */
 	@PUT
-	@Path("users/{id}")
-	@Produces({ "application/xml", "application/json" })
-	@Consumes("application/xml")
-	@Description("Update a user.")
-	UserDesc userset(@PathParam("id") String username, UserDesc userdesc);
-
-	@DELETE
-	@Path("users/{id}")
-	@Produces({ "application/xml", "application/json" })
-	@Description("What do we know about a particular user?")
-	Response userdel(@PathParam("id") String username);
+	@Path(PERM_WF)
+	@Consumes(XML)
+	@Produces({ XML, JSON })
+	@Description("What are the current list of workflow URIs that may be started? Empty means allow any, including user-supplied workflows.")
+	StringList setPermittedWorkflowURIs(@NonNull StringList permitted);
 
 	/** What HTTP methods may we use? */
 	@OPTIONS
-	@Path("users")
+	@Path(PERM_WF)
+	@Description("What are the current list of workflow URIs that may be started? Empty means allow any, including user-supplied workflows.")
+	Response optionsPermittedWorkflowURIs();
+
+	@GET
+	@Path(USERS)
+	@Produces({ XML, JSON })
+	@Description("What users are known to the server?")
+	UserList users(@NonNull @Context UriInfo ui);
+
+	@GET
+	@Path(USER)
+	@Produces({ XML, JSON })
+	@Description("What do we know about a particular user?")
+	UserDesc user(@NonNull @PathParam("id") String username);
+
+	@POST
+	@Path(USERS)
+	@Consumes(XML)
+	@Description("Create a user.")
+	Response useradd(@NonNull UserDesc userdesc, @NonNull @Context UriInfo ui);
+
+	@PUT
+	@Path(USER)
+	@Produces({ XML, JSON })
+	@Consumes(XML)
+	@Description("Update a user.")
+	UserDesc userset(@NonNull @PathParam("id") String username,
+			@NonNull UserDesc userdesc);
+
+	@DELETE
+	@Path(USER)
+	@Produces({ XML, JSON })
+	@Description("What do we know about a particular user?")
+	Response userdel(@NonNull @PathParam("id") String username);
+
+	/** What HTTP methods may we use? */
+	@OPTIONS
+	@Path(USERS)
 	@Description("What users are known to the server?")
 	Response optionsUsers();
 
 	/** What HTTP methods may we use? */
 	@OPTIONS
-	@Path("users/{id}")
+	@Path(USER)
 	@Description("What do we know about a particular user?")
-	Response optionsUser(@PathParam("id") String username);
+	Response optionsUser(@NonNull @PathParam("id") String username);
 
 	// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
@@ -849,37 +951,39 @@ public interface Admin {
 		public Uri users;
 		public Uri operatingLimit;
 		public Uri operatingCount;
+		public Uri permittedWorkflowURIs;
 
 		public AdminDescription() {
 		}
 
-		public AdminDescription(UriInfo ui) {
-			allowNew = new Uri(ui, "allowNew");
-			logWorkflows = new Uri(ui, "logWorkflows");
-			logFaults = new Uri(ui, "logFaults");
-			usageRecordDumpFile = new Uri(ui, "usageRecordDumpFile");
-			invokationCount = new Uri(ui, "invokationCount");
-			runCount = new Uri(ui, "runCount");
-			registryHost = new Uri(ui, "registryHost");
-			registryPort = new Uri(ui, "registryPort");
-			runLimit = new Uri(ui, "runLimit");
-			defaultLifetime = new Uri(ui, "defaultLifetime");
-			currentRuns = new Uri(ui, "currentRuns");
-			javaBinary = new Uri(ui, "javaBinary");
-			extraArguments = new Uri(ui, "extraArguments");
-			serverWorkerJar = new Uri(ui, "serverWorkerJar");
-			serverForkerJar = new Uri(ui, "serverForkerJar");
-			executeWorkflowScript = new Uri(ui, "executeWorkflowScript");
-			registrationWaitSeconds = new Uri(ui, "registrationWaitSeconds");
-			registrationPollMillis = new Uri(ui, "registrationPollMillis");
-			runasPasswordFile = new Uri(ui, "runasPasswordFile");
-			startupTime = new Uri(ui, "startupTime");
-			lastExitCode = new Uri(ui, "lastExitCode");
-			factoryProcessMapping = new Uri(ui, "factoryProcessMapping");
-			usageRecords = new Uri(ui, "usageRecords");
-			users = new Uri(ui, "users");
-			operatingLimit = new Uri(ui, "operatingLimit");
-			operatingCount = new Uri(ui, "operatingCount");
+		public AdminDescription(@NonNull UriInfo ui) {
+			allowNew = new Uri(ui, ALLOW_NEW);
+			logWorkflows = new Uri(ui, LOG_WFS);
+			logFaults = new Uri(ui, LOG_EXN);
+			usageRecordDumpFile = new Uri(ui, UR_FILE);
+			invokationCount = new Uri(ui, INVOKES);
+			runCount = new Uri(ui, TOTAL_RUNS);
+			registryHost = new Uri(ui, REG_HOST);
+			registryPort = new Uri(ui, REG_PORT);
+			runLimit = new Uri(ui, RUN_LIMIT);
+			defaultLifetime = new Uri(ui, LIFE);
+			currentRuns = new Uri(ui, RUNS);
+			javaBinary = new Uri(ui, JAVA);
+			extraArguments = new Uri(ui, ARGS);
+			serverWorkerJar = new Uri(ui, JAR_WORKER);
+			serverForkerJar = new Uri(ui, JAR_FORKER);
+			executeWorkflowScript = new Uri(ui, EXEC_WF);
+			registrationWaitSeconds = new Uri(ui, REG_WAIT);
+			registrationPollMillis = new Uri(ui, REG_POLL);
+			runasPasswordFile = new Uri(ui, PASSFILE);
+			startupTime = new Uri(ui, STARTUP);
+			lastExitCode = new Uri(ui, EXITCODE);
+			factoryProcessMapping = new Uri(ui, FACTORIES);
+			usageRecords = new Uri(ui, URS);
+			users = new Uri(ui, USERS);
+			operatingLimit = new Uri(ui, OP_LIMIT);
+			operatingCount = new Uri(ui, OPERATING);
+			permittedWorkflowURIs = new Uri(ui, PERM_WF);
 		}
 	}
 
@@ -933,4 +1037,43 @@ public interface Admin {
 		@XmlElement
 		public List<JobUsageRecord> usageRecord;
 	}
+}
+
+interface Paths {
+	static final String ROOT = "/";
+	static final String ALLOW_NEW = "allowNew";
+	static final String LOG_WFS = "logWorkflows";
+	static final String LOG_EXN = "logFaults";
+	static final String UR_FILE = "usageRecordDumpFile";
+	static final String INVOKES = "invokationCount";
+	static final String TOTAL_RUNS = "runCount";
+	static final String OPERATING = "operatingCount";
+	static final String REG_HOST = "registryHost";
+	static final String REG_PORT = "registryPort";
+	static final String REG_JAR = "registryJar";
+	static final String RUN_LIMIT = "runLimit";
+	static final String OP_LIMIT = "operatingLimit";
+	static final String LIFE = "defaultLifetime";
+	static final String RUNS = "currentRuns";
+	static final String JAVA = "javaBinary";
+	static final String ARGS = "extraArguments";
+	static final String JAR_WORKER = "serverWorkerJar";
+	static final String JAR_FORKER = "serverForkerJar";
+	static final String EXEC_WF = "executeWorkflowScript";
+	static final String REG_WAIT = "registrationWaitSeconds";
+	static final String REG_POLL = "registrationPollMillis";
+	static final String PASSFILE = "runasPasswordFile";
+	static final String STARTUP = "startupTime";
+	static final String EXITCODE = "lastExitCode";
+	static final String FACTORIES = "factoryProcessMapping";
+	static final String URS = "usageRecords";
+	static final String PERM_WF = "permittedWorkflowURIs";
+	static final String USERS = "users";
+	static final String USER = USERS + "/{id}";
+}
+
+interface Types {
+	static final String PLAIN = "text/plain";
+	static final String XML = "application/xml";
+	static final String JSON = "application/json";
 }

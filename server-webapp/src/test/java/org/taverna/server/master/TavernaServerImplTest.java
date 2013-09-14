@@ -7,6 +7,7 @@ import static org.junit.Assert.assertNotNull;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.taverna.server.master.api.ManagementModel;
 import org.taverna.server.master.common.RunReference;
 import org.taverna.server.master.exceptions.BadPropertyValueException;
 import org.taverna.server.master.exceptions.NoListenerException;
@@ -24,7 +25,7 @@ import edu.umd.cs.findbugs.annotations.SuppressWarnings;
 
 @SuppressWarnings
 public class TavernaServerImplTest {
-	private TavernaServerImpl server;
+	private TavernaServer server;
 	private MockPolicy policy;
 	private SimpleNonpersistentRunStore store;
 	@java.lang.SuppressWarnings("unused")
@@ -83,7 +84,7 @@ public class TavernaServerImplTest {
 	@SuppressWarnings
 	public void wireup() throws Exception {
 		// Wire everything up; ought to be done with Spring, but this works...
-		server = new TavernaServerImpl() {
+		server = new TavernaServer() {
 			@Override
 			protected RunREST makeRunInterface() {
 				return new RunREST() {

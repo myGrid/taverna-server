@@ -18,6 +18,7 @@
 <ul>
   <li><a href="#t-global">Global Settings</a></li>
   <li><a href="#t-users">Users</a></li>
+  <li><a href="#t-workflows">Workflows</a></li>
   <li><a href="#t-usage">Usage Records</a></li>
   <li><a href="#t-worker">Local Worker Configuration</a></li>
 </ul>
@@ -85,6 +86,14 @@
 </table>
 </div><!-- t-users -->
 
+<div id="t-workflows">
+<label title="Workflow URIs to limit execution to." for="workflows">Workflow URIs (one per line)</label>
+<br>
+<textarea title="Workflow URIs to limit execution to." rows="5" cols="60" id="workflows"></textarea>
+<p>
+<button id="saveWorkflows">Save</button> <button id="refreshWorkflows">Refresh</button>
+</div>
+
 <div id="t-usage">
 Download <a href="#" id="ur">usage records</a> (warning: may be slow!)
 <p>
@@ -127,6 +136,9 @@ Download <a href="#" id="ur">usage records</a> (warning: may be slow!)
       <input title="The machine hosting the RMI registry. WARNING: changing this will probably break your configuration! Contact the myGrid team for help before adjusting!" id="registryHost" size="20" />
       <label title="The port number the RMI registry. WARNING: changing this will probably break your configuration! Contact the myGrid team for help before adjusting!" for="registryPort">Port</label>
       <input title="The port number the RMI registry. WARNING: changing this will probably break your configuration! Contact the myGrid team for help before adjusting!" id="registryPort" size="5" />
+      <br>
+      <label title="The full path of the RMI registry implementation JAR file. WARNING: changing this will probably break your configuration! Contact the myGrid team for help before adjusting!" for="registryJar">RMI Registry JAR</label>
+      <input title="The full path of the RMI registry implementation JAR file. WARNING: changing this will probably break your configuration! Contact the myGrid team for help before adjusting!" id="registryJar" size="80" />
       <br>
       <label title="The time to wait (in seconds) for the back-end processes to boot and register themselves with the RMI registry. Busy machines may need a longer value here." for="registrationWaitSeconds">Time to wait for registration (seconds)</label>
       <input title="The time to wait (in seconds) for the back-end processes to boot and register themselves with the RMI registry. Busy machines may need a longer value here." id="registrationWaitSeconds" size="5" />

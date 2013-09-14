@@ -10,8 +10,7 @@
 		http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.0.xsd
 		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd">
 
-	<bean id="webapp"
-		class="org.taverna.server.master.TavernaServerImpl">
+	<bean id="webapp" class="org.taverna.server.master.TavernaServer">
 		<property name="policy" ref="worker.policy" />
 		<property name="runStore" ref="worker.rundb" />
 		<property name="fileUtils" ref="fileUtils" />
@@ -68,6 +67,7 @@
 		class="org.taverna.server.master.RunREST">
 		<property name="support" ref="webapp.support" />
 		<property name="cdBuilder" ref="contentsDescriptorBuilder" />
+		<property name="fileUtils" ref="fileUtils" />
 		<lookup-method name="makeSecurityInterface" bean="run.securityView.prototype" />
 		<lookup-method name="makeInputInterface" bean="run.inputView.prototype" />
 		<lookup-method name="makeListenersInterface" bean="run.listenersView.prototype" />
@@ -121,13 +121,14 @@
 	</bean>
 
 	<bean id="admin" class="org.taverna.server.master.admin.AdminBean">
-		<property name="state" ref="webapp.state" />
+		<property name="adminHtmlFile" value="/admin.html" />
 		<property name="counter" ref="webapp.invocationCounter" />
-		<property name="runDB" ref="worker.rundb" />
 		<property name="factory" ref="localworker.factory" />
+		<property name="localWorkerModel" ref="localworker.state" />
+		<property name="runDB" ref="worker.rundb" />
+		<property name="state" ref="webapp.state" />
 		<property name="usageRecords" ref="usageRecordSink" />
 		<property name="userStore" ref="userStore" />
-		<property name="adminHtmlFile" value="/admin.html" />
 	</bean>
 
 	<bean id="IdentityMapper" class="org.taverna.server.master.identity.CompositeIDMapper">
@@ -285,6 +286,12 @@
 		</property>
 		<property name="maxRuns" value="${default.runlimit}">
 			<description>The maximum simultaneous number of runs.</description>
+		</property>
+		<property name="operatingLimit" value="${default.operatinglimit}">
+			<description>
+				The maximum number of runs that are in the Operating state,
+				i.e., actually running with a process consuming resources.
+			</description>
 		</property>
 		<property name="extraArgs">
 			<description>Any extra arguments (memory control, etc.) to pass to

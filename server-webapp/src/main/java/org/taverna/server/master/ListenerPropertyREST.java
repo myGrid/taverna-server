@@ -5,12 +5,12 @@
  */
 package org.taverna.server.master;
 
-import static org.taverna.server.master.TavernaServerImpl.log;
+import static org.taverna.server.master.TavernaServer.log;
 import static org.taverna.server.master.utils.RestUtils.opt;
 
 import javax.ws.rs.core.Response;
 
-import org.taverna.server.master.TavernaServerImpl.SupportAware;
+import org.taverna.server.master.api.ListenerPropertyBean;
 import org.taverna.server.master.exceptions.NoListenerException;
 import org.taverna.server.master.exceptions.NoUpdateException;
 import org.taverna.server.master.interfaces.Listener;
@@ -25,6 +25,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
  * 
  * @author Donal Fellows
  */
+@SuppressWarnings("null")
 class ListenerPropertyREST implements TavernaServerListenersREST.Property,
 		ListenerPropertyBean {
 	private TavernaServerSupport support;
@@ -39,8 +40,8 @@ class ListenerPropertyREST implements TavernaServerListenersREST.Property,
 
 	@Override
 	@NonNull
-	public ListenerPropertyREST connect(Listener listen, TavernaRun run,
-			String propertyName) {
+	public ListenerPropertyREST connect(@NonNull Listener listen, @NonNull TavernaRun run,
+			@NonNull String propertyName) {
 		this.listen = listen;
 		this.propertyName = propertyName;
 		this.run = run;
@@ -75,15 +76,4 @@ class ListenerPropertyREST implements TavernaServerListenersREST.Property,
 	public Response options() {
 		return opt("PUT");
 	}
-}
-
-/**
- * Description of properties supported by {@link ListenerPropertyREST}.
- * 
- * @author Donal Fellows
- */
-interface ListenerPropertyBean extends SupportAware {
-	@NonNull
-	ListenerPropertyREST connect(Listener listen, TavernaRun run,
-			String propertyName);
 }

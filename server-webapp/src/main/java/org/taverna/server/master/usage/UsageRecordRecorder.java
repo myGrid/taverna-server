@@ -5,7 +5,7 @@
  */
 package org.taverna.server.master.usage;
 
-import static org.taverna.server.master.TavernaServerImpl.log;
+import static org.taverna.server.master.TavernaServer.log;
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -19,7 +19,7 @@ import javax.xml.bind.JAXBException;
 
 import org.ogf.usage.JobUsageRecord;
 import org.springframework.beans.factory.annotation.Required;
-import org.taverna.server.master.ManagementModel;
+import org.taverna.server.master.api.ManagementModel;
 import org.taverna.server.master.utils.Contextualizer;
 import org.taverna.server.master.utils.JDOSupport;
 

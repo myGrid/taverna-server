@@ -8,6 +8,8 @@ package org.taverna.server.master.defaults;
 import org.taverna.server.master.common.Status;
 import org.taverna.server.master.localworker.LocalWorkerState;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+
 /**
  * This defines a collection of default values, collecting them from various
  * parts of the server.
@@ -16,19 +18,29 @@ import org.taverna.server.master.localworker.LocalWorkerState;
  */
 public interface Default {
 	/** The default value of the <tt>prefix</tt> property. */
+	@NonNull
 	static final String AUTHORITY_PREFIX = "LOCALUSER_";
 
 	/**
 	 * The name of the resource that is the implementation of the subprocess
 	 * that this class will fork off.
 	 */
+	@NonNull
 	static final String SERVER_WORKER_IMPLEMENTATION_JAR = "util/server.worker.jar";
 
 	/**
 	 * The name of the resource that is the implementation of the subprocess
 	 * that manages secure forking.
 	 */
+	@NonNull
 	static final String SECURE_FORK_IMPLEMENTATION_JAR = "util/secure.fork.jar";
+
+	/**
+	 * The name of the resource that is the implementation of the subprocess
+	 * that acts as the RMI registry.
+	 */
+	@NonNull
+	static final String REGISTRY_JAR = "util/rmi.daemon.jar";
 
 	/** Initial lifetime of runs, in minutes. */
 	static final int RUN_LIFE_MINUTES = 20;
@@ -43,6 +55,7 @@ public interface Default {
 	/**
 	 * Prefix to use for RMI names.
 	 */
+	@NonNull
 	static final String RMI_PREFIX = "ForkRunFactory.";
 
 	/** Default value for {@link LocalWorkerState#passwordFile}. */
@@ -51,6 +64,7 @@ public interface Default {
 	/**
 	 * The extra arguments to pass to the subprocess.
 	 */
+	@NonNull
 	static final String[] EXTRA_ARGUMENTS = new String[0];
 
 	/**
@@ -72,6 +86,7 @@ public interface Default {
 	 * What fields of a certificate we look at when understanding who it is
 	 * talking about, in the order that we look.
 	 */
+	@NonNull
 	static final String[] CERTIFICATE_FIELD_NAMES = { "CN", "COMMONNAME",
 			"COMMON NAME", "COMMON_NAME", "OU", "ORGANIZATIONALUNITNAME",
 			"ORGANIZATIONAL UNIT NAME", "O", "ORGANIZATIONNAME",
@@ -86,8 +101,10 @@ public interface Default {
 	/**
 	 * The notification message format to use if none is configured.
 	 */
+	@NonNull
 	public static final String NOTIFY_MESSAGE_FORMAT = "Your job with ID={0} has finished with exit code {1,number,integer}.";
 
 	/** The address of the SMS gateway service used. */
+	@NonNull
 	public static final String SMS_GATEWAY_URL = "https://www.intellisoftware.co.uk/smsgateway/sendmsg.aspx";
 }

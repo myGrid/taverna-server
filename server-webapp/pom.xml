@@ -120,6 +120,13 @@
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
+			<groupId>uk.org.taverna.server</groupId>
+			<artifactId>server-rmidaemon</artifactId>
+			<version>${project.parent.version}</version>
+			<classifier>jar-with-dependencies</classifier>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
 			<groupId>javax.servlet</groupId>
 			<artifactId>servlet-api</artifactId>
 			<version>2.5</version>
@@ -524,6 +531,14 @@
 									<overWrite>false</overWrite>
 									<destFileName>secure.fork.jar</destFileName>
 								</artifactItem>
+								<artifactItem>
+									<groupId>uk.org.taverna.server</groupId>
+									<artifactId>server-rmidaemon</artifactId>
+									<version>${project.parent.version}</version>
+									<classifier>jar-with-dependencies</classifier>
+									<overWrite>false</overWrite>
+									<destFileName>rmi.daemon.jar</destFileName>
+								</artifactItem>
 							</artifactItems>
 							<outputDirectory>${util.dir}</outputDirectory>
 							<overWriteReleases>false</overWriteReleases>
@@ -616,6 +631,7 @@
 				<configuration>
 					<dotGitDirectory>${project.basedir}/../.git</dotGitDirectory>
 					<prefix>git</prefix>
+					<verbose>true</verbose>
 				</configuration>
 			</plugin>
 			<plugin>
@@ -631,13 +647,13 @@
 							<content><![CDATA[<?xml version="1.0" encoding="UTF-8"?>
 <beansProjectDescription>
 	<version>1</version>
-	<pluginVersion>2.7.2.201109122348-RELEASE></pluginVersion>
+	<pluginVersion>3.3.0.201307091516-RELEASE</pluginVersion>
 	<configSuffixes>
 		<configSuffix>xml</configSuffix>
 	</configSuffixes>
 	<enableImports>true</enableImports>
 	<configs>
-		<config>src/main/webapp/WEB-INF/windows.xml</config>
+		<config>src/main/webapp/WEB-INF/partsecure.xml</config>
 		<config>src/main/webapp/WEB-INF/beans.xml</config>
 		<config>src/main/webapp/WEB-INF/insecure.xml</config>
 		<config>src/main/webapp/WEB-INF/providers.xml</config>
@@ -672,14 +688,14 @@
 			</profiles>
 		</configSet>
 		<configSet>
-			<name>Semi-Secure (Windows) Configuration</name>
+			<name>Semi-Secure Configuration</name>
 			<allowBeanDefinitionOverriding>true</allowBeanDefinitionOverriding>
 			<incomplete>false</incomplete>
 			<configs>
 				<config>src/main/webapp/WEB-INF/beans.xml</config>
 				<config>src/main/webapp/WEB-INF/providers.xml</config>
 				<config>src/main/webapp/WEB-INF/webappBeans.xml</config>
-				<config>src/main/webapp/WEB-INF/windows.xml</config>
+				<config>src/main/webapp/WEB-INF/partsecure.xml</config>
 			</configs>
 			<profiles>
 			</profiles>

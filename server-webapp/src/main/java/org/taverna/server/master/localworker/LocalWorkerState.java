@@ -8,8 +8,12 @@ package org.taverna.server.master.localworker;
 import static java.io.File.separator;
 import static java.lang.System.getProperty;
 import static java.rmi.registry.Registry.REGISTRY_PORT;
+import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
+import static java.util.Collections.unmodifiableList;
 import static org.taverna.server.master.defaults.Default.EXTRA_ARGUMENTS;
 import static org.taverna.server.master.defaults.Default.PASSWORD_FILE;
+import static org.taverna.server.master.defaults.Default.REGISTRY_JAR;
 import static org.taverna.server.master.defaults.Default.RMI_PREFIX;
 import static org.taverna.server.master.defaults.Default.RUN_LIFE_MINUTES;
 import static org.taverna.server.master.defaults.Default.RUN_OPERATING_LIMIT;
@@ -22,6 +26,8 @@ import static org.taverna.server.master.localworker.PersistedState.makeInstance;
 
 import java.io.File;
 import java.io.FilenameFilter;
+import java.net.URI;
+import java.util.List;
 
 import javax.annotation.PostConstruct;
 import javax.jdo.annotations.PersistenceAware;
@@ -30,6 +36,10 @@ import org.springframework.beans.factory.annotation.Required;
 import org.taverna.server.master.common.Status;
 import org.taverna.server.master.defaults.Default;
 import org.taverna.server.master.utils.JDOSupport;
+import org.taverna.server.master.worker.WorkerModel;
+
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 /**
  * The persistent state of a local worker factory.
@@ -38,7 +48,7 @@ import org.taverna.server.master.utils.JDOSupport;
  */
 @PersistenceAware
 public class LocalWorkerState extends JDOSupport<PersistedState> implements
-		LocalWorkerModel {
+		WorkerModel {
 	public LocalWorkerState() {
 		super(PersistedState.class);
 	}
@@ -68,7 +78,8 @@ public class LocalWorkerState extends JDOSupport<PersistedState> implements
 	 */
 	String executeWorkflowScript;
 	/** Default value for {@link #executeWorkflowScript}. */
-	private transient String defaultExecuteWorkflowScript;
+	@NonNull
+	private transient String defaultExecuteWorkflowScript = "";
 	/**
 	 * Full path name of the file containing the password used to launch workers
 	 * as other users. The file is normally expected to contain a single line,
@@ -79,6 +90,7 @@ public class LocalWorkerState extends JDOSupport<PersistedState> implements
 	 */
 	String passwordFile;
 	/** Default value for {@link #passwordFile}. */
+	@NonNull
 	private transient String defaultPasswordFile = PASSWORD_FILE;
 	/**
 	 * The extra arguments to pass to the subprocess.
@@ -117,6 +129,9 @@ public class LocalWorkerState extends JDOSupport<PersistedState> implements
 	int registryPort;
 
 	int operatingLimit;
+
+	URI[] permittedWorkflows;
+	private String registryJar;
 
 	@Override
 	public void setDefaultLifetime(int defaultLifetime) {
@@ -180,6 +195,8 @@ public class LocalWorkerState extends JDOSupport<PersistedState> implements
 				: executeWorkflowScript;
 	}
 
+	@SuppressWarnings("null")
+	@NonNull
 	private static String guessWorkflowScript() {
 		File utilDir = new File(DEFAULT_WORKER_JAR).getParentFile();
 		File[] dirs = utilDir.listFiles(new FilenameFilter() {
@@ -200,13 +217,15 @@ public class LocalWorkerState extends JDOSupport<PersistedState> implements
 	 *            Full path to the script to use.
 	 */
 	public void setDefaultExecuteWorkflowScript(String defaultScript) {
-		if (defaultScript.startsWith("${")) {
+		if (defaultScript == null || defaultScript.startsWith("${")) {
 			this.defaultExecuteWorkflowScript = guessWorkflowScript();
 			return;
 		}
 		this.defaultExecuteWorkflowScript = defaultScript;
 	}
 
+	@SuppressWarnings("null")
+	@NonNull
 	String getDefaultExecuteWorkflowScript() {
 		return defaultExecuteWorkflowScript;
 	}
@@ -295,18 +314,19 @@ public class LocalWorkerState extends JDOSupport<PersistedState> implements
 		return passwordFile == null ? defaultPasswordFile : passwordFile;
 	}
 
-	void setDefaultPasswordFile(String defaultPasswordFile) {
+	void setDefaultPasswordFile(@Nullable String defaultPasswordFile) {
 		this.defaultPasswordFile = defaultPasswordFile;
 	}
 
 	@Override
-	public void setRegistryHost(String registryHost) {
+	public void setRegistryHost(@Nullable String registryHost) {
 		this.registryHost = (registryHost == null ? "" : registryHost);
 		if (loadedState)
 			self.store();
 	}
 
 	@Override
+	@Nullable
 	public String getRegistryHost() {
 		return (registryHost == null || registryHost.isEmpty()) ? null
 				: registryHost;
@@ -325,6 +345,39 @@ public class LocalWorkerState extends JDOSupport<PersistedState> implements
 		return registryPort == 0 ? REGISTRY_PORT : registryPort;
 	}
 
+	@Override
+	@NonNull
+	public String getRegistryJar() {
+		String jar = registryJar;
+		return jar == null ? REGISTRY_JAR : jar;
+	}
+
+	@Override
+	public void setRegistryJar(@Nullable String rmiRegistryJar) {
+		this.registryJar = (rmiRegistryJar == null || rmiRegistryJar.isEmpty()) ? null
+				: rmiRegistryJar;
+		if (loadedState)
+			self.store();
+	}
+
+	@Override
+	public List<URI> getPermittedWorkflowURIs() {
+		if (permittedWorkflows == null || permittedWorkflows.length == 0)
+			return emptyList();
+		return unmodifiableList(asList(permittedWorkflows));
+	}
+
+	@Override
+	public void setPermittedWorkflowURIs(@Nullable List<URI> permittedWorkflows) {
+		if (permittedWorkflows == null || permittedWorkflows.isEmpty())
+			this.permittedWorkflows = new URI[0];
+		else
+			this.permittedWorkflows = permittedWorkflows
+					.toArray(new URI[permittedWorkflows.size()]);
+		if (loadedState)
+			self.store();
+	}
+
 	// --------------------------------------------------------------
 
 	private boolean loadedState;
@@ -334,7 +387,7 @@ public class LocalWorkerState extends JDOSupport<PersistedState> implements
 	public void load() {
 		if (loadedState || !isPersistent())
 			return;
-		LocalWorkerModel state = getById(KEY);
+		WorkerModel state = getById(KEY);
 		if (state == null) {
 			store();
 			return;
@@ -354,6 +407,9 @@ public class LocalWorkerState extends JDOSupport<PersistedState> implements
 		registryHost = state.getRegistryHost();
 		registryPort = state.getRegistryPort();
 		operatingLimit = state.getOperatingLimit();
+		List<URI> pwu = state.getPermittedWorkflowURIs();
+		permittedWorkflows = (URI[]) pwu.toArray(new URI[pwu.size()]);
+		registryJar = state.getRegistryJar();
 
 		loadedState = true;
 	}
@@ -362,7 +418,7 @@ public class LocalWorkerState extends JDOSupport<PersistedState> implements
 	public void store() {
 		if (!isPersistent())
 			return;
-		LocalWorkerModel state = getById(KEY);
+		WorkerModel state = getById(KEY);
 		if (state == null) {
 			state = persist(makeInstance());
 		}
@@ -381,6 +437,9 @@ public class LocalWorkerState extends JDOSupport<PersistedState> implements
 		state.setRegistryHost(registryHost);
 		state.setRegistryPort(registryPort);
 		state.setOperatingLimit(operatingLimit);
+		if (permittedWorkflows != null)
+			state.setPermittedWorkflowURIs(asList(permittedWorkflows));
+		state.setRegistryJar(registryJar);
 
 		loadedState = true;
 	}

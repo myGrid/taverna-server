@@ -8,6 +8,7 @@ package org.taverna.server.master.soap;
 import static org.taverna.server.master.common.Namespaces.SERVER_SOAP;
 import static org.taverna.server.master.common.Roles.USER;
 
+import java.net.URI;
 import java.util.Date;
 
 import javax.annotation.security.RolesAllowed;
@@ -17,6 +18,7 @@ import javax.jws.WebResult;
 import javax.jws.WebService;
 
 import org.apache.cxf.annotations.WSDLDocumentation;
+import org.ogf.usage.JobUsageRecord;
 import org.taverna.server.master.common.Credential;
 import org.taverna.server.master.common.InputDescription;
 import org.taverna.server.master.common.Permission;
@@ -65,6 +67,22 @@ public interface TavernaServerSOAP {
 			throws NoUpdateException, NoCreateException;
 
 	/**
+	 * Make a run for a particular workflow, where that workflow will be
+	 * downloaded from elsewhere. The URI <i>must</i> be publicly readable.
+	 * 
+	 * @param workflowURI
+	 *            The URI to the workflow to instantiate.
+	 * @return Annotated handle for created run.
+	 * @throws NoUpdateException
+	 * @throws NoCreateException
+	 */
+	@WebResult(name = "Run")
+	@WSDLDocumentation("Make a run for a particular workflow where that workflow is given by publicly readable URI.")
+	RunReference submitWorkflowByURI(
+			@WebParam(name = "workflowURI") URI workflowURI)
+			throws NoCreateException, NoUpdateException;
+
+	/**
 	 * Get the list of existing runs owned by the user.
 	 * 
 	 * @return Annotated handle list.
@@ -91,10 +109,10 @@ public interface TavernaServerSOAP {
 	 * 
 	 * @return A list of workflow documents.
 	 */
-	@WebMethod(operationName = "getPermittedWorkflows")
-	@WebResult(name = "PermittedWorkflow")
-	@WSDLDocumentation("Get the list of allowed workflows. If the list is empty, any workflow may be used.")
-	Workflow[] getAllowedWorkflows();
+	@WebMethod(operationName = "getPermittedWorkflowURIs")
+	@WebResult(name = "PermittedWorkflowURI")
+	@WSDLDocumentation("Get the list of URIs to allowed workflows. If the list is empty, any workflow may be used including those not submitted via URI.")
+	URI[] getAllowedWorkflows();
 
 	/**
 	 * Get the list of allowed event listeners.
@@ -547,6 +565,82 @@ public interface TavernaServerSOAP {
 			@WebParam(name = "listenerType") String listenerType,
 			@WebParam(name = "configuration") String configuration)
 			throws UnknownRunException, NoUpdateException, NoListenerException;
+
+	/**
+	 * Returns the standard output of the workflow run. Unstarted runs return
+	 * the empty string.
+	 * <p>
+	 * The equivalent thing can also be fetched from the relevant listener
+	 * property (i.e., io/stdout).
+	 * 
+	 * @param runName
+	 *            The handle of the run.
+	 * @return Whatever the run engine printed on its stdout.
+	 * @throws UnknownRunException
+	 *             If the server doesn't know about the run or if the user is
+	 *             not permitted to see it.
+	 */
+	@WebResult(name = "StandardOutput")
+	@WSDLDocumentation("Returns the stdout from the run engine.")
+	String getRunStdout(@WebParam(name = "runName") String runName)
+			throws UnknownRunException;
+
+	/**
+	 * Returns the standard error of the workflow run. Unstarted runs return the
+	 * empty string.
+	 * <p>
+	 * The equivalent thing can also be fetched from the relevant listener
+	 * property (i.e., io/stderr).
+	 * 
+	 * @param runName
+	 *            The handle of the run.
+	 * @return Whatever the run engine printed on its stderr.
+	 * @throws UnknownRunException
+	 *             If the server doesn't know about the run or if the user is
+	 *             not permitted to see it.
+	 */
+	@WebResult(name = "StandardError")
+	@WSDLDocumentation("Returns the stderr from the run engine.")
+	String getRunStderr(@WebParam(name = "runName") String runName)
+			throws UnknownRunException;
+
+	/**
+	 * Returns the usage record for the workflow run. Unfinished runs return
+	 * <tt>null</tt>.
+	 * <p>
+	 * The equivalent thing can also be fetched from the relevant listener
+	 * property (i.e., io/usage).
+	 * 
+	 * @param runName
+	 *            The handle of the run.
+	 * @return The usage record, or <tt>null</tt>.
+	 * @throws UnknownRunException
+	 *             If the server doesn't know about the run or if the user is
+	 *             not permitted to see it.
+	 */
+	@WebResult(name = "ResourceUsage")
+	@WSDLDocumentation("Returns the resource usage from the run engine.")
+	JobUsageRecord getRunUsageRecord(@WebParam(name = "runName") String runName)
+			throws UnknownRunException;
+
+	/**
+	 * Returns the log of the workflow run. Unstarted runs return the empty
+	 * string.
+	 * <p>
+	 * This can also be fetched from the appropriate file (i.e.,
+	 * <tt>logs/detail.log</tt>).
+	 * 
+	 * @param runName
+	 *            The handle of the run.
+	 * @return Whatever the run engine wrote to its log.
+	 * @throws UnknownRunException
+	 *             If the server doesn't know about the run or if the user is
+	 *             not permitted to see it.
+	 */
+	@WebResult(name = "Log")
+	@WSDLDocumentation("Returns the detailed log from the run engine.")
+	String getRunLog(@WebParam(name = "runName") String runName)
+			throws UnknownRunException;
 
 	/**
 	 * Get the owner of the run.

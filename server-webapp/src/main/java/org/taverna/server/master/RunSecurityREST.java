@@ -13,13 +13,12 @@ import static org.taverna.server.master.common.Uri.secure;
 import static org.taverna.server.master.utils.RestUtils.opt;
 
 import java.net.URI;
-import java.util.HashMap;
 import java.util.Map;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-import org.taverna.server.master.TavernaServerImpl.SupportAware;
+import org.taverna.server.master.api.SecurityBean;
 import org.taverna.server.master.common.Credential;
 import org.taverna.server.master.common.Permission;
 import org.taverna.server.master.common.Trust;
@@ -38,6 +37,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
  * 
  * @author Donal Fellows
  */
+@SuppressWarnings("null")
 class RunSecurityREST implements TavernaServerSecurityREST, SecurityBean {
 	private TavernaServerSupport support;
 	private TavernaSecurityContext context;
@@ -50,8 +50,8 @@ class RunSecurityREST implements TavernaServerSecurityREST, SecurityBean {
 
 	@Override
 	@NonNull
-	public RunSecurityREST connect(TavernaSecurityContext context,
-			TavernaRun run) {
+	public RunSecurityREST connect(@NonNull TavernaSecurityContext context,
+			@NonNull TavernaRun run) {
 		this.context = context;
 		this.run = run;
 		return this;
@@ -225,13 +225,7 @@ class RunSecurityREST implements TavernaServerSecurityREST, SecurityBean {
 	@NonNull
 	@CallCounted
 	public PermissionsDescription describePermissions(@NonNull UriInfo ui) {
-		Map<String, Permission> perm = new HashMap<String, Permission>();
-		for (String u : context.getPermittedReaders())
-			perm.put(u, Permission.Read);
-		for (String u : context.getPermittedUpdaters())
-			perm.put(u, Permission.Update);
-		for (String u : context.getPermittedDestroyers())
-			perm.put(u, Permission.Destroy);
+		Map<String, Permission> perm = support.getPermissionMap(context);
 		return new PermissionsDescription(secure(ui).path("{id}"), perm);
 	}
 
@@ -322,14 +316,4 @@ class RunSecurityREST implements TavernaServerSecurityREST, SecurityBean {
 	public Response permissionOptions(String id) {
 		return opt("PUT", "DELETE");
 	}
-}
-
-/**
- * Description of properties supported by {@link RunSecurityREST}.
- * 
- * @author Donal Fellows
- */
-interface SecurityBean extends SupportAware {
-	@NonNull
-	RunSecurityREST connect(TavernaSecurityContext context, TavernaRun run);
 }

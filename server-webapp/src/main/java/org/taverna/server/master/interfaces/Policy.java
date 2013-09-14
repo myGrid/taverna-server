@@ -5,6 +5,7 @@
  */
 package org.taverna.server.master.interfaces;
 
+import java.net.URI;
 import java.util.List;
 
 import org.taverna.server.master.common.Status;
@@ -97,19 +98,30 @@ public interface Policy {
 			throws NoUpdateException;
 
 	/**
-	 * Get the workflows that the given user may execute.
+	 * Get the URIs of the workflows that the given user may execute.
 	 * 
 	 * @param user
-	 *            Who are we finding out on behalf of.
-	 * @return A list of workflows that they may instantiate, or <tt>null</tt>
-	 *         if any workflow may be submitted.
+	 *            Who are we finding out on behalf of, or <tt>null</tt> for
+	 *            public info only.
+	 * @return A list of workflow URIs that they may instantiate, or
+	 *         <tt>null</tt> if any workflow may be submitted.
 	 */
 	@Nullable
-	List<Workflow> listPermittedWorkflows(@NonNull UsernamePrincipal user);
+	List<URI> listPermittedWorkflowURIs(@Nullable UsernamePrincipal user);
 
 	/**
 	 * @return The maximum number of {@linkplain Status#Operating operating}
 	 *         runs that the system can support.
 	 */
 	int getOperatingLimit();
+
+	/**
+	 * Set the URIs of the workflows that the given user may execute.
+	 * 
+	 * @param user
+	 *            Who are we finding out on behalf of.
+	 * @param permitted
+	 *            A list of workflow URIs that they may instantiate.
+	 */
+	void setPermittedWorkflowURIs(UsernamePrincipal user, List<URI> permitted);
 }

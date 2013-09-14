@@ -3,10 +3,12 @@
  * 
  * See the file "LICENSE" for license terms.
  */
-package org.taverna.server.master.localworker;
+package org.taverna.server.master.worker;
+
+import java.net.URI;
+import java.util.List;
 
 import org.taverna.server.master.common.Status;
-import org.taverna.server.master.worker.PolicyLimits;
 
 /**
  * Profile of the getters and setters in a worker system. Ensures that the
@@ -15,7 +17,7 @@ import org.taverna.server.master.worker.PolicyLimits;
  * 
  * @author Donal Fellows
  */
-public interface LocalWorkerModel extends PolicyLimits {
+public interface WorkerModel extends PolicyLimits {
 
 	/**
 	 * @param defaultLifetime
@@ -170,4 +172,19 @@ public interface LocalWorkerModel extends PolicyLimits {
 	 *            {@linkplain Status#Operating operating} state at once
 	 */
 	public abstract void setOperatingLimit(int operatingLimit);
+
+	void setPermittedWorkflowURIs(List<URI> permittedWorkflows);
+
+	/**
+	 * @return the full path name of the RMI registry subprocess's
+	 *         implementation JAR
+	 */
+	String getRegistryJar();
+
+	/**
+	 * @param rmiRegistryJar
+	 *            the full path name of the RMI registry subprocess's
+	 *            implementation JAR
+	 */
+	void setRegistryJar(String rmiRegistryJar);
 }

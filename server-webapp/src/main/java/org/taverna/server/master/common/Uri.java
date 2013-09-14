@@ -37,7 +37,7 @@ import edu.umd.cs.findbugs.annotations.SuppressWarnings;
  */
 @XmlType(name = "Location")
 public class Uri {
-	static final Log log = getLog("Taverna.Server.UriRewriter");
+	static Log log = getLog("Taverna.Server.UriRewriter");
 	private static final String SECURE_SCHEME = "https";
 	/**
 	 * This type is characterised by an attribute that is the reference to some
@@ -101,6 +101,8 @@ public class Uri {
 	 */
 	public Uri(@NonNull UriInfo ui, boolean secure, @NonNull String path,
 			String... strings) {
+		@java.lang.SuppressWarnings("null")
+		@NonNull
 		UriBuilder ub = ui.getAbsolutePathBuilder();
 		if (secure) {
 			ub = secure(ub);
@@ -108,19 +110,27 @@ public class Uri {
 		ref = ub.path(path).build((Object[]) strings);
 	}
 
-	public static UriBuilder secure(UriBuilder ub) {
+	@NonNull
+	public static UriBuilder secure(@NonNull UriBuilder ub) {
 		return Rewriter.getInstance().getSecuredUriBuilder(ub);
 	}
 
+	@java.lang.SuppressWarnings("null")
+	@NonNull
 	public static UriBuilder secure(UriInfo ui) {
 		return secure(ui.getAbsolutePathBuilder());
 	}
 
+	@java.lang.SuppressWarnings("null")
+	@NonNull
 	public static URI secure(URI uri) {
 		URI newURI = secure(fromUri(uri)).build();
 		log.debug("rewrote " + uri + " to " + newURI);
 		return newURI;
 	}
+
+	@java.lang.SuppressWarnings("null")
+	@NonNull
 	public static URI secure(URI base, String uri) {
 		URI newURI = secure(fromUri(base.resolve(uri))).build();
 		log.debug("rewrote " + uri + " to " + newURI);
@@ -198,8 +208,10 @@ public class Uri {
 		@SuppressWarnings
 		public void done() {
 			instance = null;
+			Uri.log = null;
 		}
 
+		@java.lang.SuppressWarnings("null")
 		@NonNull
 		URI rewrite(@NonNull String url) {
 			if (rewriteTarget != null)
@@ -207,6 +219,7 @@ public class Uri {
 			return URI.create(url);
 		}
 
+		@java.lang.SuppressWarnings("null")
 		@NonNull
 		public UriBuilder getSecuredUriBuilder(@NonNull UriBuilder uribuilder) {
 			if (suppress)
@@ -242,7 +255,9 @@ public class Uri {
 				wrapped = builder.clone();
 			}
 
-			private URI rewrite(URI uri) {
+			@NonNull
+			@java.lang.SuppressWarnings("null")
+			private URI rewrite(@NonNull URI uri) {
 				return Rewriter.this.rewrite(uri.toString());
 			}
 
@@ -251,24 +266,28 @@ public class Uri {
 				return new RewritingUriBuilder(wrapped);
 			}
 
+			@java.lang.SuppressWarnings("null")
 			@Override
 			public URI buildFromMap(Map<String, ? extends Object> values)
 					throws IllegalArgumentException, UriBuilderException {
 				return rewrite(wrapped.buildFromMap(values));
 			}
 
+			@java.lang.SuppressWarnings("null")
 			@Override
 			public URI buildFromEncodedMap(Map<String, ? extends Object> values)
 					throws IllegalArgumentException, UriBuilderException {
 				return rewrite(wrapped.buildFromEncodedMap(values));
 			}
 
+			@java.lang.SuppressWarnings("null")
 			@Override
 			public URI build(Object... values) throws IllegalArgumentException,
 					UriBuilderException {
 				return rewrite(wrapped.build(values));
 			}
 
+			@java.lang.SuppressWarnings("null")
 			@Override
 			public URI buildFromEncoded(Object... values)
 					throws IllegalArgumentException, UriBuilderException {

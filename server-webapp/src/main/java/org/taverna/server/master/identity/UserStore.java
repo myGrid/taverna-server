@@ -6,7 +6,7 @@
 package org.taverna.server.master.identity;
 
 import static org.apache.commons.logging.LogFactory.getLog;
-import static org.taverna.server.master.TavernaServerImpl.JMX_ROOT;
+import static org.taverna.server.master.TavernaServer.JMX_ROOT;
 import static org.taverna.server.master.common.Roles.ADMIN;
 import static org.taverna.server.master.common.Roles.USER;
 import static org.taverna.server.master.defaults.Default.AUTHORITY_PREFIX;
@@ -19,9 +19,11 @@ import java.util.Map;
 import java.util.Properties;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import javax.jdo.annotations.PersistenceAware;
 
 import org.apache.commons.logging.Log;
+import org.springframework.beans.factory.annotation.Required;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jmx.export.annotation.ManagedAttribute;
 import org.springframework.jmx.export.annotation.ManagedOperation;
@@ -46,10 +48,17 @@ import org.taverna.server.master.utils.JDOSupport;
 @ManagedResource(objectName = JMX_ROOT + "Users", description = "The user database.")
 public class UserStore extends JDOSupport<User> implements UserDetailsService {
 	/** The logger for the user store. */
-	private static final Log log = getLog("Taverna.Server.UserDB");
+	private static Log log = getLog("Taverna.Server.UserDB");
 
 	public UserStore() {
 		super(User.class);
+	}
+
+	private UserStore self;
+
+	@PreDestroy
+	void closeLog() {
+		log = null;
 	}
 
 	private Map<String, BootstrapUserInfo> base = new HashMap<String, BootstrapUserInfo>();
@@ -65,6 +74,11 @@ public class UserStore extends JDOSupport<User> implements UserDetailsService {
 	 */
 	public void setEncoder(PasswordEncoder encoder) {
 		this.encoder = encoder;
+	}
+
+	@Required
+	void setSelf(UserStore me) {
+		this.self = me;
 	}
 
 	public void setBaselineUserProperties(Properties props) {
@@ -210,6 +224,20 @@ public class UserStore extends JDOSupport<User> implements UserDetailsService {
 		persist(u);
 	}
 
+	@WithinSingleTransaction
+	public StoredUser addUser(String username, String password) {
+		addUser(username, password, false);
+		return self.new StoredUser(username, getUser(username));
+	}
+
+	@WithinSingleTransaction
+	public StoredUser get(String username) {
+		User u = getUser(username);
+		if (u == null)
+			throw new RuntimeException("no such user");
+		return self.new StoredUser(username, u);
+	}
+
 	/**
 	 * Set or clear whether this account is enabled. Disabled accounts cannot be
 	 * used to log in.
@@ -338,6 +366,66 @@ public class UserStore extends JDOSupport<User> implements UserDetailsService {
 		if (u != null)
 			return u;
 		throw new UsernameNotFoundException("who are you?");
+	}
+
+	public class StoredUser {
+		private String username;
+		private User copy;
+
+		StoredUser(String username, User copy) {
+			this.username = username;
+			this.copy = copy;
+		}
+
+		public void setPassword(String pass) {
+			setUserPassword(username, pass);
+			copy = null;
+		}
+
+		public void setLocalUser(String localUser) {
+			setUserLocalUser(username, localUser);
+			copy = null;
+		}
+
+		public void setAdmin(boolean admin) {
+			setUserAdmin(username, admin);
+			copy = null;
+		}
+
+		public void setEnabled(boolean enabled) {
+			setUserEnabled(username, enabled);
+			copy = null;
+		}
+
+		public String getId() {
+			if (copy == null)
+				copy = getUser(username);
+			return copy.getUsername();
+		}
+
+		public String getPassword() {
+			if (copy == null)
+				copy = getUser(username);
+			return copy.getPassword();
+		}
+
+		public String getLocalUser() {
+			if (copy == null)
+				copy = getUser(username);
+			return copy.getLocalUsername();
+		}
+
+		public boolean isAdmin() {
+			if (copy == null)
+				copy = getUser(username);
+			return copy.isAdmin();
+		}
+
+		public boolean isEnabled() {
+			if (copy == null)
+				copy = getUser(username);
+			return copy.isEnabled();
+		}
 	}
 
 	private static class BootstrapUserInfo {

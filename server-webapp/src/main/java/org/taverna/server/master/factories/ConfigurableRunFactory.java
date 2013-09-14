@@ -69,13 +69,14 @@ public interface ConfigurableRunFactory extends RunFactory {
 	 * How do we start the file system access process? Extra arguments to pass.
 	 * Getter
 	 */
+	@NonNull
 	String[] getExtraArguments();
 
 	/**
 	 * How do we start the file system access process? Extra arguments to pass.
 	 * Setter
 	 */
-	void setExtraArguments(String[] firstArguments);
+	void setExtraArguments(@NonNull String[] firstArguments);
 
 	/** Where is Java? Getter */
 	@NonNull
@@ -132,4 +133,11 @@ public interface ConfigurableRunFactory extends RunFactory {
 	 *             if anything goes wrong
 	 */
 	int getOperatingCount() throws Exception;
+
+	/** How do we start the RMI registry process? Getter */
+	@NonNull
+	String getRmiRegistryJar();
+
+	/** How do we start the RMI registry process? Setter */
+	void setRmiRegistryJar(@NonNull String rmiRegistryJar);
 }

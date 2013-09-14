@@ -5,9 +5,9 @@
  */
 package org.taverna.server.master.worker;
 
-import static java.util.Collections.emptyList;
 import static org.taverna.server.master.identity.WorkflowInternalAuthProvider.PREFIX;
 
+import java.net.URI;
 import java.util.List;
 
 import org.apache.commons.logging.Log;
@@ -27,6 +27,7 @@ import org.taverna.server.master.interfaces.TavernaSecurityContext;
 import org.taverna.server.master.utils.UsernamePrincipal;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import edu.umd.cs.findbugs.annotations.SuppressWarnings;
 
 /**
@@ -68,8 +69,9 @@ class PolicyImpl implements Policy {
 	}
 
 	@Override
-	public List<Workflow> listPermittedWorkflows(@NonNull UsernamePrincipal user) {
-		return emptyList();
+	@Nullable
+	public List<URI> listPermittedWorkflowURIs(@Nullable UsernamePrincipal user) {
+		return limits.getPermittedWorkflowURIs();
 	}
 
 	private boolean isSelfAccess(String runId) {
@@ -112,6 +114,7 @@ class PolicyImpl implements Policy {
 		return context.getPermittedReaders().contains(username);
 	}
 
+	@java.lang.SuppressWarnings("unused")
 	@Override
 	public void permitCreate(@NonNull UsernamePrincipal user,
 			@NonNull Workflow workflow) throws NoCreateException {
@@ -122,6 +125,7 @@ class PolicyImpl implements Policy {
 			throw new NoCreateException("server load exceeded; please wait");
 	}
 
+	@java.lang.SuppressWarnings("unused")
 	@Override
 	public synchronized void permitDestroy(@NonNull UsernamePrincipal user,
 			@NonNull TavernaRun run) throws NoDestroyException {
@@ -136,6 +140,7 @@ class PolicyImpl implements Policy {
 			throw new NoDestroyException();
 	}
 
+	@java.lang.SuppressWarnings("unused")
 	@Override
 	public void permitUpdate(@NonNull UsernamePrincipal user,
 			@NonNull TavernaRun run) throws NoUpdateException {
@@ -153,5 +158,11 @@ class PolicyImpl implements Policy {
 		if (!context.getPermittedUpdaters().contains(user.getName()))
 			throw new NoUpdateException(
 					"workflow run not owned by you and you're not granted access");
+	}
+
+	@Override
+	public void setPermittedWorkflowURIs(UsernamePrincipal user,
+			List<URI> permitted) {
+		limits.setPermittedWorkflowURIs(permitted);
 	}
 }

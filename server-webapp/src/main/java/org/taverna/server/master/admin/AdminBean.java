@@ -16,6 +16,9 @@ import static org.taverna.server.master.utils.RestUtils.opt;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.core.Response;
@@ -24,14 +27,15 @@ import javax.ws.rs.core.UriInfo;
 
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Required;
-import org.taverna.server.master.ManagementModel;
+import org.taverna.server.master.api.ManagementModel;
 import org.taverna.server.master.exceptions.GeneralFailureException;
 import org.taverna.server.master.factories.ConfigurableRunFactory;
-import org.taverna.server.master.identity.User;
 import org.taverna.server.master.identity.UserStore;
+import org.taverna.server.master.identity.UserStore.StoredUser;
 import org.taverna.server.master.usage.UsageRecordRecorder;
 import org.taverna.server.master.utils.InvocationCounter;
 import org.taverna.server.master.worker.RunDBSupport;
+import org.taverna.server.master.worker.WorkerModel;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
@@ -72,6 +76,11 @@ public class AdminBean implements Admin {
 		this.userStore = userStore;
 	}
 
+	@Required
+	public void setLocalWorkerModel(WorkerModel worker) {
+		localWorker = worker;
+	}
+
 	public void setAdminHtmlFile(String filename) {
 		this.adminHtmlFile = filename;
 	}
@@ -92,18 +101,20 @@ public class AdminBean implements Admin {
 	private ConfigurableRunFactory factory;
 	private UsageRecordRecorder usageRecords;
 	private UserStore userStore;
+	private WorkerModel localWorker;
 	private String adminHtmlFile = "/admin.html";
 	private String resourceRoot = "/static/";
 
+	@SuppressWarnings("null")
 	@RolesAllowed(ADMIN)
 	@Override
-	public @NonNull
-	Response getUserInterface() throws IOException {
+	@NonNull
+	public Response getUserInterface() throws IOException {
 		return Response.ok(getResource(adminHtmlFile), "text/html").build();
 	}
 
 	@RolesAllowed(ADMIN)
-	public Response getStaticResource(String file) throws IOException {
+	public Response getStaticResource(@NonNull String file) throws IOException {
 		if (file.matches("^[-_.a-zA-Z0-9]+$")) {
 			String type = "application/octet-stream";
 			if (file.endsWith(".html"))
@@ -132,8 +143,8 @@ public class AdminBean implements Admin {
 
 	@RolesAllowed(ADMIN)
 	@Override
-	public @NonNull
-	AdminDescription getDescription(UriInfo ui) {
+	@NonNull
+	public AdminDescription getDescription(@NonNull UriInfo ui) {
 		return new AdminDescription(ui);
 	}
 
@@ -210,17 +221,18 @@ public class AdminBean implements Admin {
 
 	@RolesAllowed(ADMIN)
 	@Override
-	public @NonNull
-	String getURFile() {
-		return state.getUsageRecordLogFile();
+	@NonNull
+	public String getURFile() {
+		String urf = state.getUsageRecordLogFile();
+		return urf == null ? "" : urf;
 	}
 
 	@RolesAllowed(ADMIN)
 	@Override
-	public @NonNull
-	String setURFile(@NonNull String newValue) {
-		state.setUsageRecordLogFile(newValue);
-		return state.getUsageRecordLogFile();
+	@NonNull
+	public String setURFile(@NonNull String newValue) {
+		state.setUsageRecordLogFile(newValue.isEmpty() ? null : newValue);
+		return getURFile();
 	}
 
 	@RolesAllowed(ADMIN)
@@ -261,15 +273,15 @@ public class AdminBean implements Admin {
 
 	@RolesAllowed(ADMIN)
 	@Override
-	public @NonNull
-	String getRegistryHost() {
+	@NonNull
+	public String getRegistryHost() {
 		return factory.getRegistryHost();
 	}
 
 	@RolesAllowed(ADMIN)
 	@Override
-	public @NonNull
-	String setRegistryHost(@NonNull String newValue) {
+	@NonNull
+	public String setRegistryHost(@NonNull String newValue) {
 		factory.setRegistryHost(newValue);
 		return factory.getRegistryHost();
 	}
@@ -296,6 +308,29 @@ public class AdminBean implements Admin {
 
 	@Override
 	public Response optionsRegistryPort() {
+		return opt("PUT");
+	}
+
+	// /////////////////////////////////////////////////////
+
+	@RolesAllowed(ADMIN)
+	@Override
+	@NonNull
+	public String getRegistryJar() {
+		return factory.getRmiRegistryJar();
+	}
+
+	@RolesAllowed(ADMIN)
+	@Override
+	@NonNull
+	public String setRegistryJar(@NonNull String registryJar) {
+		factory.setRmiRegistryJar(registryJar);
+		return factory.getRmiRegistryJar();
+	}
+
+	@RolesAllowed(ADMIN)
+	@Override
+	public Response optionsRegistryJar() {
 		return opt("PUT");
 	}
 
@@ -343,6 +378,7 @@ public class AdminBean implements Admin {
 
 	@RolesAllowed(ADMIN)
 	@Override
+	@NonNull
 	public StringList currentRuns() {
 		StringList result = new StringList();
 		result.string = runDB.listRunNames();
@@ -359,15 +395,15 @@ public class AdminBean implements Admin {
 
 	@RolesAllowed(ADMIN)
 	@Override
-	public @NonNull
-	String getJavaBinary() {
+	@NonNull
+	public String getJavaBinary() {
 		return factory.getJavaBinary();
 	}
 
 	@RolesAllowed(ADMIN)
 	@Override
-	public @NonNull
-	String setJavaBinary(@NonNull String newValue) {
+	@NonNull
+	public String setJavaBinary(@NonNull String newValue) {
 		factory.setJavaBinary(newValue);
 		return factory.getJavaBinary();
 	}
@@ -381,8 +417,8 @@ public class AdminBean implements Admin {
 
 	@RolesAllowed(ADMIN)
 	@Override
-	public @NonNull
-	StringList getExtraArguments() {
+	@NonNull
+	public StringList getExtraArguments() {
 		String[] xargs = factory.getExtraArguments();
 		StringList result = new StringList();
 		result.string = asList(xargs == null ? new String[0] : xargs);
@@ -391,8 +427,8 @@ public class AdminBean implements Admin {
 
 	@RolesAllowed(ADMIN)
 	@Override
-	public @NonNull
-	StringList setExtraArguments(@NonNull StringList newValue) {
+	@NonNull
+	public StringList setExtraArguments(@NonNull StringList newValue) {
 		if (newValue == null || newValue.string == null)
 			factory.setExtraArguments(new String[0]);
 		else
@@ -413,15 +449,15 @@ public class AdminBean implements Admin {
 
 	@RolesAllowed(ADMIN)
 	@Override
-	public @NonNull
-	String getServerWorkerJar() {
+	@NonNull
+	public String getServerWorkerJar() {
 		return factory.getServerWorkerJar();
 	}
 
 	@RolesAllowed(ADMIN)
 	@Override
-	public @NonNull
-	String setServerWorkerJar(@NonNull String newValue) {
+	@NonNull
+	public String setServerWorkerJar(@NonNull String newValue) {
 		factory.setServerWorkerJar(newValue);
 		return factory.getServerWorkerJar();
 	}
@@ -436,15 +472,15 @@ public class AdminBean implements Admin {
 
 	@RolesAllowed(ADMIN)
 	@Override
-	public @NonNull
-	String getExecuteWorkflowScript() {
+	@NonNull
+	public String getExecuteWorkflowScript() {
 		return factory.getExecuteWorkflowScript();
 	}
 
 	@RolesAllowed(ADMIN)
 	@Override
-	public @NonNull
-	String setExecuteWorkflowScript(@NonNull String newValue) {
+	@NonNull
+	public String setExecuteWorkflowScript(@NonNull String newValue) {
 		factory.setExecuteWorkflowScript(newValue);
 		return factory.getExecuteWorkflowScript();
 	}
@@ -524,15 +560,15 @@ public class AdminBean implements Admin {
 
 	@RolesAllowed(ADMIN)
 	@Override
-	public @NonNull
-	String getServerForkerJar() {
+	@NonNull
+	public String getServerForkerJar() {
 		return factory.getServerForkerJar();
 	}
 
 	@RolesAllowed(ADMIN)
 	@Override
-	public @NonNull
-	String setServerForkerJar(@NonNull String newValue) {
+	@NonNull
+	public String setServerForkerJar(@NonNull String newValue) {
 		factory.setServerForkerJar(newValue);
 		return factory.getServerForkerJar();
 	}
@@ -607,7 +643,7 @@ public class AdminBean implements Admin {
 
 	@RolesAllowed(ADMIN)
 	@Override
-	public UserList users(UriInfo ui) {
+	public UserList users(@NonNull UriInfo ui) {
 		UserList ul = new UserList();
 		UriBuilder ub = secure(ui).path("{id}");
 		for (String user : userStore.getUserNames())
@@ -623,11 +659,11 @@ public class AdminBean implements Admin {
 
 	@RolesAllowed(ADMIN)
 	@Override
-	public UserDesc user(String username) {
+	public UserDesc user(@NonNull String username) {
 		UserDesc desc = new UserDesc();
-		User u = userStore.getUser(username);
-		desc.username = u.getUsername();
-		desc.localUserId = u.getLocalUsername();
+		StoredUser u = userStore.get(username);
+		desc.username = u.getId();
+		desc.localUserId = u.getLocalUser();
 		desc.admin = u.isAdmin();
 		desc.enabled = u.isEnabled();
 		return desc;
@@ -635,53 +671,52 @@ public class AdminBean implements Admin {
 
 	@RolesAllowed(ADMIN)
 	@Override
-	public Response optionsUser(String username) {
+	public Response optionsUser(@NonNull String username) {
 		return opt("PUT", "DELETE");
 	}
 
 	@RolesAllowed(ADMIN)
 	@Override
-	public Response useradd(UserDesc userdesc, @NonNull UriInfo ui) {
+	public Response useradd(@NonNull UserDesc userdesc, @NonNull UriInfo ui) {
 		if (userdesc.username == null)
 			throw new IllegalArgumentException("no user name supplied");
 		if (userdesc.password == null)
 			userdesc.password = randomUUID().toString();
-		userStore.addUser(userdesc.username, userdesc.password, false);
+		StoredUser u = userStore.addUser(userdesc.username, userdesc.password);
 		if (userdesc.localUserId != null)
-			userStore.setUserLocalUser(userdesc.username, userdesc.localUserId);
+			u.setLocalUser(userdesc.localUserId);
 		if (userdesc.admin != null && userdesc.admin)
-			userStore.setUserAdmin(userdesc.username, true);
+			u.setAdmin(userdesc.admin);
 		if (userdesc.enabled != null && userdesc.enabled)
-			userStore.setUserEnabled(userdesc.username, true);
+			u.setEnabled(userdesc.enabled);
 		return created(secure(ui).path("{id}").build(userdesc.username))
 				.build();
 	}
 
 	@RolesAllowed(ADMIN)
 	@Override
-	public UserDesc userset(String username, UserDesc userdesc) {
+	public UserDesc userset(@NonNull String username, @NonNull UserDesc userdesc) {
+		StoredUser su = userStore.get(username);
 		if (userdesc.password != null)
-			userStore.setUserPassword(username, userdesc.password);
+			su.setPassword(userdesc.password);
 		if (userdesc.localUserId != null)
-			userStore.setUserLocalUser(username, userdesc.localUserId);
+			su.setLocalUser(userdesc.localUserId);
 		if (userdesc.admin != null)
-			userStore.setUserAdmin(username, userdesc.admin);
+			su.setAdmin(userdesc.admin);
 		if (userdesc.enabled != null)
-			userStore.setUserEnabled(username, userdesc.enabled);
-		userdesc = null; // Stop reuse!
+			su.setEnabled(userdesc.enabled);
 
 		UserDesc desc = new UserDesc();
-		User u = userStore.getUser(username);
-		desc.username = u.getUsername();
-		desc.localUserId = u.getLocalUsername();
-		desc.admin = u.isAdmin();
-		desc.enabled = u.isEnabled();
+		desc.username = su.getId();
+		desc.localUserId = su.getLocalUser();
+		desc.admin = su.isAdmin();
+		desc.enabled = su.isEnabled();
 		return desc;
 	}
 
 	@RolesAllowed(ADMIN)
 	@Override
-	public Response userdel(String username) {
+	public Response userdel(@NonNull String username) {
 		userStore.deleteUser(username);
 		return noContent().build();
 	}
@@ -722,6 +757,41 @@ public class AdminBean implements Admin {
 	@RolesAllowed(ADMIN)
 	@Override
 	public Response optionsOperatingLimit() {
+		return opt("PUT");
+	}
+
+	@RolesAllowed(ADMIN)
+	@Override
+	@NonNull
+	public StringList getPermittedWorkflowURIs() {
+		StringList sl = new StringList();
+		List<URI> uris = localWorker.getPermittedWorkflowURIs();
+		if (uris != null)
+			for (URI uri : uris)
+				sl.string.add(uri.toString());
+		return sl;
+	}
+
+	private static final URI myExp = URI.create("http://www.myexperment.org/");
+
+	@RolesAllowed(ADMIN)
+	@Override
+	@NonNull
+	public StringList setPermittedWorkflowURIs(@NonNull StringList permitted) {
+		List<URI> uris = new ArrayList<URI>();
+		for (String uri : permitted.string)
+			try {
+				uris.add(myExp.resolve(uri));
+			} catch (Exception e) {
+				// Ignore
+			}
+		localWorker.setPermittedWorkflowURIs(uris);
+		return getPermittedWorkflowURIs();
+	}
+
+	@RolesAllowed(ADMIN)
+	@Override
+	public Response optionsPermittedWorkflowURIs() {
 		return opt("PUT");
 	}
 }

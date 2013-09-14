@@ -1,7 +1,6 @@
 package org.taverna.server.master.mocks;
 
-import static java.util.Collections.emptyList;
-
+import java.net.URI;
 import java.util.List;
 
 import org.taverna.server.master.common.Workflow;
@@ -13,6 +12,7 @@ import org.taverna.server.master.interfaces.TavernaRun;
 import org.taverna.server.master.utils.UsernamePrincipal;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 /**
  * A very simple (and unsafe) security model. The number of runs is configurable
@@ -62,11 +62,6 @@ public class SimpleServerPolicy implements Policy {
 	}
 
 	@Override
-	public List<Workflow> listPermittedWorkflows(@NonNull UsernamePrincipal p) {
-		return emptyList();
-	}
-
-	@Override
 	public boolean permitAccess(@NonNull UsernamePrincipal p,
 			@NonNull TavernaRun run) {
 		// No secrets here!
@@ -104,5 +99,16 @@ public class SimpleServerPolicy implements Policy {
 	@Override
 	public int getOperatingLimit() {
 		return 1;
+	}
+
+	@Override
+	public List<URI> listPermittedWorkflowURIs(@Nullable UsernamePrincipal user) {
+		return null;
+	}
+
+	@Override
+	public void setPermittedWorkflowURIs(UsernamePrincipal user,
+			List<URI> permitted) {
+		// Ignore
 	}
 }

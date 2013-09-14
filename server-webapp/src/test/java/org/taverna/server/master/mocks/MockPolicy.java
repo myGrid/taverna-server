@@ -1,8 +1,6 @@
 package org.taverna.server.master.mocks;
 
-import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import org.taverna.server.master.common.Workflow;
@@ -35,11 +33,6 @@ public class MockPolicy extends SimpleServerPolicy {
 	@Override
 	public Integer getMaxRuns(@NonNull UsernamePrincipal user) {
 		return usermaxruns;
-	}
-
-	@Override
-	public List<Workflow> listPermittedWorkflows(@NonNull UsernamePrincipal user) {
-		return Arrays.asList();
 	}
 
 	@Override

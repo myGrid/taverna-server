@@ -3,7 +3,7 @@
  * 
  * See the file "LICENSE" for license terms.
  */
-package org.taverna.server.localworker.impl;
+package org.taverna.server.localworker.api;
 
 import static java.nio.charset.Charset.defaultCharset;
 
@@ -71,7 +71,6 @@ public interface Constants {
 	 * workflows.
 	 */
 	// This technique is known to be insecure; bite me.
-	// TODO Use agreed environment name for HELIO CIS token
 	static final String HELIO_TOKEN_NAME = "HELIO_CIS_TOKEN";
 
 	/**
@@ -113,4 +112,11 @@ public interface Constants {
 	 * Time to wait during closing down this process. In milliseconds.
 	 */
 	static final int DEATH_DELAY = 500;
+	/**
+	 * The name of the property describing where shared directories should be
+	 * located.
+	 */
+	static final String SHARED_DIR_PROP = "taverna.sharedDirectory";
+
+	static final String TIME = "/usr/bin/time";
 }

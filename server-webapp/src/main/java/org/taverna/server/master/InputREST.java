@@ -18,7 +18,7 @@ import javax.ws.rs.core.UriInfo;
 import org.apache.cxf.jaxrs.impl.MetadataMap;
 import org.apache.cxf.jaxrs.model.URITemplate;
 import org.springframework.beans.factory.annotation.Required;
-import org.taverna.server.master.TavernaServerImpl.SupportAware;
+import org.taverna.server.master.api.InputBean;
 import org.taverna.server.master.common.DirEntryReference;
 import org.taverna.server.master.exceptions.BadInputPortNameException;
 import org.taverna.server.master.exceptions.BadPropertyValueException;
@@ -45,6 +45,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
  * 
  * @author Donal Fellows
  */
+@SuppressWarnings("null")
 class InputREST implements TavernaServerInputREST, InputBean {
 	private UriInfo ui;
 	private TavernaServerSupport support;
@@ -70,7 +71,8 @@ class InputREST implements TavernaServerInputREST, InputBean {
 	}
 
 	@Override
-	public InputREST connect(TavernaRun run, UriInfo ui) {
+	@NonNull
+	public InputREST connect(@NonNull TavernaRun run, @NonNull UriInfo ui) {
 		this.run = run;
 		this.ui = ui;
 		return this;
@@ -162,7 +164,7 @@ class InputREST implements TavernaServerInputREST, InputBean {
 		try {
 			File from = fileUtils.getFile(
 					support.getRun(mvm.get("runName").get(0)),
-					FalseDE.make(mvm.get("path").get(0)));
+					SyntheticDirectoryEntry.make(mvm.get("path").get(0)));
 			File to = run.getWorkingDirectory().makeEmptyFile(
 					support.getPrincipal(), randomUUID().toString());
 
@@ -177,47 +179,6 @@ class InputREST implements TavernaServerInputREST, InputBean {
 			throw new BadStateChangeException("may not copy from that run", e);
 		} catch (NoDirectoryEntryException e) {
 			throw new BadStateChangeException("source does not exist", e);
-		}
-	}
-
-	static class FalseDE implements DirectoryEntry {
-		public static DirEntryReference make(String path) {
-			return DirEntryReference.newInstance(new FalseDE(path));
-		}
-
-		private FalseDE(String p) {
-			this.p = p;
-			this.d = new Date();
-		}
-
-		private String p;
-		private Date d;
-
-		@Override
-		@NonNull
-		public String getName() {
-			return "";
-		}
-
-		@Override
-		@NonNull
-		public String getFullName() {
-			return p;
-		}
-
-		@Override
-		public void destroy() {
-		}
-
-		@Override
-		public int compareTo(DirectoryEntry o) {
-			return p.compareTo(o.getFullName());
-		}
-
-		@Override
-		@NonNull
-		public Date getModificationDate() {
-			return d;
 		}
 	}
 
@@ -247,14 +208,50 @@ class InputREST implements TavernaServerInputREST, InputBean {
 }
 
 /**
- * Description of properties supported by {@link InputREST}.
+ * A way to create synthetic directory entries, used during deletion.
  * 
  * @author Donal Fellows
  */
-interface InputBean extends SupportAware {
-	InputREST connect(TavernaRun run, UriInfo ui);
+@SuppressWarnings("null")
+class SyntheticDirectoryEntry implements DirectoryEntry {
+	public static DirEntryReference make(@NonNull String path) {
+		return DirEntryReference.newInstance(new SyntheticDirectoryEntry(path));
+	}
 
-	void setCdBuilder(ContentsDescriptorBuilder cd);
+	private SyntheticDirectoryEntry(@NonNull String p) {
+		this.p = p;
+		this.d = new Date();
+	}
 
-	void setFileUtils(FilenameUtils fn);
+	@NonNull
+	private final String p;
+	@NonNull
+	private final Date d;
+
+	@Override
+	@NonNull
+	public String getName() {
+		return "";
+	}
+
+	@Override
+	@NonNull
+	public String getFullName() {
+		return p;
+	}
+
+	@Override
+	public void destroy() {
+	}
+
+	@Override
+	public int compareTo(DirectoryEntry o) {
+		return p.compareTo(o.getFullName());
+	}
+
+	@Override
+	@NonNull
+	public Date getModificationDate() {
+		return d;
+	}
 }

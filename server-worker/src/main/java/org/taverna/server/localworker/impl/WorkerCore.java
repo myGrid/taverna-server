@@ -8,16 +8,22 @@ package org.taverna.server.localworker.impl;
 import static java.io.File.createTempFile;
 import static java.io.File.pathSeparator;
 import static java.lang.Boolean.parseBoolean;
+import static java.lang.Double.parseDouble;
+import static java.lang.Long.parseLong;
+import static java.lang.Runtime.getRuntime;
 import static java.lang.System.out;
+import static java.net.InetAddress.getLocalHost;
 import static org.apache.commons.io.FileUtils.forceDelete;
+import static org.apache.commons.io.FileUtils.sizeOfDirectory;
 import static org.apache.commons.io.FileUtils.write;
 import static org.apache.commons.io.IOUtils.copy;
-import static org.taverna.server.localworker.impl.Constants.CREDENTIAL_MANAGER_DIRECTORY;
-import static org.taverna.server.localworker.impl.Constants.CREDENTIAL_MANAGER_PASSWORD;
-import static org.taverna.server.localworker.impl.Constants.DEFAULT_LISTENER_NAME;
-import static org.taverna.server.localworker.impl.Constants.KEYSTORE_PASSWORD;
-import static org.taverna.server.localworker.impl.Constants.START_WAIT_TIME;
-import static org.taverna.server.localworker.impl.Constants.SYSTEM_ENCODING;
+import static org.taverna.server.localworker.api.Constants.CREDENTIAL_MANAGER_DIRECTORY;
+import static org.taverna.server.localworker.api.Constants.CREDENTIAL_MANAGER_PASSWORD;
+import static org.taverna.server.localworker.api.Constants.DEFAULT_LISTENER_NAME;
+import static org.taverna.server.localworker.api.Constants.KEYSTORE_PASSWORD;
+import static org.taverna.server.localworker.api.Constants.START_WAIT_TIME;
+import static org.taverna.server.localworker.api.Constants.SYSTEM_ENCODING;
+import static org.taverna.server.localworker.api.Constants.TIME;
 import static org.taverna.server.localworker.impl.TavernaRunManager.interactionFeedPath;
 import static org.taverna.server.localworker.impl.TavernaRunManager.interactionHost;
 import static org.taverna.server.localworker.impl.TavernaRunManager.interactionPort;
@@ -31,17 +37,18 @@ import static org.taverna.server.localworker.remote.RemoteStatus.Finished;
 import static org.taverna.server.localworker.remote.RemoteStatus.Initialized;
 import static org.taverna.server.localworker.remote.RemoteStatus.Operating;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
-import java.net.InetAddress;
 import java.net.URL;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
@@ -51,11 +58,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.ws.Holder;
 
 import org.ogf.usage.JobUsageRecord;
+import org.taverna.server.localworker.api.RunAccounting;
+import org.taverna.server.localworker.api.Worker;
 import org.taverna.server.localworker.remote.ImplementationException;
 import org.taverna.server.localworker.remote.RemoteListener;
 import org.taverna.server.localworker.remote.RemoteStatus;
@@ -78,6 +89,17 @@ import edu.umd.cs.findbugs.annotations.SuppressWarnings;
 public class WorkerCore extends UnicastRemoteObject implements Worker,
 		RemoteListener {
 	static final Map<String, Property> pmap = new HashMap<String, Property>();
+	/**
+	 * Regular expression to extract the detailed timing information from the
+	 * output of /usr/bin/time
+	 */
+	private static final Pattern TimeRE;
+	static {
+		final String TIMERE = "([0-9.:]+)";
+		final String TERMS = "(real|user|system|sys|elapsed)";
+		TimeRE = Pattern.compile(TIMERE + " *" + TERMS + "[ \t]*" + TIMERE
+				+ " *" + TERMS + "[ \t]*" + TIMERE + " *" + TERMS);
+	}
 
 	enum Property {
 		STDOUT("stdout"), STDERR("stderr"), EXIT_CODE("exitcode"), READY_TO_NOTIFY(
@@ -126,6 +148,7 @@ public class WorkerCore extends UnicastRemoteObject implements Worker,
 	String emailAddress;
 	Date start;
 	RunAccounting accounting;
+	Holder<Integer> pid;
 
 	private boolean finished;
 	private JobUsageRecord ur;
@@ -142,7 +165,16 @@ public class WorkerCore extends UnicastRemoteObject implements Worker,
 		super();
 		stdout = new StringWriter();
 		stderr = new StringWriter();
+		pid = new Holder<Integer>();
 		this.accounting = accounting;
+	}
+
+	private int getPID() {
+		synchronized(pid) {
+			if (pid.value == null)
+				return -1;
+			return pid.value;
+		}
 	}
 
 	/**
@@ -152,12 +184,17 @@ public class WorkerCore extends UnicastRemoteObject implements Worker,
 	 * @author Donal Fellows
 	 */
 	private static class AsyncCopy extends Thread {
-		private InputStream from;
+		private BufferedReader from;
 		private Writer to;
+		private Holder<Integer> pidHolder;
 
-		AsyncCopy(InputStream from, Writer to) {
-			this.from = from;
+		AsyncCopy(InputStream from, Writer to) throws UnsupportedEncodingException {
+			this(from, to, null);
+		}
+		AsyncCopy(InputStream from, Writer to, Holder<Integer> pid) throws UnsupportedEncodingException {
+			this.from = new BufferedReader(new InputStreamReader(from, SYSTEM_ENCODING));
 			this.to = to;
+			this.pidHolder = pid;
 			setDaemon(true);
 			start();
 		}
@@ -165,7 +202,16 @@ public class WorkerCore extends UnicastRemoteObject implements Worker,
 		@Override
 		public void run() {
 			try {
-				copy(from, to, SYSTEM_ENCODING);
+				if (pidHolder != null) {
+					String line = from.readLine();
+					if (line.matches("^pid:\\d+$"))
+						synchronized(pidHolder) {
+							pidHolder.value = Integer.parseInt(line.substring(4));
+						}
+					else
+						to.write(line + System.getProperty("line.separator"));
+				}
+				copy(from, to);
 			} catch (IOException e) {
 			}
 		}
@@ -271,7 +317,7 @@ public class WorkerCore extends UnicastRemoteObject implements Worker,
 					accounting.runStarted();
 
 					// Capture its stdout and stderr
-					new AsyncCopy(subprocess.getInputStream(), stdout);
+					new AsyncCopy(subprocess.getInputStream(), stdout, pid);
 					new AsyncCopy(subprocess.getErrorStream(), stderr);
 					if (password != null)
 						new PasswordWriterThread(subprocess, password);
@@ -336,6 +382,7 @@ public class WorkerCore extends UnicastRemoteObject implements Worker,
 			String token, List<String> runtime) throws IOException,
 			UnsupportedEncodingException, FileNotFoundException {
 		ProcessBuilder pb = new ProcessBuilder();
+		pb.command().add(TIME);
 		/*
 		 * WARNING! HERE THERE BE DRAGONS! BE CAREFUL HERE!
 		 * 
@@ -495,7 +542,7 @@ public class WorkerCore extends UnicastRemoteObject implements Worker,
 				// Check if the workflow terminated of its own accord
 				code = subprocess.exitValue();
 				accounting.runCeased();
-				buildUR(code == 0 ? Completed : Failed);
+				buildUR(code == 0 ? Completed : Failed, code);
 			} catch (IllegalThreadStateException e) {
 				subprocess.destroy();
 				try {
@@ -505,7 +552,7 @@ public class WorkerCore extends UnicastRemoteObject implements Worker,
 					return;
 				}
 				accounting.runCeased();
-				buildUR(code == 0 ? Completed : Aborted);
+				buildUR(code == 0 ? Completed : Aborted, code);
 			}
 			finished = true;
 			exitCode = code;
@@ -527,15 +574,43 @@ public class WorkerCore extends UnicastRemoteObject implements Worker,
 		return new JobUsageRecord("unknown");
 	}
 
-	private void buildUR(Status status) {
+
+	/**
+	 * Fills in the accounting information from the exit code and stderr.
+	 * 
+	 * @param exitCode
+	 *            The exit code from the program.
+	 */
+	private void buildUR(Status status, int exitCode) {
 		try {
 			Date now = new Date();
+			long user = -1, sys = -1, real = -1;
+			Matcher m = TimeRE.matcher(stderr.toString());
 			ur = newUR();
+			while (m.find())
+				for (int i = 1; i < 6; i += 2)
+					if (m.group(i + 1).equals("user"))
+						user = parseDuration(m.group(i));
+					else if (m.group(i + 1).equals("sys")
+							|| m.group(i + 1).equals("system"))
+						sys = parseDuration(m.group(i));
+					else if (m.group(i + 1).equals("real")
+							|| m.group(i + 1).equals("elapsed"))
+						real = parseDuration(m.group(i));
+			if (user != -1)
+				ur.addCpuDuration(user).setUsageType("user");
+			if (sys != -1)
+				ur.addCpuDuration(sys).setUsageType("system");
 			ur.addUser(System.getProperty("user.name"), null);
 			ur.addStartAndEnd(start, now);
-			ur.addWallDuration(now.getTime() - start.getTime());
+			if (real != -1)
+				ur.addWallDuration(real);
+			else
+				ur.addWallDuration(now.getTime() - start.getTime());
 			ur.setStatus(status.toString());
-			ur.addHost(InetAddress.getLocalHost().getHostName());
+			ur.addHost(getLocalHost().getHostName());
+			ur.addResource("exitcode", Integer.toString(exitCode));
+			ur.addDisk(sizeOfDirectory(wd)).setStorageUnit("B");
 			if (urreceiver != null)
 				urreceiver.acceptUsageRecord(ur.marshal());
 		} catch (RuntimeException e) {
@@ -545,28 +620,52 @@ public class WorkerCore extends UnicastRemoteObject implements Worker,
 		}
 	}
 
+	private long parseDuration(String durationString) {
+		try {
+			return (long)(parseDouble(durationString) * 1000);
+		} catch (NumberFormatException nfe) {
+			// Not a double; maybe MM:SS.mm or HH:MM:SS.mm
+		}
+		long dur = 0;
+		for (String d : durationString.split(":"))
+			try {
+				dur = 60 * dur + parseLong(d);
+			} catch (NumberFormatException nfe) {
+				// Assume that only one thing is fractional, and that it is last
+				return 60000 * dur + (long)(parseDouble(d) * 1000);
+			}
+		return dur * 1000;
+	}
+
+	private void signal(String signal) throws Exception {
+		int pid = getPID();
+		if (pid > 0
+				&& getRuntime().exec("kill -" + signal + " " + pid).waitFor() == 0)
+			return;
+		throw new Exception("failed to send signal " + signal + " to process "
+				+ pid);
+	}
+
 	/**
 	 * Move the worker out of the stopped state and back to operating.
 	 * 
 	 * @throws Exception
-	 *             if it fails (which it always does; operation currently
-	 *             unsupported).
+	 *             if it fails.
 	 */
 	@Override
 	public void startWorker() throws Exception {
-		throw new Exception("starting unsupported");
+		signal("CONT");
 	}
 
 	/**
 	 * Move the worker into the stopped state from the operating state.
 	 * 
 	 * @throws Exception
-	 *             if it fails (which it always does; operation currently
-	 *             unsupported).
+	 *             if it fails.
 	 */
 	@Override
 	public void stopWorker() throws Exception {
-		throw new Exception("stopping unsupported");
+		signal("STOP");
 	}
 
 	/**
@@ -584,7 +683,7 @@ public class WorkerCore extends UnicastRemoteObject implements Worker,
 			finished = true;
 			readyToSendEmail = true;
 			accounting.runCeased();
-			buildUR(exitCode.intValue() == 0 ? Completed : Failed);
+			buildUR(exitCode.intValue() == 0 ? Completed : Failed, exitCode);
 			return Finished;
 		} catch (IllegalThreadStateException e) {
 			return Operating;
