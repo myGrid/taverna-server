@@ -9,7 +9,11 @@ import static java.lang.Math.min;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.sort;
 import static java.util.UUID.randomUUID;
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE;
+import static javax.ws.rs.core.MediaType.APPLICATION_XML_TYPE;
 import static javax.ws.rs.core.Response.created;
+import static javax.ws.rs.core.Response.notAcceptable;
+import static javax.ws.rs.core.Response.ok;
 import static javax.ws.rs.core.UriBuilder.fromUri;
 import static javax.xml.ws.handler.MessageContext.HTTP_REQUEST_HEADERS;
 import static javax.xml.ws.handler.MessageContext.PATH_INFO;
@@ -21,6 +25,7 @@ import static org.taverna.server.master.common.Roles.ADMIN;
 import static org.taverna.server.master.common.Roles.USER;
 import static org.taverna.server.master.common.Status.Initialized;
 import static org.taverna.server.master.common.Uri.secure;
+import static org.taverna.server.master.rest.handler.URIListHandler.URILIST_TYPE;
 import static org.taverna.server.master.soap.DirEntry.convert;
 import static org.taverna.server.master.utils.RestUtils.opt;
 
@@ -30,9 +35,12 @@ import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
@@ -42,9 +50,12 @@ import javax.jws.WebService;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
+import javax.ws.rs.core.Variant;
+import javax.ws.rs.core.Variant.VariantListBuilder;
 import javax.xml.bind.JAXBException;
 import javax.xml.ws.WebServiceContext;
 
@@ -238,12 +249,29 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 		return new ServerDescription(ui, resolve(interactionFeed));
 	}
 
+	private static final MediaType[] RUN_LIST_TYPES = { APPLICATION_XML_TYPE,
+			APPLICATION_JSON_TYPE, URILIST_TYPE };
+	private static final Set<MediaType> LIST_TYPE_SET = new HashSet<MediaType>(
+			Arrays.asList(RUN_LIST_TYPES));
+	private static final List<Variant> LIST_TYPE_VARS = VariantListBuilder
+			.newInstance().mediaTypes(RUN_LIST_TYPES).build();
+
 	@Override
 	@CallCounted
 	@RolesAllowed(USER)
-	public RunList listUsersRuns(UriInfo ui) {
+	public Response listUsersRuns(UriInfo ui, HttpHeaders headers) {
 		jaxrsUriInfo.set(new WeakReference<UriInfo>(ui));
-		return new RunList(runs(), secure(ui).path("{name}"));
+		RunList rl = new RunList(runs(), secure(ui).path("{name}"));
+		for (MediaType mt : headers.getAcceptableMediaTypes())
+			if (LIST_TYPE_SET.contains(mt)) {
+				if (!mt.isCompatible(URILIST_TYPE))
+					return ok(rl, mt).build();
+				List<URI> response = new ArrayList<URI>();
+				for (RunReference s : rl.run)
+					response.add(s.link);
+				return ok(response, mt).build();
+			}
+		return notAcceptable(LIST_TYPE_VARS).build();
 	}
 
 	@Override

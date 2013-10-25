@@ -35,6 +35,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
@@ -98,11 +99,12 @@ public interface TavernaServerREST {
 	 */
 	@GET
 	@Path(RUNS)
-	@Produces({ XML, JSON })
+	@Produces({ XML, JSON, URI_LIST })
 	@RolesAllowed(USER)
 	@Description("Produces a list of all runs visible to the user.")
 	@NonNull
-	RunList listUsersRuns(@NonNull @Context UriInfo ui);
+	Response listUsersRuns(@NonNull @Context UriInfo ui,
+			@NonNull @Context HttpHeaders headers);
 
 	/**
 	 * Accepts (or not) a request to create a new run executing the given
