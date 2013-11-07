@@ -16,7 +16,7 @@ import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
  * 
  * @author Donal Fellows
  */
-interface ContentTypes {
+public interface ContentTypes {
 	static final String URI_LIST = "text/uri-list";
 	static final String ZIP = "application/zip";
 	static final String TEXT = TEXT_PLAIN;

@@ -51,6 +51,8 @@ import org.taverna.server.master.rest.TavernaServerREST.ServerDescription;
 import org.taverna.server.master.rest.TavernaServerRunREST.RunDescription;
 import org.taverna.server.master.rest.TavernaServerSecurityREST;
 import org.taverna.server.master.rest.TavernaServerSecurityREST.CredentialHolder;
+import org.taverna.server.master.rest.scape.PreservationActionPlan;
+import org.taverna.server.master.rest.scape.ScapeExecutionService;
 import org.taverna.server.master.soap.DirEntry;
 import org.taverna.server.master.soap.FileContents;
 import org.taverna.server.master.soap.PermissionList;
@@ -345,7 +347,13 @@ public class JaxbSanityTest {
 	}
 
 	@Test
-	public void testJAXBforAdmininstration() throws Exception {
+	public void testJAXBforAdministration() throws Exception {
 		testJAXB(Admin.AdminDescription.class);
+	}
+
+	@Test
+	public void textJAXBforScape() throws Exception {
+		testJAXB(PreservationActionPlan.class, ScapeExecutionService.Job.class,
+				ScapeExecutionService.Jobs.class);
 	}
 }
