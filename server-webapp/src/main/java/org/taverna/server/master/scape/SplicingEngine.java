@@ -36,7 +36,9 @@ public class SplicingEngine {
 		return e;
 	}
 
-	private List<Element> children(Element context, String name) {
+	@NonNull
+	private List<Element> children(@NonNull Element context,
+			@NonNull String name) {
 		NodeList nl = context.getElementsByTagNameNS(T2FLOW_NS, name);
 		List<Element> elems = new ArrayList<Element>(nl.getLength());
 		for (int i = 0; i < nl.getLength(); i++)
@@ -64,15 +66,26 @@ public class SplicingEngine {
 		Element innerMaster = getInnerMasterAndSplice(executablePlan, wrap);
 
 		// Splice in processor
-		spliceSubworkflowProcessor(outerMaster, innerMaster);
-
-		// FIXME Splice inputs and outputs
+		Element dataflowProcessor = spliceSubworkflowProcessor(outerMaster,
+				innerMaster);
+		spliceInputs(dataflowProcessor, outerMaster, innerMaster);
+		spliceOutputs(dataflowProcessor, outerMaster, innerMaster);
 
 		// Splice into POJO
 		Workflow w = new Workflow();
 		w.content = new Element[1];
 		w.content[0] = wrap;
 		return w;
+	}
+
+	void spliceInputs(Element processor, Element outer, Element inner) {
+		// FIXME Auto-generated method stub
+
+	}
+
+	void spliceOutputs(Element processor, Element outer, Element inner) {
+		// FIXME Auto-generated method stub
+
 	}
 
 	Element getInnerMasterAndSplice(Element executablePlan, Element wrap)
@@ -99,7 +112,8 @@ public class SplicingEngine {
 				"template workflow had no toplevel dataflow");
 	}
 
-	void spliceSubworkflowProcessor(Element outer, Element inner) {
+	Element spliceSubworkflowProcessor(Element outer, Element inner)
+			throws NoCreateException {
 		for (Element processor : children(getChild(outer, "processors"),
 				"processor")) {
 			Element activity = getChild(processor, "activities", "activity");
@@ -107,8 +121,9 @@ public class SplicingEngine {
 			if (type.getTextContent().equals("dataflow-activity")) {
 				Element dfConfig = getChild(activity, "configBean", "dataflow");
 				dfConfig.setAttribute("ref", inner.getAttribute("id"));
-				break;
+				return processor;
 			}
 		}
+		throw new NoCreateException("no processor splice point");
 	}
 }
