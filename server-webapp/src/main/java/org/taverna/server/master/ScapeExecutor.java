@@ -5,6 +5,8 @@ import static javax.ws.rs.core.Response.status;
 import static org.taverna.server.master.common.Roles.USER;
 import static org.taverna.server.master.common.Status.Finished;
 import static org.taverna.server.master.rest.scape.PreservationActionPlan.ExecutablePlan.ExecutablePlanType.Taverna2;
+import static org.taverna.server.master.scape.SplicingEngine.Model.One2OneNoSchema;
+import static org.taverna.server.master.scape.SplicingEngine.Model.One2OneSchema;
 
 import java.io.IOException;
 import java.util.List;
@@ -29,6 +31,7 @@ import org.taverna.server.master.rest.scape.PreservationActionPlan;
 import org.taverna.server.master.rest.scape.PreservationActionPlan.DigitalObject;
 import org.taverna.server.master.rest.scape.ScapeExecutionService;
 import org.taverna.server.master.scape.SplicingEngine;
+import org.taverna.server.master.scape.SplicingEngine.Model;
 import org.taverna.server.master.utils.InvocationCounter.CallCounted;
 import org.w3c.dom.Element;
 import org.xml.sax.SAXException;
@@ -78,11 +81,12 @@ public class ScapeExecutor implements ScapeExecutionService {
 		@NonNull
 		String id;
 		try {
-			id = submitAndStart(
-					splicer.constructWorkflow(
-							plan.executablePlan.workflowDocument,
-							plan.qualityLevelDescription.schematronDocument != null),
-					objs, plan.qualityLevelDescription.schematronDocument);
+			// TODO Find a better way of picking which model workflow to use
+			Model model = plan.qualityLevelDescription.schematronDocument != null ? One2OneSchema
+					: One2OneNoSchema;
+			id = submitAndStart(splicer.constructWorkflow(
+					plan.executablePlan.workflowDocument, model), objs,
+					plan.qualityLevelDescription.schematronDocument);
 		} catch (IOException e) {
 			throw new NoCreateException("failed to construct workflow", e);
 		} catch (ParserConfigurationException e) {
