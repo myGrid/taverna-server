@@ -8,7 +8,6 @@ import static org.taverna.server.master.rest.scape.PreservationActionPlan.Execut
 import static org.taverna.server.master.scape.SplicingEngine.Model.One2OneNoSchema;
 import static org.taverna.server.master.scape.SplicingEngine.Model.One2OneSchema;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Map.Entry;
 
@@ -16,7 +15,6 @@ import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import javax.xml.parsers.ParserConfigurationException;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.taverna.server.master.common.Uri;
@@ -34,7 +32,6 @@ import org.taverna.server.master.scape.SplicingEngine;
 import org.taverna.server.master.scape.SplicingEngine.Model;
 import org.taverna.server.master.utils.InvocationCounter.CallCounted;
 import org.w3c.dom.Element;
-import org.xml.sax.SAXException;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
@@ -87,11 +84,9 @@ public class ScapeExecutor implements ScapeExecutionService {
 			id = submitAndStart(splicer.constructWorkflow(
 					plan.executablePlan.workflowDocument, model), objs,
 					plan.qualityLevelDescription.schematronDocument);
-		} catch (IOException e) {
-			throw new NoCreateException("failed to construct workflow", e);
-		} catch (ParserConfigurationException e) {
-			throw new NoCreateException("failed to construct workflow", e);
-		} catch (SAXException e) {
+		} catch (NoCreateException e) {
+			throw e;
+		} catch (Exception e) {
 			throw new NoCreateException("failed to construct workflow", e);
 		}
 		return created(ui.getRequestUriBuilder().path("{id}").build(id))

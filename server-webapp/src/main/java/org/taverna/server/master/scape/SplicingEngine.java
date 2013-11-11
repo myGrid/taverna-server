@@ -1,5 +1,10 @@
 package org.taverna.server.master.scape;
 
+import static java.lang.String.format;
+import static javax.xml.xpath.XPathConstants.BOOLEAN;
+import static javax.xml.xpath.XPathConstants.NODE;
+import static javax.xml.xpath.XPathConstants.NODESET;
+import static javax.xml.xpath.XPathConstants.STRING;
 import static org.taverna.server.master.rest.scape.Namespaces.T2FLOW_NS;
 import static org.w3c.dom.Node.ELEMENT_NODE;
 
@@ -15,11 +20,16 @@ import java.util.Set;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathExpressionException;
+import javax.xml.xpath.XPathFactory;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.cxf.helpers.MapNamespaceContext;
 import org.springframework.beans.factory.annotation.Value;
 import org.taverna.server.master.common.Workflow;
 import org.taverna.server.master.exceptions.NoCreateException;
+import org.w3c.dom.DOMException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -30,6 +40,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 public class SplicingEngine {
 	/** The name of the processor to splice. Must be a dataflow processor! */
 	public static final String SPLICE_PROCESSOR_NAME = "preservationActionPlan";
+	public static final String CONTAINER_NAME = "ObjectTransform";
 	@Value("${scape.wrapper}")
 	private String wrapper;
 	private String wrapperContents;
@@ -47,25 +58,43 @@ public class SplicingEngine {
 		}
 	}
 
-	@NonNull
-	private Element getChild(@NonNull Element context, String... nodes) {
-		Element e = context;
-		for (String name : nodes) {
-			e = (Element) e.getElementsByTagNameNS(T2FLOW_NS, name).item(0);
-			if (e == null)
-				throw new RuntimeException("no such element: " + name);
+	private ThreadLocal<XPath> tlxp = new ThreadLocal<XPath>() {
+		public Map<String, String> nsmap = new HashMap<String, String>();
+		{
+			nsmap.put("", T2FLOW_NS);
 		}
-		return e;
+
+		@Override
+		protected XPath initialValue() {
+			XPath xp = XPathFactory.newInstance().newXPath();
+			xp.setNamespaceContext(new MapNamespaceContext(nsmap));
+			return xp;
+		}
+	};
+
+	private List<Element> select(Element context, String expression)
+			throws XPathExpressionException {
+		List<Element> result = new ArrayList<Element>();
+		NodeList nl = (NodeList) tlxp.get().evaluate(expression, context,
+				NODESET);
+		for (int i = 0; i < nl.getLength(); i++)
+			result.add((Element) nl.item(i));
+		return result;
 	}
 
-	@NonNull
-	private List<Element> children(@NonNull Element context,
-			@NonNull String name) {
-		NodeList nl = context.getElementsByTagNameNS(T2FLOW_NS, name);
-		List<Element> elems = new ArrayList<Element>(nl.getLength());
-		for (int i = 0; i < nl.getLength(); i++)
-			elems.add((Element) nl.item(i));
-		return elems;
+	private Element get(Element context, String expression)
+			throws XPathExpressionException {
+		return (Element) tlxp.get().evaluate(expression, context, NODE);
+	}
+
+	private String text(Element context, String expression)
+			throws XPathExpressionException {
+		return (String) tlxp.get().evaluate(expression, context, STRING);
+	}
+
+	private boolean isMatched(Element context, String expression)
+			throws XPathExpressionException {
+		return (Boolean) tlxp.get().evaluate(expression, context, BOOLEAN);
 	}
 
 	@NonNull
@@ -83,7 +112,8 @@ public class SplicingEngine {
 	@SuppressWarnings("unused")
 	public Workflow constructWorkflow(@NonNull Element executablePlan,
 			@NonNull Model model) throws IOException,
-			ParserConfigurationException, SAXException, NoCreateException {
+			ParserConfigurationException, SAXException, NoCreateException,
+			XPathExpressionException, DOMException {
 		Element wrap = getWrapperInstance(model);
 
 		// Splice in dataflows
@@ -108,29 +138,29 @@ public class SplicingEngine {
 	}
 
 	/**
-	 * Connects the spliced dataflow to
+	 * Connects the spliced dataflow to the input ports of the processor that
+	 * "contains" it.
 	 * 
 	 * @param processor
 	 * @param outer
 	 * @param inner
 	 * @return
+	 * @throws XPathExpressionException
 	 */
 	@NonNull
 	Set<String> spliceInputs(@NonNull Element processor,
-			@NonNull Element outer, @NonNull Element inner) {
+			@NonNull Element outer, @NonNull Element inner)
+			throws XPathExpressionException {
 		Document doc = outer.getOwnerDocument();
 		Set<String> created = new HashSet<String>();
 
 		// Construct process ports for inputs on the inner dataflow
-		Element procInputs = getChild(processor, "inputPorts");
+		Element procInputs = get(processor, "inputPorts");
 		Map<String, Integer> procInMap = new HashMap<String, Integer>();
-		for (Element pin : children(procInputs, "port"))
-			procInMap.put(getChild(pin, "name").getTextContent(), new Integer(
-					getChild(pin, "depth").getTextContent()));
-		Element innerInputs = getChild(inner, "inputPorts");
-		Map<String, Integer> added = new HashMap<String, Integer>();
-		for (Element in : children(innerInputs, "port")) {
-			String name = getChild(in, "name").getTextContent();
+		for (Element pin : select(procInputs, "port"))
+			procInMap.put(text(pin, "name"), new Integer(text(pin, "depth")));
+		for (Element in : select(inner, "inputPorts/port")) {
+			String name = text(in, "name");
 			if (procInMap.containsKey(name))
 				continue;
 			Element newPort = doc.createElementNS(T2FLOW_NS, "port");
@@ -140,31 +170,29 @@ public class SplicingEngine {
 			newName.setTextContent(name);
 			newPort.appendChild(newDepth = doc.createElementNS(T2FLOW_NS,
 					"depth"));
-			String d = getChild(in, "depth").getTextContent();
+			String d = text(in, "depth");
 			newDepth.setTextContent(d);
 			procInputs.appendChild(newPort);
-			added.put(name, new Integer(d));
+			procInMap.put(name, new Integer(d));
 		}
-		procInMap.putAll(added);
 
 		// Construct mapping between inside and outside
-		Element inputMapElement = getChild(processor, "activities", "activity",
-				"inputMap");
+		Element inputMapElement = select(processor,
+				"activities/activity/inputMap").get(0);
 		Map<String, Element> inputMapping = new HashMap<String, Element>();
-		for (Element e : children(inputMapElement, "map"))
+		for (Element e : select(inputMapElement, "map"))
 			inputMapping.put(e.getAttribute("from"), e);
-		for (String name : procInMap.keySet()) {
-			if (inputMapping.containsKey(name))
-				continue;
-			Element newMap = doc.createElementNS(T2FLOW_NS, "map");
-			newMap.setAttribute("from", name);
-			newMap.setAttribute("to", name);
-			inputMapElement.appendChild(newMap);
-		}
+		for (String name : procInMap.keySet())
+			if (!inputMapping.containsKey(name)) {
+				Element newMap = doc.createElementNS(T2FLOW_NS, "map");
+				newMap.setAttribute("from", name);
+				newMap.setAttribute("to", name);
+				inputMapElement.appendChild(newMap);
+			}
 
 		// Construct iteration strategy
-		Element iterationStrategy = getChild(processor,
-				"iterationStrategyStack", "iteration", "strategy");
+		Element iterationStrategy = select(processor,
+				"iterationStrategyStack/iteration/strategy").get(0);
 		NodeList nl = iterationStrategy.getChildNodes();
 		for (int i = 0; i < nl.getLength(); i++)
 			if (nl.item(i).getNodeType() == ELEMENT_NODE)
@@ -198,19 +226,18 @@ public class SplicingEngine {
 	}
 
 	Set<String> spliceOutputs(@NonNull Element processor,
-			@NonNull Element outer, @NonNull Element inner) {
+			@NonNull Element outer, @NonNull Element inner)
+			throws XPathExpressionException, DOMException {
 		Document doc = outer.getOwnerDocument();
 		Set<String> created = new HashSet<String>();
 
-		Element procOutputs = getChild(processor, "outputPorts");
+		Element procOutputs = get(processor, "outputPorts");
 		Map<String, Element> procOutputMap = new HashMap<String, Element>();
-		for (Element procPort : children(procOutputs, "port"))
-			procOutputMap.put(getChild(procPort, "name").getTextContent(),
-					procPort);
-		Element outputMap = getChild(processor, "activities", "activity", "outputMap");
-		for (Element innerPort : children(getChild(inner, "outputPorts"),
-				"port")) {
-			String name = getChild(innerPort, "name").getTextContent();
+		for (Element procPort : select(procOutputs, "port"))
+			procOutputMap.put(text(procPort, "name"), procPort);
+		Element outputMap = get(processor, "activities/activity/outputMap");
+		for (Element innerPort : select(inner, "outputPorts/port")) {
+			String name = text(innerPort, "name");
 			if (procOutputMap.containsKey(name))
 				continue;
 
@@ -240,10 +267,11 @@ public class SplicingEngine {
 
 	@NonNull
 	Element getInnerMasterAndSplice(@NonNull Element executablePlan,
-			@NonNull Element wrap) throws NoCreateException {
+			@NonNull Element wrap) throws NoCreateException,
+			XPathExpressionException, DOMException {
 		Element innerMaster = null;
-		for (Element df : children(executablePlan, "dataflow")) {
-			if (df.getAttribute("role").equals("top")) {
+		for (Element df : select(executablePlan, "dataflow")) {
+			if (isMatched(df, "@role = \"top\"")) {
 				innerMaster = df;
 				df.setAttribute("role", "nested");
 			}
@@ -256,30 +284,32 @@ public class SplicingEngine {
 	}
 
 	@NonNull
-	Element getOuterMaster(@NonNull Element wrap) throws NoCreateException {
-		for (Element df : children(wrap, "dataflow"))
-			if (df.getAttribute("role").equals("top"))
-				return df;
+	Element getOuterMaster(@NonNull Element wrap) throws NoCreateException,
+			XPathExpressionException {
+		Element container = get(wrap,
+				format("dataflow[name/text()=\"%s\"]", CONTAINER_NAME));
+		if (container != null)
+			return container;
 		throw new NoCreateException(
-				"template workflow had no toplevel dataflow");
+				"template workflow had no container dataflow (called "
+						+ CONTAINER_NAME + ")");
 	}
 
 	@NonNull
 	Element spliceSubworkflowProcessor(@NonNull Element outer,
-			@NonNull Element inner) throws NoCreateException {
-		for (Element processor : children(getChild(outer, "processors"),
-				"processor")) {
-			if (!getChild(processor, "name").getTextContent().equals(
-					SPLICE_PROCESSOR_NAME))
-				continue;
-			Element activity = getChild(processor, "activities", "activity");
-			Element type = getChild(activity, "raven", "artifact");
-			if (type.getTextContent().equals("dataflow-activity")) {
-				Element dfConfig = getChild(activity, "configBean", "dataflow");
-				dfConfig.setAttribute("ref", inner.getAttribute("id"));
-				return processor;
-			}
+			@NonNull Element inner) throws NoCreateException,
+			XPathExpressionException, DOMException {
+		for (Element processor : select(
+				outer,
+				format("processors/processor[name=\"%s\"]"
+						+ "[activities/activity/raven/artifact/text()=\"dataflow-activity\"]",
+						SPLICE_PROCESSOR_NAME))) {
+			for (Element dataflow : select(processor,
+					"activities/activity/configBean/dataflow"))
+				dataflow.setAttribute("ref", inner.getAttribute("id"));
+			return processor;
 		}
-		throw new NoCreateException("no processor splice point");
+		throw new NoCreateException("no processor splice point (called "
+				+ SPLICE_PROCESSOR_NAME + ")");
 	}
 }
