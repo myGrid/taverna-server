@@ -1,10 +1,6 @@
 package org.taverna.server.master.scape;
 
 import static java.lang.String.format;
-import static javax.xml.xpath.XPathConstants.BOOLEAN;
-import static javax.xml.xpath.XPathConstants.NODE;
-import static javax.xml.xpath.XPathConstants.NODESET;
-import static javax.xml.xpath.XPathConstants.STRING;
 import static org.taverna.server.master.rest.scape.Namespaces.T2FLOW_NS;
 import static org.w3c.dom.Node.ELEMENT_NODE;
 
@@ -20,12 +16,9 @@ import java.util.Set;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathExpressionException;
-import javax.xml.xpath.XPathFactory;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.cxf.helpers.MapNamespaceContext;
 import org.springframework.beans.factory.annotation.Value;
 import org.taverna.server.master.common.Workflow;
 import org.taverna.server.master.exceptions.NoCreateException;
@@ -37,7 +30,7 @@ import org.xml.sax.SAXException;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 
-public class SplicingEngine {
+public class SplicingEngine extends XPathSupport {
 	/** The name of the processor to splice. Must be a dataflow processor! */
 	public static final String SPLICE_PROCESSOR_NAME = "preservationActionPlan";
 	public static final String CONTAINER_NAME = "ObjectTransform";
@@ -58,43 +51,8 @@ public class SplicingEngine {
 		}
 	}
 
-	private ThreadLocal<XPath> tlxp = new ThreadLocal<XPath>() {
-		public Map<String, String> nsmap = new HashMap<String, String>();
-		{
-			nsmap.put("", T2FLOW_NS);
-		}
-
-		@Override
-		protected XPath initialValue() {
-			XPath xp = XPathFactory.newInstance().newXPath();
-			xp.setNamespaceContext(new MapNamespaceContext(nsmap));
-			return xp;
-		}
-	};
-
-	private List<Element> select(Element context, String expression)
-			throws XPathExpressionException {
-		List<Element> result = new ArrayList<Element>();
-		NodeList nl = (NodeList) tlxp.get().evaluate(expression, context,
-				NODESET);
-		for (int i = 0; i < nl.getLength(); i++)
-			result.add((Element) nl.item(i));
-		return result;
-	}
-
-	private Element get(Element context, String expression)
-			throws XPathExpressionException {
-		return (Element) tlxp.get().evaluate(expression, context, NODE);
-	}
-
-	private String text(Element context, String expression)
-			throws XPathExpressionException {
-		return (String) tlxp.get().evaluate(expression, context, STRING);
-	}
-
-	private boolean isMatched(Element context, String expression)
-			throws XPathExpressionException {
-		return (Boolean) tlxp.get().evaluate(expression, context, BOOLEAN);
+	SplicingEngine() {
+		super("", T2FLOW_NS);
 	}
 
 	@NonNull
@@ -117,6 +75,7 @@ public class SplicingEngine {
 		Element wrap = getWrapperInstance(model);
 
 		// Splice in dataflows
+		Element topMaster = getTop(wrap);
 		Element outerMaster = getOuterMaster(wrap);
 		Element innerMaster = getInnerMasterAndSplice(executablePlan, wrap);
 
@@ -293,6 +252,15 @@ public class SplicingEngine {
 		throw new NoCreateException(
 				"template workflow had no container dataflow (called "
 						+ CONTAINER_NAME + ")");
+	}
+
+	@NonNull
+	Element getTop(@NonNull Element wrap) throws NoCreateException,
+			XPathExpressionException {
+		Element top = get(wrap, "dataflow[@role=\"top\"]");
+		if (top != null)
+			return top;
+		throw new NoCreateException("template workflow had no top dataflow!");
 	}
 
 	@NonNull
