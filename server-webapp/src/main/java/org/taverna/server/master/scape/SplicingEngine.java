@@ -31,9 +31,11 @@ import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.taverna.server.master.common.Workflow;
 import org.taverna.server.master.exceptions.NoCreateException;
+import org.w3c.dom.Attr;
 import org.w3c.dom.DOMException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -116,17 +118,25 @@ public class SplicingEngine extends XPathSupport {
 						.get(model)))).getDocumentElement();
 	}
 
+	private void realizeAttrs(Element base) throws XPathExpressionException {
+		for (Node n : selectNodes(base, "//@*"))
+			((Attr) n).getValue();
+	}
+
 	public Workflow constructWorkflow(@NonNull Element executablePlan,
 			@NonNull Model model) throws Exception {
 		Element wrap = getWrapperInstance(model);
 
+		/*
+		 * CRITICAL! Work around Java DOM bug! Ensure all attributes are
+		 * realized!
+		 */
+		realizeAttrs(executablePlan);
+		realizeAttrs(wrap);
+
 		// Splice in dataflows
 		Element topMaster = getTop(wrap);
 		Element outerMaster = getOuterMaster(wrap);
-		// CRITICAL! Work around Java DOM bug! Fetch this now.
-		text(topMaster, SELECT_PROCESSOR
-				+ "/t:activities/t:activity/t:outputMap/t:map/@to",
-				CONTAINER_NAME);
 		Element innerMaster = getInnerMasterAndSplice(executablePlan, wrap);
 		// Do not use executablePlan from here on!
 
@@ -145,6 +155,8 @@ public class SplicingEngine extends XPathSupport {
 		dropDummyAndConnectRealSource(topMaster, metricDocSource[0],
 				metricDocSource[1]);
 
+		for (Element broken : select(topMaster, "//*[@encoding=\"\"]"))
+			broken.setAttribute("encoding", "xstream");
 		// Splice into POJO
 		Workflow w = new Workflow();
 		w.content = new Element[] { wrap };
@@ -301,6 +313,12 @@ public class SplicingEngine extends XPathSupport {
 					new String[] { "metricDocument" });
 			get(docBuilder, "t:inputPorts/t:port[t:name=\"%s\"]/t:depth",
 					"values").setTextContent("1");
+			Element istrat=get(docBuilder, "t:iterationStrategyStack/t:iteration/t:strategy");
+			Element cross=branch(istrat,"cross");
+			Element values = get(istrat,"t:dot/t:port[@name=\"values\"]");
+			values.setAttribute("depth", "1");
+			cross.appendChild(values);
+			cross.appendChild(get(istrat, "t:dot"));
 
 			datalink(outerMaster, subjectName, "value", dbName, "subject");
 			datalink(outerMaster, typesName, "value", dbName, "types");
@@ -347,10 +365,10 @@ public class SplicingEngine extends XPathSupport {
 		{
 			Element ports = branch(processor, "inputPorts");
 			for (String in : inputs)
-				branch(port(ports, in, 0, 0), "annotations");
+				port(ports, in, 0, null);
 			ports = branch(processor, "outputPorts");
 			for (String out : outputs)
-				branch(port(ports, out, (Integer) null, null), "annotations");
+				port(ports, out, 0, 0);
 		}
 		branch(processor, "annotations");
 		{
@@ -548,8 +566,10 @@ public class SplicingEngine extends XPathSupport {
 	Element getTop(@NonNull Element wrap) throws NoCreateException,
 			XPathExpressionException {
 		Element top = get(wrap, "t:dataflow[@role=\"top\"]");
-		if (top != null)
+		if (top != null) {
+			System.out.println("top has id=" + top.getAttribute("id"));
 			return top;
+		}
 		throw new NoCreateException("template workflow had no top dataflow!");
 	}
 

@@ -34,6 +34,7 @@ import javax.xml.xpath.XPathFactory;
 import org.apache.cxf.helpers.MapNamespaceContext;
 import org.springframework.core.NamedThreadLocal;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -85,6 +86,16 @@ class XPathSupport {
 				.evaluate(context, NODESET);
 		for (int i = 0; i < nl.getLength(); i++)
 			result.add((Element) nl.item(i));
+		return result;
+	}
+
+	public List<Node> selectNodes(Element context, String expression,
+			Object... args) throws XPathExpressionException {
+		List<Node> result = new ArrayList<Node>();
+		NodeList nl = (NodeList) xp(expression, args)
+				.evaluate(context, NODESET);
+		for (int i = 0; i < nl.getLength(); i++)
+			result.add(nl.item(i));
 		return result;
 	}
 
