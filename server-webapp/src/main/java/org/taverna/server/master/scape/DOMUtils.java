@@ -3,8 +3,12 @@ package org.taverna.server.master.scape;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
+
 abstract class DOMUtils {
-	private DOMUtils(){}
+	private DOMUtils() {
+	}
 
 	static Element attrs(Element element, String... definitions) {
 		if ((definitions.length & 1) == 1)
@@ -52,6 +56,34 @@ abstract class DOMUtils {
 		created.setPrefix("");
 		config.appendChild(created);
 		return created;
+	}
+
+	static Element datalink(Element datalinks, String fromProc,
+			String fromPort, String toProc, String toPort) {
+		Element link = branch(datalinks, "datalink");
+		Element sink = attrs(branch(link, "sink"), "type",
+				toProc == null ? "dataflow" : "processor");
+		if (toProc != null)
+			leaf(sink, "processor", toProc);
+		leaf(sink, "port", toPort);
+		Element source = attrs(branch(link, "source"), "type",
+				fromProc == null ? "dataflow" : "processor");
+		if (fromProc != null)
+			leaf(source, "processor", fromProc);
+		leaf(source, "port", fromPort);
+		return link;
+	}
+
+	@NonNull
+	static Element port(@NonNull Element container, @NonNull String name,
+			@Nullable String depth, @Nullable String granularDepth) {
+		Element port = branch(container, "port");
+		leaf(port, "name", name);
+		if (depth != null)
+			leaf(port, "depth", depth);
+		if (granularDepth != null)
+			leaf(port, "granularDepth", granularDepth);
+		return port;
 	}
 
 }

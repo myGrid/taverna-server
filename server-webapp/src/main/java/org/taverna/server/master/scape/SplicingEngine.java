@@ -9,6 +9,7 @@ import static org.taverna.server.master.scape.DOMUtils.leaf;
 import static org.w3c.dom.Node.ELEMENT_NODE;
 
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.StringReader;
 import java.net.URL;
@@ -38,6 +39,7 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 public class SplicingEngine extends XPathSupport {
 	private static final String DISPATCH_LAYERS_PKG = "net.sf.taverna.t2.workflowmodel.processor.dispatch.layers.";
@@ -56,6 +58,8 @@ public class SplicingEngine extends XPathSupport {
 	private String utilityFamily = "SCAPE Utility Components";
 	private String builderName = "MeasuresDocBuilder";
 	private String builderVersion = "3";
+	private String joinerName = "MeasuresDocCombiner";
+	private String joinerVersion = "1";
 
 	public static enum Model {
 		One2OneNoSchema("1to1"), One2OneSchema("1to1_schema");
@@ -72,6 +76,25 @@ public class SplicingEngine extends XPathSupport {
 
 	SplicingEngine() {
 		super("", "", "t", T2FLOW_NS);
+	}
+
+	public static void main(String... args) throws Exception {
+		SplicingEngine e = new SplicingEngine();
+		e.wrapperPrefix = "SCAPE_outer_";
+		URL url = e.getClass().getResource("PAP_Example.t2flow");
+		if (url == null)
+			throw new Exception("no resource");
+		DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+		dbf.setNamespaceAware(true);
+		Element executablePlan = dbf.newDocumentBuilder()
+				.parse(new InputSource(url.toString())).getDocumentElement();
+		System.out.println("setup ok");
+		Workflow w = e.constructWorkflow(executablePlan, Model.One2OneNoSchema);
+		System.out.println("transform ok");
+		String file = "/tmp/PAP_out.t2flow";
+		IOUtils.write(e.write(w.getWorkflowRoot()), new FileOutputStream(file),
+				"UTF-8");
+		System.out.println("wrote results to " + file);
 	}
 
 	@NonNull
@@ -93,7 +116,6 @@ public class SplicingEngine extends XPathSupport {
 						.get(model)))).getDocumentElement();
 	}
 
-	@SuppressWarnings("unused")
 	public Workflow constructWorkflow(@NonNull Element executablePlan,
 			@NonNull Model model) throws Exception {
 		Element wrap = getWrapperInstance(model);
@@ -101,6 +123,10 @@ public class SplicingEngine extends XPathSupport {
 		// Splice in dataflows
 		Element topMaster = getTop(wrap);
 		Element outerMaster = getOuterMaster(wrap);
+		// CRITICAL! Work around Java DOM bug! Fetch this now.
+		text(topMaster, SELECT_PROCESSOR
+				+ "/t:activities/t:activity/t:outputMap/t:map/@to",
+				CONTAINER_NAME);
 		Element innerMaster = getInnerMasterAndSplice(executablePlan, wrap);
 		// Do not use executablePlan from here on!
 
@@ -113,8 +139,11 @@ public class SplicingEngine extends XPathSupport {
 				innerMaster);
 
 		connectInnerInputsToTop(topMaster, outerMaster, innerMaster, createdIn);
-		Set<String> subjects = connectInnerOutputsToTop(outerMaster, createdOut);
-		// TODO compose subject port pairs, concatenate
+		Set<String> subjectPorts = connectInnerOutputsToTop(topMaster,
+				outerMaster, createdOut);
+		String[] metricDocSource = concatenateDocuments(topMaster, subjectPorts);
+		dropDummyAndConnectRealSource(topMaster, metricDocSource[0],
+				metricDocSource[1]);
 
 		// Splice into POJO
 		Workflow w = new Workflow();
@@ -122,36 +151,87 @@ public class SplicingEngine extends XPathSupport {
 		return w;
 	}
 
+	private void dropDummyAndConnectRealSource(Element topMaster,
+			String procName, String portName) throws Exception {
+		String dummy = "ignore";
+		for (Element e : select(topMaster,
+				"t:processors/t:processor[t:name=\"%s\"]", dummy))
+			e.getParentNode().removeChild(e);
+
+		for (Element e : select(topMaster,
+				"t:datalinks/t:datalink[t:source/t:processor=\"%s\"]", dummy)) {
+			datalink(topMaster, procName, portName,
+					text(e, "t:sink/t:processor"), text(e, "t:sink/t:port"));
+			e.getParentNode().removeChild(e);
+		}
+	}
+
+	private String[] concatenateDocuments(Element topMaster,
+			Set<String> subjectPorts) throws Exception {
+		int counter = 0;
+		String sourceProcessor = null, currentPort = null;
+		for (String portName : subjectPorts) {
+			if (currentPort == null) {
+				sourceProcessor = CONTAINER_NAME;
+				currentPort = portName;
+				continue;
+			}
+			String procName = "CONCAT" + ++counter;
+			makeComponent(topMaster, procName, repository, utilityFamily,
+					joinerName, joinerVersion, new String[] {
+							"metricDocument1", "metricDocument2" },
+					new String[] { "combinedMetricDocument" });
+			datalink(topMaster, sourceProcessor, currentPort, procName,
+					"metricDocument1");
+			datalink(topMaster, CONTAINER_NAME, portName, procName,
+					"metricDocument2");
+			sourceProcessor = procName;
+			currentPort = "combinedMetricDocument";
+		}
+		return new String[] { sourceProcessor, currentPort };
+	}
+
 	void connectInnerInputsToTop(Element topMaster, Element outerMaster,
-			Element innerMaster, Set<String> createdIn)
-			throws XPathExpressionException {
+			Element innerMaster, Set<String> createdIn) throws Exception {
 		Element outProc = get(outerMaster, SELECT_PROCESSOR + REQUIRE_NESTED,
 				SPLICE_PROCESSOR_NAME);
 		Element top = get(topMaster, SELECT_PROCESSOR + REQUIRE_NESTED,
 				CONTAINER_NAME);
+		if (top == null)
+			throw new Exception(String.format("no top context!: "
+					+ SELECT_PROCESSOR + REQUIRE_NESTED, CONTAINER_NAME));
 		Element cross = get(top, ITERATION_STRATEGY + "/t:cross");
 		for (String in : createdIn) {
 			Element inPort = get(innerMaster,
 					"t:inputPorts/t:port[t:name=\"%s\"]", in);
 			get(outerMaster, "t:inputPorts")
 					.appendChild(inPort.cloneNode(true));
-			Element inport = branch(get(outProc, "t:inputPorts"), "port");
-			leaf(inport, "name", in);
-			leaf(inport, "depth", "0");
+			port(get(outProc, "t:inputPorts"), in, 0, null);
 			mapInput(outProc, in);
-			datalinkFromInput(outerMaster, SPLICE_PROCESSOR_NAME, in);
+			datalink(outerMaster, null, in, SPLICE_PROCESSOR_NAME, in);
 			attrs(branch(cross, "port"), "name", in, "depth", "0");
-			inport = branch(get(top, "t:inputPorts"), "port");
-			leaf(inport, "name", in);
-			leaf(inport, "depth", "0");
+			port(get(top, "t:inputPorts"), in, 0, null);
 			mapInput(top, in);
-			inport = branch(get(topMaster, "t:inputPorts"), "port");
-			leaf(inport, "name", in);
-			leaf(inport, "depth", "0");
-			leaf(inport, "granularDepth", "0");
-			branch(inport, "annotations");
-			datalinkFromInput(topMaster, CONTAINER_NAME, in);
+			branch(port(get(topMaster, "t:inputPorts"), in, 0, 0),
+					"annotations");
+			datalink(topMaster, null, in, CONTAINER_NAME, in);
 		}
+	}
+
+	@NonNull
+	private static Element port(@NonNull Element container,
+			@NonNull String name, @Nullable Integer depth,
+			@Nullable Integer granularDepth) {
+		return DOMUtils.port(container, name,
+				depth != null ? Integer.toString(depth) : null,
+				granularDepth != null ? Integer.toString(granularDepth) : null);
+	}
+
+	private Element datalink(@NonNull Element dataflow,
+			@Nullable String fromProc, @NonNull String fromPort,
+			@Nullable String toProc, @NonNull String toPort) throws Exception {
+		return DOMUtils.datalink(get(dataflow, "t:datalinks"), fromProc,
+				fromPort, toProc, toPort);
 	}
 
 	private void mapInput(Element processor, String name)
@@ -162,47 +242,18 @@ public class SplicingEngine extends XPathSupport {
 
 	private void mapOutput(Element processor, String name)
 			throws XPathExpressionException {
-		Element inMap = get(processor, "t:activities/t:activity/t:outputMap");
-		attrs(branch(inMap, "map"), "from", name, "to", name);
+		Element outMap = get(processor, "t:activities/t:activity/t:outputMap");
+		attrs(branch(outMap, "map"), "from", name, "to", name);
 	}
 
-	private void datalinkFromInput(Element dataflow, String processor, String in)
-			throws XPathExpressionException {
-		Element datalink = branch(get(dataflow, "t:datalinks"), "datalink");
-		Element sink = attrs(branch(datalink, "sink"), "type", "processor");
-		leaf(sink, "processor", processor);
-		leaf(sink, "port", in);
-		Element source = attrs(branch(datalink, "source"), "type", "dataflow");
-		leaf(source, "port", in);
-	}
-
-	private void datalinkToOutput(Element dataflow, String processor,
-			String port, String output) throws XPathExpressionException {
-		Element datalink = branch(get(dataflow, "t:datalinks"), "datalink");
-		Element sink = attrs(branch(datalink, "sink"), "type", "dataflow");
-		leaf(sink, "port", output);
-		Element source = attrs(branch(datalink, "source"), "type", "processor");
-		leaf(sink, "processor", processor);
-		leaf(source, "port", port);
-	}
-
-	private void datalink(Element dataflow, String fromProc, String fromPort,
-			String toProc, String toPort) throws Exception {
-		Element links = get(dataflow, "t:datalinks");
-		Element link = branch(links, "datalink");
-		Element sink = attrs(branch(link, "sink"), "type", "processor");
-		leaf(sink, "processor", toProc);
-		leaf(sink, "port", toPort);
-		Element source = attrs(branch(link, "source"), "type", "processor");
-		leaf(source, "processor", fromProc);
-		leaf(source, "port", fromPort);
-	}
-
-	Set<String> connectInnerOutputsToTop(Element outerMaster,
-			Set<String> createdOut) throws Exception {
+	Set<String> connectInnerOutputsToTop(Element topMaster,
+			Element outerMaster, Set<String> createdOut) throws Exception {
 		Pattern p = Pattern.compile("^measure_([a-zA-Z0-9]+)_([a-zA-Z0-9]+)$");
 		Map<String, List<String>> types = new HashMap<String, List<String>>();
+		Set<String> topPortSet = new HashSet<String>();
 		Element outPorts = get(outerMaster, "t:outputPorts");
+		Element topProcessor = get(topMaster, SELECT_PROCESSOR, CONTAINER_NAME);
+		Element topPorts = get(topProcessor, "t:outputPorts");
 		for (String out : createdOut) {
 			Matcher m = p.matcher(out);
 			if (!m.matches())
@@ -211,10 +262,13 @@ public class SplicingEngine extends XPathSupport {
 			String type = m.group(2);
 			if (!types.containsKey(subject)) {
 				types.put(subject, new ArrayList<String>());
+				String mp = "measures_" + subject;
+				topPortSet.add(mp);
 				Element outp = branch(outPorts, "port");
-				leaf(outp, "name", "measures_" + subject);
+				leaf(outp, "name", mp);
 				branch(outp, "annotations");
-				// TODO Couple outer to top
+				port(topPorts, mp, 0, 0);
+				mapOutput(topProcessor, mp);
 			}
 			types.get(subject).add(type);
 		}
@@ -250,10 +304,10 @@ public class SplicingEngine extends XPathSupport {
 
 			datalink(outerMaster, subjectName, "value", dbName, "subject");
 			datalink(outerMaster, typesName, "value", dbName, "types");
-			datalinkToOutput(outerMaster, dbName, "metricDocument", "measures_"
+			datalink(outerMaster, dbName, "metricDocument", null, "measures_"
 					+ subject);
 		}
-		return types.keySet();
+		return topPortSet;
 	}
 
 	private Element makeConstant(Element dataflow, String name, String value)
@@ -261,12 +315,7 @@ public class SplicingEngine extends XPathSupport {
 		Element processor = branch(get(dataflow, "t:processors"), "processor");
 		leaf(processor, "name", name);
 		branch(processor, "inputPorts");
-		{
-			Element portDecl = branch(processor, "outputPorts", "port");
-			leaf(portDecl, "name", "value");
-			leaf(portDecl, "depth", "0");
-			leaf(portDecl, "granularDepth", "0");
-		}
+		port(branch(processor, "outputPorts"), "value", 0, 0);
 		branch(processor, "annotations");
 		{
 			Element activity = branch(processor, "activities", "activity");
@@ -287,7 +336,7 @@ public class SplicingEngine extends XPathSupport {
 	}
 
 	/**
-	 * Note: input ports are all depth 0 by default, and are all crossed
+	 * Note: input ports are all depth 0 by default, and are all dotted
 	 * together!
 	 */
 	private Element makeComponent(Element dataflow, String name, String repo,
@@ -297,19 +346,11 @@ public class SplicingEngine extends XPathSupport {
 		leaf(processor, "name", name);
 		{
 			Element ports = branch(processor, "inputPorts");
-			for (String in : inputs) {
-				Element item = branch(ports, "port");
-				leaf(item, "name", in);
-				leaf(item, "depth", "0");
-				leaf(item, "granularDepth", "0");
-				branch(item, "annotations");
-			}
+			for (String in : inputs)
+				branch(port(ports, in, 0, 0), "annotations");
 			ports = branch(processor, "outputPorts");
-			for (String out : outputs) {
-				Element item = branch(ports, "port");
-				leaf(item, "name", out);
-				branch(item, "annotations");
-			}
+			for (String out : outputs)
+				branch(port(ports, out, (Integer) null, null), "annotations");
 		}
 		branch(processor, "annotations");
 		{
@@ -403,11 +444,9 @@ public class SplicingEngine extends XPathSupport {
 			String name = text(in, PORT_NAME);
 			if (procInMap.containsKey(name))
 				continue;
-			String d = text(in, PORT_DEPTH);
-			Element newPort = branch(procInputs, "port");
-			leaf(newPort, "name", name);
-			leaf(newPort, "depth", d);
-			procInMap.put(name, new Integer(d));
+			int d = Integer.parseInt(text(in, PORT_DEPTH));
+			port(procInputs, name, d, null);
+			procInMap.put(name, d);
 		}
 
 		// Construct mapping between inside and outside
@@ -466,13 +505,8 @@ public class SplicingEngine extends XPathSupport {
 			if (procOutputMap.containsKey(name))
 				continue;
 
-			Element port = branch(procOutputs, "port");
-			leaf(port, "name", name);
-			leaf(port, "depth", "0");
-			leaf(port, "granularDepth", "0");
-
+			port(procOutputs, name, 0, 0);
 			mapOutput(processor, name);
-
 			created.add(name);
 		}
 
@@ -484,6 +518,9 @@ public class SplicingEngine extends XPathSupport {
 			@NonNull Element wrap) throws NoCreateException,
 			XPathExpressionException, DOMException {
 		Element innerMaster = null;
+		for (Element df : select(wrap, "t:dataflow[t:name=\"%s\"]",
+				SPLICE_PROCESSOR_NAME.substring(0, 20)))
+			wrap.removeChild(df);
 		for (Element df : select(executablePlan, "t:dataflow")) {
 			if (isMatched(df, "@role = \"top\""))
 				attrs(innerMaster = df, "role", "nested");
