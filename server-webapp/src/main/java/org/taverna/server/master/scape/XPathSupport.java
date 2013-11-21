@@ -31,6 +31,7 @@ import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
+import org.apache.commons.logging.Log;
 import org.apache.cxf.helpers.MapNamespaceContext;
 import org.springframework.core.NamedThreadLocal;
 import org.w3c.dom.Element;
@@ -40,13 +41,15 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 class XPathSupport {
-	XPathSupport(String... map) {
+	XPathSupport(Log log, String... map) {
 		Map<String, String> nsmap = new HashMap<String, String>();
 		for (int i = 0; i < map.length; i += 2)
 			nsmap.put(map[i], map[i + 1]);
 		context = new MapNamespaceContext(nsmap);
+		this.log = log;
 	}
 
+	private final Log log;
 	private final NamespaceContext context;
 
 	@SuppressWarnings("serial")
@@ -60,8 +63,10 @@ class XPathSupport {
 
 		XPathExpression compile(String expression)
 				throws XPathExpressionException {
-			if (!containsKey(expression))
+			if (!containsKey(expression)) {
+				log.info("compiling expression for " + expression);
 				put(expression, factory.compile(expression));
+			}
 			return get(expression);
 		}
 	}
