@@ -5,8 +5,8 @@ import static javax.ws.rs.core.Response.status;
 import static org.taverna.server.master.common.Roles.USER;
 import static org.taverna.server.master.common.Status.Finished;
 import static org.taverna.server.master.rest.scape.PreservationActionPlan.ExecutablePlan.ExecutablePlanType.Taverna2;
-import static org.taverna.server.master.scape.SplicingEngine.Model.One2OneNoSchema;
-import static org.taverna.server.master.scape.SplicingEngine.Model.One2OneSchema;
+import static org.taverna.server.master.scape.ScapeSplicingEngine.Model.One2OneNoSchema;
+import static org.taverna.server.master.scape.ScapeSplicingEngine.Model.One2OneSchema;
 
 import java.util.List;
 import java.util.Map.Entry;
@@ -28,8 +28,8 @@ import org.taverna.server.master.interfaces.TavernaRun;
 import org.taverna.server.master.rest.scape.PreservationActionPlan;
 import org.taverna.server.master.rest.scape.PreservationActionPlan.DigitalObject;
 import org.taverna.server.master.rest.scape.ScapeExecutionService;
-import org.taverna.server.master.scape.SplicingEngine;
-import org.taverna.server.master.scape.SplicingEngine.Model;
+import org.taverna.server.master.scape.ScapeSplicingEngine;
+import org.taverna.server.master.scape.ScapeSplicingEngine.Model;
 import org.taverna.server.master.utils.InvocationCounter.CallCounted;
 import org.w3c.dom.Element;
 
@@ -45,7 +45,7 @@ public class ScapeExecutor implements ScapeExecutionService {
 	@Autowired
 	private Policy policy;
 	@Autowired
-	private SplicingEngine splicer;
+	private ScapeSplicingEngine splicer;
 
 	@Override
 	@CallCounted
