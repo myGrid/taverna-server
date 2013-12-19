@@ -10,6 +10,7 @@ import static org.joda.time.format.ISODateTimeFormat.basicDateTime;
 import static org.taverna.server.master.common.Roles.USER;
 import static org.taverna.server.master.interaction.InteractionFeedSupport.FEED_URL_DIR;
 import static org.taverna.server.master.rest.ContentTypes.JSON;
+import static org.taverna.server.master.rest.ContentTypes.ROBUNDLE;
 import static org.taverna.server.master.rest.ContentTypes.TEXT;
 import static org.taverna.server.master.rest.ContentTypes.XML;
 import static org.taverna.server.master.rest.TavernaServerRunREST.PathNames.DIR;
@@ -17,6 +18,7 @@ import static org.taverna.server.master.rest.TavernaServerRunREST.PathNames.IN;
 import static org.taverna.server.master.rest.TavernaServerRunREST.PathNames.LISTEN;
 import static org.taverna.server.master.rest.TavernaServerRunREST.PathNames.LOG;
 import static org.taverna.server.master.rest.TavernaServerRunREST.PathNames.OUT;
+import static org.taverna.server.master.rest.TavernaServerRunREST.PathNames.RUNBUNDLE;
 import static org.taverna.server.master.rest.TavernaServerRunREST.PathNames.SEC;
 import static org.taverna.server.master.rest.TavernaServerRunREST.PathNames.STATUS;
 import static org.taverna.server.master.rest.TavernaServerRunREST.PathNames.STDERR;
@@ -49,6 +51,7 @@ import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlSchemaType;
 import javax.xml.bind.annotation.XmlType;
@@ -502,6 +505,23 @@ public interface TavernaServerRunREST {
 	Response logOptions();
 
 	/**
+	 * @return The log for the workflow run, or empty string if the run has not
+	 *         yet started.
+	 */
+	@GET
+	@Path(RUNBUNDLE)
+	@Description("Return the run bundle for the workflow run.")
+	@Produces(ROBUNDLE)
+	@NonNull
+	Response getRunBundle();
+
+	/** Get an outline of the operations supported. */
+	@OPTIONS
+	@Path(RUNBUNDLE)
+	@Description("Return the run bundle for the workflow run.")
+	Response runBundleOptions();
+
+	/**
 	 * Factored out path names used in the {@link TavernaServerRunREST}
 	 * interface and related places.
 	 * 
@@ -525,6 +545,7 @@ public interface TavernaServerRunREST {
 		public static final String STDERR = "stderr";
 		public static final String USAGE = "usage";
 		public static final String LOG = "log";
+		public static final String RUNBUNDLE = "run-bundle";
 	}
 
 	/**
@@ -573,6 +594,9 @@ public interface TavernaServerRunREST {
 		public Uri usage;
 		/** The log from the run. */
 		public Uri log;
+		/** The bundle describing the run. */
+		@XmlElement(name = "run-bundle")
+		public Uri runBundle;
 
 		/**
 		 * How to describe a run's expiry.
@@ -692,6 +716,7 @@ public interface TavernaServerRunREST {
 			stderr = new Uri(ui, STDERR);
 			usage = new Uri(ui, USAGE);
 			log = new Uri(ui, LOG);
+			runBundle = new Uri(ui, RUNBUNDLE);
 		}
 	}
 }

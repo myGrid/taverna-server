@@ -37,6 +37,7 @@
 			<map key-type="java.lang.String" value-type="java.lang.String">
 				<description>Maps suffixes (post '.') to content types.</description>
 				<entry key="baclava" value="application/vnd.taverna.baclava+xml" />
+				<entry key="robundle.zip" value="application/vnd.wf4ever.robundle+zip" />
 			</map>
 		</property>
 		<property name="capabilitySource" ref="capabilities" />
@@ -66,6 +67,9 @@
 	</bean>
 
 	<bean id="webapp.invocationCounter" class="org.taverna.server.master.utils.InvocationCounter" />
+	<bean id="webapp.perfLogger" class="org.taverna.server.master.utils.CallTimeLogger">
+		<property name="threshold" value="${calltime.logthreshold:100000}" />
+	</bean>
 
 	<bean id="run.coreView.prototype" scope="prototype"
 		class="org.taverna.server.master.RunREST">
@@ -280,7 +284,9 @@
 		<!-- <property name="length" value="8" /> -->
 	</bean>
 
-	<bean id="certificateChainFetcher" class="org.taverna.server.master.utils.CertificateChainFetcher"/>
+	<bean id="certificateChainFetcher" class="org.taverna.server.master.utils.CertificateChainFetcher">
+		<property name="secure" value="${fetchCertificateChain}" />
+	</bean>
 
 	<bean id="localworker.state" class="org.taverna.server.master.localworker.LocalWorkerState"
 		scope="singleton" lazy-init="false">
@@ -329,7 +335,7 @@
 			to the executeworkflow.sh in either the Taverna 2 Workbench distribution 
 			or the Taverna 2 Command Line distribution.</description> </property> -->
 		<property name="self" ref="localworker.state" />
-		<property name="defaultExecuteWorkflowScript" value="${executeWorkflowScript}" />
+		<property name="defaultExecuteWorkflowScript" value="${executeWorkflowScript:NONE}" />
 	</bean>
 
 	<bean id="worker.policy" class="org.taverna.server.master.worker.PolicyImpl">

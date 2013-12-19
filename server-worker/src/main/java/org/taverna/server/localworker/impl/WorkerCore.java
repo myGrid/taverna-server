@@ -216,10 +216,10 @@ public class WorkerCore extends UnicastRemoteObject implements Worker,
 				public void doIt() throws IOException {
 					startExecutorSubprocess(
 							createProcessBuilder(local, executeWorkflowCommand,
-									workflow, workingDir, inputBaclava, inputFiles,
-									inputValues, outputBaclava, securityDir,
-									password, environment, token, runtime),
-							password);
+									workflow, workingDir, inputBaclava,
+									inputFiles, inputValues, outputBaclava,
+									securityDir, password, environment, token,
+									runtime), password);
 				}
 			}.doOrTimeOut(START_WAIT_TIME);
 		} catch (IOException e) {
@@ -376,6 +376,7 @@ public class WorkerCore extends UnicastRemoteObject implements Worker,
 						"parent directory of output baclava file does not exist");
 			if (outputBaclava.exists())
 				throw new IOException("output baclava file exists");
+			// Provenance cannot be supported when using baclava output
 		} else {
 			File out = new File(workingDir, "out");
 			if (!out.mkdir())
@@ -384,6 +385,9 @@ public class WorkerCore extends UnicastRemoteObject implements Worker,
 			forceDelete(out);
 			pb.command().add("-outputdir");
 			pb.command().add(out.getAbsolutePath());
+			// Enable provenance generation
+			pb.command().add("-embedded");
+			pb.command().add("-provenance");
 		}
 
 		// Add an argument holding the workflow
@@ -465,18 +469,10 @@ public class WorkerCore extends UnicastRemoteObject implements Worker,
 					buildUR(code.value == 0 ? Completed : Failed, code.value);
 				}
 			}, new TimingOutTask() {
-				/** Ask the workflow to stop */
+				/** Tell the workflow to stop */
 				@Override
 				public void doIt() throws IOException {
-					code.value = killVeryNicely();
-					accounting.runCeased();
-					buildUR(code.value == 0 ? Completed : Aborted, code.value);
-				}
-			}, new TimingOutTask() {
-				/** Tell the workflow firmly to stop */
-				@Override
-				public void doIt() throws IOException {
-					code.value = killFairlyNicely();
+					code.value = killNicely();
 					accounting.runCeased();
 					buildUR(code.value == 0 ? Completed : Aborted, code.value);
 				}
@@ -488,7 +484,7 @@ public class WorkerCore extends UnicastRemoteObject implements Worker,
 					accounting.runCeased();
 					buildUR(code.value == 0 ? Completed : Aborted, code.value);
 				}
-			}}) {
+			} }) {
 				try {
 					tot.doOrTimeOut(DEATH_TIME);
 				} catch (Exception e) {
@@ -589,17 +585,7 @@ public class WorkerCore extends UnicastRemoteObject implements Worker,
 	}
 
 	@Nullable
-	private Integer killVeryNicely() {
-		try {
-			subprocess.destroy();
-			return subprocess.waitFor();
-		} catch (InterruptedException e) {
-			return null;
-		}
-	}
-
-	@Nullable
-	private Integer killFairlyNicely() {
+	private Integer killNicely() {
 		try {
 			signal("TERM");
 			return subprocess.waitFor();

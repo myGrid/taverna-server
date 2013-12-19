@@ -913,4 +913,16 @@ public class TavernaServerSupport {
 	public List<Capability> getCapabilities() {
 		return capabilitySource.getCapabilities();
 	}
+
+	static final String PROV_BUNDLE = "out.robundle.zip";
+
+	public FileConcatenation getProv(TavernaRun run) {
+		FileConcatenation fc = new FileConcatenation();
+		try {
+			fc.add(fileUtils.getFile(run, PROV_BUNDLE));
+		} catch (FilesystemAccessException | NoDirectoryEntryException e) {
+			// Ignore
+		}
+		return fc;
+	}
 }
