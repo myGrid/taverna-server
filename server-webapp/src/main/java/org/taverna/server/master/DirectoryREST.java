@@ -88,7 +88,6 @@ class DirectoryREST implements TavernaServerDirectoryREST, DirectoryBean {
 	@CallCounted
 	@PerfLogged
 	@RolesAllowed({ USER, SELF })
-	@SuppressWarnings("null")
 	public Response destroyDirectoryEntry(List<PathSegment> path)
 			throws NoUpdateException, FilesystemAccessException,
 			NoDirectoryEntryException {
@@ -203,7 +202,6 @@ class DirectoryREST implements TavernaServerDirectoryREST, DirectoryBean {
 	@CallCounted
 	@PerfLogged
 	@RolesAllowed({ USER, SELF })
-	@SuppressWarnings("null")
 	public Response getDirectoryOrFileContents(List<PathSegment> path,
 			UriInfo ui, HttpHeaders headers) throws FilesystemAccessException,
 			NoDirectoryEntryException, NegotiationFailedException {
@@ -241,7 +239,6 @@ class DirectoryREST implements TavernaServerDirectoryREST, DirectoryBean {
 	@CallCounted
 	@PerfLogged
 	@RolesAllowed({ USER, SELF })
-	@SuppressWarnings("null")
 	public Response makeDirectoryOrUpdateFile(List<PathSegment> parent,
 			MakeOrUpdateDirEntry op, UriInfo ui) throws NoUpdateException,
 			FilesystemAccessException, NoDirectoryEntryException {
@@ -285,7 +282,6 @@ class DirectoryREST implements TavernaServerDirectoryREST, DirectoryBean {
 		return seeOther(ub.build(f.getName())).build();
 	}
 
-	@SuppressWarnings("null")
 	private File getFileForWrite(List<PathSegment> filePath,
 			Holder<Boolean> isNew) throws FilesystemAccessException,
 			NoDirectoryEntryException, NoUpdateException {
@@ -327,7 +323,6 @@ class DirectoryREST implements TavernaServerDirectoryREST, DirectoryBean {
 	@CallCounted
 	@PerfLogged
 	@RolesAllowed({ USER, SELF })
-	@SuppressWarnings("null")
 	public Response setFileContents(List<PathSegment> filePath,
 			InputStream contents, UriInfo ui) throws NoDirectoryEntryException,
 			NoUpdateException, FilesystemAccessException {
@@ -344,7 +339,6 @@ class DirectoryREST implements TavernaServerDirectoryREST, DirectoryBean {
 	@CallCounted
 	@PerfLogged
 	@RolesAllowed(USER)
-	@SuppressWarnings("null")
 	public Response setFileContentsFromURL(List<PathSegment> filePath,
 			List<URI> referenceList, UriInfo ui)
 			throws NoDirectoryEntryException, NoUpdateException,

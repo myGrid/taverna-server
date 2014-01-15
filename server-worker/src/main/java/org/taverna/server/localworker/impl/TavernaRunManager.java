@@ -105,7 +105,6 @@ public class TavernaRunManager extends UnicastRemoteObject implements
 	 * @throws RemoteException
 	 *             If anything goes wrong during creation of the instance.
 	 */
-	@java.lang.SuppressWarnings("null")
 	public TavernaRunManager(@NonNull String command) throws RemoteException {
 		this.command = command;
 		this.dbf = DocumentBuilderFactory.newInstance();
@@ -126,7 +125,6 @@ public class TavernaRunManager extends UnicastRemoteObject implements
 	 * @throws RemoteException
 	 *             If anything goes wrong.
 	 */
-	@java.lang.SuppressWarnings("null")
 	@SuppressWarnings("REC_CATCH_EXCEPTION")
 	@NonNull
 	private String unwrapWorkflow(@NonNull String workflow,
@@ -258,7 +256,6 @@ public class TavernaRunManager extends UnicastRemoteObject implements
 		}
 		setSecurityManager(new RMISecurityManager());
 		factoryName = args[args.length - 1];
-		@java.lang.SuppressWarnings("null")
 		TavernaRunManager man = new TavernaRunManager(args[0]);
 		for (int i = 1; i < args.length - 1; i++)
 			man.addArgument(args[i]);

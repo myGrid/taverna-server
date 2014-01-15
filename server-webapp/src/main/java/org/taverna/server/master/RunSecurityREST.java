@@ -6,8 +6,6 @@
 package org.taverna.server.master;
 
 import static java.util.UUID.randomUUID;
-import static javax.ws.rs.core.Response.created;
-import static javax.ws.rs.core.Response.noContent;
 import static org.taverna.server.master.common.Status.Initialized;
 import static org.taverna.server.master.common.Uri.secure;
 import static org.taverna.server.master.utils.RestUtils.opt;
@@ -31,6 +29,8 @@ import org.taverna.server.master.rest.TavernaServerSecurityREST;
 import org.taverna.server.master.utils.CallTimeLogger.PerfLogged;
 import org.taverna.server.master.utils.InvocationCounter.CallCounted;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+
 /**
  * RESTful interface to a single workflow run's security settings.
  * 
@@ -40,6 +40,16 @@ class RunSecurityREST implements TavernaServerSecurityREST, SecurityBean {
 	private TavernaServerSupport support;
 	private TavernaSecurityContext context;
 	private TavernaRun run;
+
+	@NonNull
+	private Response noContent() {
+		return Response.noContent().build();
+	}
+
+	@NonNull
+	private Response created(URI location) {
+		return Response.created(location).build();
+	}
 
 	@Override
 	public void setSupport(TavernaServerSupport support) {
@@ -117,7 +127,7 @@ class RunSecurityREST implements TavernaServerSecurityREST, SecurityBean {
 		c.href = uri.toString();
 		context.validateCredential(c);
 		context.addCredential(c);
-		return created(uri).build();
+		return created(uri);
 	}
 
 	@Override
@@ -128,8 +138,9 @@ class RunSecurityREST implements TavernaServerSecurityREST, SecurityBean {
 		if (run.getStatus() != Initialized)
 			throw new BadStateChangeException();
 		for (Credential c : context.getCredentials())
-			context.deleteCredential(c);
-		return noContent().build();
+			if (c != null)
+				context.deleteCredential(c);
+		return noContent();
 	}
 
 	@Override
@@ -140,7 +151,7 @@ class RunSecurityREST implements TavernaServerSecurityREST, SecurityBean {
 		if (run.getStatus() != Initialized)
 			throw new BadStateChangeException();
 		context.deleteCredential(new Credential.Dummy(id));
-		return noContent().build();
+		return noContent();
 	}
 
 	@Override
@@ -187,7 +198,7 @@ class RunSecurityREST implements TavernaServerSecurityREST, SecurityBean {
 		t.href = uri.toString();
 		context.validateTrusted(t);
 		context.addTrusted(t);
-		return created(uri).build();
+		return created(uri);
 	}
 
 	@Override
@@ -197,8 +208,9 @@ class RunSecurityREST implements TavernaServerSecurityREST, SecurityBean {
 		if (run.getStatus() != Initialized)
 			throw new BadStateChangeException();
 		for (Trust t : context.getTrusted())
-			context.deleteTrusted(t);
-		return noContent().build();
+			if (t != null)
+				context.deleteTrusted(t);
+		return noContent();
 	}
 
 	@Override
@@ -211,7 +223,7 @@ class RunSecurityREST implements TavernaServerSecurityREST, SecurityBean {
 		Trust toDelete = new Trust();
 		toDelete.id = id;
 		context.deleteTrusted(toDelete);
-		return noContent().build();
+		return noContent();
 	}
 
 	@Override
@@ -242,7 +254,7 @@ class RunSecurityREST implements TavernaServerSecurityREST, SecurityBean {
 	@PerfLogged
 	public Response deletePermission(String id, UriInfo ui) {
 		support.setPermission(context, id, Permission.None);
-		return noContent().build();
+		return noContent();
 	}
 
 	@Override
@@ -250,7 +262,7 @@ class RunSecurityREST implements TavernaServerSecurityREST, SecurityBean {
 	@PerfLogged
 	public Response makePermission(PermissionDescription desc, UriInfo ui) {
 		support.setPermission(context, desc.userName, desc.permission);
-		return created(secure(ui).path("{user}").build(desc.userName)).build();
+		return created(secure(ui).path("{user}").build(desc.userName));
 	}
 
 	@Override

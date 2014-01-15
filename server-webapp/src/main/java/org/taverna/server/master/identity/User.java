@@ -52,7 +52,6 @@ public class User implements UserDetails {
 	@Persistent
 	private String localUsername;
 
-	@SuppressWarnings("null")
 	@Override
 	public Collection<GrantedAuthority> getAuthorities() {
 		List<GrantedAuthority> auths = new ArrayList<GrantedAuthority>();

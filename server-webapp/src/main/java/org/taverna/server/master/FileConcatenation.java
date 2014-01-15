@@ -10,15 +10,18 @@ import java.util.List;
 import org.taverna.server.master.exceptions.FilesystemAccessException;
 import org.taverna.server.master.interfaces.File;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+
 /**
  * Simple concatenation of files.
  * 
  * @author Donal Fellows
  */
 public class FileConcatenation implements Iterable<File> {
-	private List<File> files = new ArrayList<File>();
+	@NonNull
+	private final List<File> files = new ArrayList<File>();
 
-	public void add(File f) {
+	public void add(@NonNull File f) {
 		files.add(f);
 	}
 
@@ -34,11 +37,12 @@ public class FileConcatenation implements Iterable<File> {
 		long size = 0;
 		for (File f : files)
 			try {
-				size += f.getSize();
+				if (f != null)
+					size += f.getSize();
 			} catch (FilesystemAccessException e) {
 				// Ignore; shouldn't happen but can't guarantee
 			}
-		return (size == 0 && !files.isEmpty() ? -1 : size);
+		return (size == 0 && !isEmpty() ? -1 : size);
 	}
 
 	/**
@@ -50,11 +54,13 @@ public class FileConcatenation implements Iterable<File> {
 	 * @throws UnsupportedEncodingException
 	 *             If the encoding doesn't exist.
 	 */
+	@NonNull
 	public String get(String encoding) throws UnsupportedEncodingException {
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		for (File f : files)
 			try {
-				baos.write(f.getContents(0, -1));
+				if (f != null)
+					baos.write(f.getContents(0, -1));
 			} catch (FilesystemAccessException e) {
 				continue;
 			} catch (IOException e) {
@@ -64,6 +70,7 @@ public class FileConcatenation implements Iterable<File> {
 	}
 
 	@Override
+	@NonNull
 	public Iterator<File> iterator() {
 		return files.iterator();
 	}

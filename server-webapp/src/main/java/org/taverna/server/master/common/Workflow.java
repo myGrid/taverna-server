@@ -77,7 +77,6 @@ public class Workflow implements Serializable,Externalizable {
 		return (Workflow) unmarshaller.unmarshal(sr);
 	}
 
-	@SuppressWarnings("null")
 	public @NonNull String marshal() throws JAXBException {
 		StringWriter sw = new StringWriter();
 		marshaller.marshal(this, sw);

@@ -323,7 +323,6 @@ public class ScapeSplicingEngine extends SplicingEngine {
 		e.setLinkingDataflowName(CONTAINER_NAME);
 		e.setInnerProcessorName(SPLICE_PROCESSOR_NAME);
 		e.setDummyProcessorName(DUMMY_PROCESSOR_NAME);
-		@SuppressWarnings("null")
 		@NonNull
 		Element executablePlan = e.parse(new InputSource(from));
 

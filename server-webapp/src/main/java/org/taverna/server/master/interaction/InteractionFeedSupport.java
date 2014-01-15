@@ -105,7 +105,6 @@ public class InteractionFeedSupport {
 	 * @return The URI of the feed
 	 */
 	@NonNull
-	@SuppressWarnings("null")
 	public URI getFeedURI(@NonNull TavernaRun run) {
 		return uriBuilder.getRunUriBuilder(run).path(FEED_URL_DIR).build();
 	}
@@ -118,14 +117,12 @@ public class InteractionFeedSupport {
 	 * @return The URI of the entry.
 	 */
 	@NonNull
-	@SuppressWarnings("null")
 	public URI getEntryURI(@NonNull TavernaRun run, @NonNull String id) {
 		return uriBuilder.getRunUriBuilder(run)
 				.path(FEED_URL_DIR + "/{entryID}").build(id);
 	}
 
 	@NonNull
-	@SuppressWarnings("null")
 	private Entry getEntryFromFile(@NonNull File f)
 			throws FilesystemAccessException {
 		long size = f.getSize();
@@ -136,7 +133,6 @@ public class InteractionFeedSupport {
 		return doc.getRoot();
 	}
 
-	@SuppressWarnings("null")
 	private void putEntryInFile(@NonNull Directory dir, @NonNull String name,
 			@NonNull Entry contents) throws FilesystemAccessException,
 			NoUpdateException {
@@ -153,7 +149,6 @@ public class InteractionFeedSupport {
 	@NonNull
 	private List<DirectoryEntry> listPossibleEntries(TavernaRun run)
 			throws FilesystemAccessException, NoDirectoryEntryException {
-		@SuppressWarnings("null")
 		List<DirectoryEntry> entries = new ArrayList<DirectoryEntry>(utils
 				.getDirectory(run, FEED_DIR).getContentsByDate());
 		reverse(entries);
@@ -161,7 +156,6 @@ public class InteractionFeedSupport {
 	}
 
 	@NonNull
-	@SuppressWarnings("null")
 	private String getRunURL(TavernaRun run) {
 		return new IRI(uriBuilder.getRunUriBuilder(run).build()).toString();
 	}
@@ -252,7 +246,6 @@ public class InteractionFeedSupport {
 	 *             If a generated URL is illegal (shouldn't happen).
 	 */
 	@NonNull
-	@SuppressWarnings("null")
 	public Entry addRunFeedEntry(@NonNull TavernaRun run, @NonNull Entry entry)
 			throws FilesystemAccessException, NoDirectoryEntryException,
 			NoUpdateException {

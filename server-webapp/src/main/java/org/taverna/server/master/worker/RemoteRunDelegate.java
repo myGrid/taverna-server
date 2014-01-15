@@ -152,7 +152,6 @@ public class RemoteRunDelegate implements TavernaRun {
 
 	@Override
 	@NonNull
-	@SuppressWarnings("null")
 	public String getId() {
 		String id = this.id;
 		return (id != null ? id : (this.id = randomUUID().toString()));
@@ -232,7 +231,6 @@ public class RemoteRunDelegate implements TavernaRun {
 	}
 
 	@Override
-	@SuppressWarnings("null")
 	public Workflow getWorkflow() {
 		return workflow;
 	}
@@ -421,7 +419,6 @@ public class RemoteRunDelegate implements TavernaRun {
 	 * @return the readers
 	 */
 	@NonNull
-	@SuppressWarnings("null")
 	public Set<String> getReaders() {
 		return readers == null ? new HashSet<String>()
 				: unmodifiableSet(readers);
@@ -440,7 +437,6 @@ public class RemoteRunDelegate implements TavernaRun {
 	 * @return the writers
 	 */
 	@NonNull
-	@SuppressWarnings("null")
 	public Set<String> getWriters() {
 		return writers == null ? new HashSet<String>()
 				: unmodifiableSet(writers);
@@ -459,7 +455,6 @@ public class RemoteRunDelegate implements TavernaRun {
 	 * @return the destroyers
 	 */
 	@NonNull
-	@SuppressWarnings("null")
 	public Set<String> getDestroyers() {
 		return destroyers == null ? new HashSet<String>()
 				: unmodifiableSet(destroyers);
@@ -472,7 +467,7 @@ public class RemoteRunDelegate implements TavernaRun {
 		out.writeObject(new MarshalledObject<RemoteSingleRun>(run));
 	}
 
-	@SuppressWarnings({ "unchecked", "null" })
+	@SuppressWarnings({ "unchecked" })
 	private void readObject(ObjectInputStream in) throws IOException,
 			ClassNotFoundException {
 		in.defaultReadObject();
@@ -501,7 +496,6 @@ public class RemoteRunDelegate implements TavernaRun {
 
 	@NonNull
 	@Override
-	@SuppressWarnings("null")
 	public String getName() {
 		return name;
 	}
@@ -540,7 +534,6 @@ abstract class DEDelegate implements DirectoryEntry {
 	}
 
 	@Override
-	@SuppressWarnings("null")
 	public String getFullName() {
 		if (full != null)
 			return full;
@@ -577,7 +570,6 @@ abstract class DEDelegate implements DirectoryEntry {
 	}
 
 	@Override
-	@SuppressWarnings("null")
 	public Date getModificationDate() {
 		if (cacheModTime == null || currentTimeMillis() - cacheQueryTime < 5000)
 			try {
@@ -830,7 +822,6 @@ class ListenerDelegate implements Listener {
 	}
 
 	@Override
-	@SuppressWarnings("null")
 	public String getConfiguration() {
 		try {
 			if (conf == null)

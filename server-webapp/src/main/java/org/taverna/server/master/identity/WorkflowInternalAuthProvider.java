@@ -119,7 +119,6 @@ public class WorkflowInternalAuthProvider extends
 			@NonNull Object principal, @NonNull Object credentials)
 			throws Exception {
 		@NonNull
-		@SuppressWarnings("null")
 		HttpServletRequest req = ((ServletRequestAttributes) currentRequestAttributes())
 				.getRequest();
 
@@ -175,7 +174,6 @@ public class WorkflowInternalAuthProvider extends
 	 *             a general AuthenticationException.
 	 */
 	@NonNull
-	@SuppressWarnings("null")
 	protected UserDetails retrieveUser(String username, Object details)
 			throws Exception {
 		if (details == null || !(details instanceof WebAuthenticationDetails))
@@ -200,7 +198,6 @@ public class WorkflowInternalAuthProvider extends
 	}
 
 	@Override
-	@SuppressWarnings("null")
 	protected final void additionalAuthenticationChecks(UserDetails userRecord,
 			UsernamePasswordAuthenticationToken token) {
 		try {

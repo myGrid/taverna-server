@@ -71,7 +71,6 @@ public class FileSegment {
 	 * @return A JAX-RS response.
 	 */
 	@NonNull
-	@SuppressWarnings("null")
 	public Response toResponse(MediaType type) {
 		if (from == null && to == null)
 			return ok(file).type(type).build();

@@ -25,17 +25,14 @@ public class UsernamePrincipal implements Principal, Serializable {
 		this.name = username;
 	}
 
-	@SuppressWarnings("null")
 	public UsernamePrincipal(@NonNull Principal other) {
 		this.name = other.getName();
 	}
 
-	@SuppressWarnings("null")
 	public UsernamePrincipal(@NonNull Authentication auth) {
 		this(auth.getPrincipal());
 	}
 
-	@SuppressWarnings("null")
 	public UsernamePrincipal(@NonNull Object principal) {
 		if (principal instanceof Principal)
 			this.name = ((Principal) principal).getName();

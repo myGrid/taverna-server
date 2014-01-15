@@ -124,7 +124,6 @@ class XPathSupport {
 	}
 
 	@NonNull
-	@SuppressWarnings("null")
 	public String text(Element context, String expression, Object... args)
 			throws XPathExpressionException {
 		return (String) xp(expression, args).evaluate(context, STRING);

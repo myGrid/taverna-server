@@ -4,6 +4,8 @@ import org.taverna.server.master.rest.TavernaServerDirectoryREST;
 import org.taverna.server.master.interfaces.TavernaRun;
 import org.taverna.server.master.utils.FilenameUtils;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+
 /**
  * Description of properties supported by {@link DirectoryREST}.
  * 
@@ -12,5 +14,6 @@ import org.taverna.server.master.utils.FilenameUtils;
 public interface DirectoryBean extends SupportAware {
 	void setFileUtils(FilenameUtils fileUtils);
 
-	TavernaServerDirectoryREST connect(TavernaRun run);
+	@NonNull
+	TavernaServerDirectoryREST connect(@NonNull TavernaRun run);
 }

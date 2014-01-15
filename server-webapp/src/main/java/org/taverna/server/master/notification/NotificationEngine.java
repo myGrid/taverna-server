@@ -112,7 +112,6 @@ public class NotificationEngine {
 	 * @throws Exception
 	 *             If anything goes wrong with the dispatch process.
 	 */
-	@SuppressWarnings("null")
 	public void dispatchMessage(@NonNull TavernaRun originator,
 			@Nullable String destination, @NonNull Message message)
 			throws Exception {

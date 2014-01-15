@@ -157,7 +157,7 @@ public interface TavernaServerRunREST {
 	@Description("Set the descriptive name of the workflow run. Note that "
 			+ "this value may be arbitrarily truncated by the implementation.")
 	@NonNull
-	public String setName(String name) throws NoUpdateException;
+	public String setName(@NonNull String name) throws NoUpdateException;
 
 	/** Produce the workflow name HTTP operations. */
 	@OPTIONS

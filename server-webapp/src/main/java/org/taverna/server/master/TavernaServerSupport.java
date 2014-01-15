@@ -140,7 +140,6 @@ public class TavernaServerSupport {
 	/**
 	 * @return Current number of runs.
 	 */
-	@java.lang.SuppressWarnings("null")
 	@ManagedMetric(description = "Current number of runs.", metricType = GAUGE, category = "utilization")
 	public int getCurrentRunCount() {
 		return runStore.listRuns(null, policy).size();
@@ -368,7 +367,9 @@ public class TavernaServerSupport {
 	 * @throws NoUpdateException
 	 *             If the current user is not permitted to update the run.
 	 */
-	public void permitUpdate(@NonNull TavernaRun run) throws NoUpdateException {
+	public void permitUpdate(@Nullable TavernaRun run) throws NoUpdateException {
+		if (run == null)
+			throw new NoUpdateException();
 		if (isSuperUser()) {
 			accessLog
 					.warn("check for admin powers passed; elevated access rights granted for update");
@@ -391,8 +392,10 @@ public class TavernaServerSupport {
 	 * @throws NoDestroyException
 	 *             If the current user is not permitted to destroy the run.
 	 */
-	public void permitDestroy(@NonNull TavernaRun run)
+	public void permitDestroy(@Nullable TavernaRun run)
 			throws NoDestroyException {
+		if (run == null)
+			throw new NoDestroyException();
 		if (isSuperUser()) {
 			accessLog
 					.warn("check for admin powers passed; elevated access rights granted for destroy");
@@ -451,7 +454,6 @@ public class TavernaServerSupport {
 	 *             have permission to see it.
 	 */
 	@NonNull
-	@java.lang.SuppressWarnings("null")
 	public TavernaRun getRun(@NonNull String name) throws UnknownRunException {
 		if (isSuperUser()) {
 			accessLog
@@ -751,7 +753,6 @@ public class TavernaServerSupport {
 			run = runFactory.create(p, workflow);
 			TavernaSecurityContext c = run.getSecurityContext();
 			@NonNull
-			@java.lang.SuppressWarnings("null")
 			SecurityContext ctxt = SecurityContextHolder.getContext();
 			c.initializeSecurityFromContext(ctxt);
 			/*
@@ -835,7 +836,6 @@ public class TavernaServerSupport {
 	 *         "application/octet-stream".
 	 */
 	@NonNull
-	@java.lang.SuppressWarnings("null")
 	public String getEstimatedContentType(@NonNull File f) {
 		String name = f.getName();
 		for (int idx = name.indexOf('.'); idx != -1; idx = name.indexOf('.',
@@ -909,7 +909,6 @@ public class TavernaServerSupport {
 			"logs/detail.log.3", "logs/detail.log.2", "logs/detail.log.1",
 			"logs/detail.log" };
 
-	@java.lang.SuppressWarnings("null")
 	public FileConcatenation getLogs(@NonNull TavernaRun run) {
 		FileConcatenation fc = new FileConcatenation();
 		for (String name : LOGS) {
@@ -932,7 +931,6 @@ public class TavernaServerSupport {
 	static final String PROV_BUNDLE = "out.robundle.zip";
 
 	@NonNull
-	@java.lang.SuppressWarnings("null")
 	public FileConcatenation getProv(@NonNull TavernaRun run) {
 		FileConcatenation fc = new FileConcatenation();
 		try {

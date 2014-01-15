@@ -190,7 +190,6 @@ public class LocalWorkerState extends JDOSupport<PersistedState> implements
 
 	@Override
 	@NonNull
-	@SuppressWarnings("null")
 	public String getExecuteWorkflowScript() {
 		return executeWorkflowScript == null ? defaultExecuteWorkflowScript
 				: executeWorkflowScript;
@@ -234,7 +233,6 @@ public class LocalWorkerState extends JDOSupport<PersistedState> implements
 			self.store();
 	}
 
-	@SuppressWarnings("null")
 	@Override
 	@NonNull
 	public String[] getExtraArgs() {
@@ -274,7 +272,6 @@ public class LocalWorkerState extends JDOSupport<PersistedState> implements
 
 	@Override
 	@NonNull
-	@SuppressWarnings("null")
 	public String getServerWorkerJar() {
 		return serverWorkerJar == null ? DEFAULT_WORKER_JAR : serverWorkerJar;
 	}
@@ -288,7 +285,6 @@ public class LocalWorkerState extends JDOSupport<PersistedState> implements
 
 	@Override
 	@NonNull
-	@SuppressWarnings("null")
 	public String getServerForkerJar() {
 		return serverForkerJar == null ? DEFAULT_FORKER_JAR : serverForkerJar;
 	}
@@ -302,7 +298,6 @@ public class LocalWorkerState extends JDOSupport<PersistedState> implements
 
 	@Override
 	@NonNull
-	@SuppressWarnings("null")
 	public String getJavaBinary() {
 		return javaBinary == null ? DEFAULT_JAVA_BINARY : javaBinary;
 	}
@@ -351,7 +346,6 @@ public class LocalWorkerState extends JDOSupport<PersistedState> implements
 
 	@Override
 	@NonNull
-	@SuppressWarnings("null")
 	public String getRegistryJar() {
 		return registryJar == null ? DEFAULT_REGISTRY_JAR : registryJar;
 	}

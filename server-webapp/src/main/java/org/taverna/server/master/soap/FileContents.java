@@ -150,7 +150,6 @@ class TavernaFileSource implements DataSource {
 				write(new byte[] { (byte) b });
 			}
 
-			@SuppressWarnings("null")
 			@Override
 			public void write(byte[] b) throws IOException {
 				try {

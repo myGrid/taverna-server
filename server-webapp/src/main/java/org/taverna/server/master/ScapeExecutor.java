@@ -231,7 +231,6 @@ public class ScapeExecutor implements ScapeExecutionService {
 		return id;
 	}
 
-	@SuppressWarnings("null")
 	protected void initObjects(@NonNull TavernaRun run,
 			@NonNull List<Object> objs) throws BadStateChangeException {
 		StringBuffer sb = new StringBuffer();
@@ -246,7 +245,6 @@ public class ScapeExecutor implements ScapeExecutionService {
 	}
 
 	@NonNull
-	@SuppressWarnings("null")
 	private String serializeXml(@NonNull Node node) throws TransformerException {
 		Transformer writer = TransformerFactory.newInstance().newTransformer();
 		writer.setOutputProperty(OMIT_XML_DECLARATION, "yes");
@@ -330,7 +328,6 @@ class ScapeJob implements Serializable {
 	}
 
 	@NonNull
-	@SuppressWarnings("null")
 	public String getId() {
 		return id;
 	}

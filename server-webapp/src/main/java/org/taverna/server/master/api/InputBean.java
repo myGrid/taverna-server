@@ -7,15 +7,18 @@ import org.taverna.server.master.interfaces.TavernaRun;
 import org.taverna.server.master.rest.TavernaServerInputREST;
 import org.taverna.server.master.utils.FilenameUtils;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+
 /**
  * Description of properties supported by {@link InputREST}.
  * 
  * @author Donal Fellows
  */
 public interface InputBean extends SupportAware {
-	TavernaServerInputREST connect(TavernaRun run, UriInfo ui);
+	@NonNull
+	TavernaServerInputREST connect(@NonNull TavernaRun run, @NonNull UriInfo ui);
 
-	void setCdBuilder(ContentsDescriptorBuilder cd);
+	void setCdBuilder(@NonNull ContentsDescriptorBuilder cd);
 
-	void setFileUtils(FilenameUtils fn);
+	void setFileUtils(@NonNull FilenameUtils fn);
 }

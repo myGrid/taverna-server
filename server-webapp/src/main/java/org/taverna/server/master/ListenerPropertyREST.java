@@ -48,7 +48,6 @@ class ListenerPropertyREST implements TavernaServerListenersREST.Property,
 	@Override
 	@CallCounted
 	@PerfLogged
-	@SuppressWarnings("null")
 	public String getValue() {
 		try {
 			return listen.getProperty(propertyName);
@@ -62,7 +61,6 @@ class ListenerPropertyREST implements TavernaServerListenersREST.Property,
 	@Override
 	@CallCounted
 	@PerfLogged
-	@SuppressWarnings("null")
 	public String setValue(String value) throws NoUpdateException,
 			NoListenerException {
 		support.permitUpdate(run);

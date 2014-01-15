@@ -88,7 +88,6 @@ public class EventDAO extends JDOSupport<Event> implements MessageDispatcher {
 	 */
 	@NonNull
 	@WithinSingleTransaction
-	@SuppressWarnings("null")
 	public Event getEvent(@NonNull UsernamePrincipal user, @NonNull String id) {
 		@SuppressWarnings("unchecked")
 		List<String> ids = (List<String>) namedQuery("eventForUserAndId")

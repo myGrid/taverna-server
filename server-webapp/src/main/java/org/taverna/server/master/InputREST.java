@@ -223,7 +223,6 @@ class InputREST implements TavernaServerInputREST, InputBean {
  * 
  * @author Donal Fellows
  */
-@SuppressWarnings("null")
 class SyntheticDirectoryEntry implements DirectoryEntry {
 	@NonNull
 	public static DirEntryReference make(String path) {

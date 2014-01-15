@@ -27,7 +27,6 @@ abstract class DOMUtils {
 		Element elem = parent;
 		for (String n : name) {
 			@NonNull
-			@SuppressWarnings("null")
 			Element created = doc.createElementNS(elem.getNamespaceURI(), n);
 			elem.appendChild(created);
 			elem = created;

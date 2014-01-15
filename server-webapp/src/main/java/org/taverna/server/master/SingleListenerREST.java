@@ -69,9 +69,8 @@ abstract class SingleListenerREST implements TavernaServerListenerREST,
 	public TavernaServerListenersREST.Property getProperty(
 			final String propertyName) throws NoListenerException {
 		List<String> p = asList(listen.listProperties());
-		if (p.contains(propertyName)) {
+		if (p.contains(propertyName))
 			return makePropertyInterface().connect(listen, run, propertyName);
-		}
 		throw new NoListenerException("no such property");
 	}
 

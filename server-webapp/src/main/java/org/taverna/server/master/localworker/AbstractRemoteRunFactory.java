@@ -132,7 +132,6 @@ public abstract class AbstractRemoteRunFactory extends RunFactoryConfiguration
 		}
 	}
 
-	@SuppressWarnings("null")
 	protected void initInteractionDetails(RemoteRunFactory factory)
 			throws RemoteException {
 		if (interhost != null) {
@@ -338,10 +337,8 @@ public abstract class AbstractRemoteRunFactory extends RunFactoryConfiguration
 			RemoteRunDelegate run = new RemoteRunDelegate(now, workflow, rsr,
 					state.getDefaultLifetime(), runDB, id, this);
 			run.setSecurityContext(securityFactory.create(run, creator));
-			@SuppressWarnings("null")
 			@NonNull
 			URL feedUrl = interactionFeedSupport.getFeedURI(run).toURL();
-			@SuppressWarnings("null")
 			@NonNull
 			URL webdavUrl = baseurifactory.getRunUriBuilder(run)
 					.path(DIR + "/interactions").build().toURL();

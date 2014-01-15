@@ -70,7 +70,6 @@ public class ExampleRun implements TavernaRun, TavernaSecurityContext {
 	@NonNull
 	String name = "";
 
-	@java.lang.SuppressWarnings("null")
 	public ExampleRun(@NonNull UsernamePrincipal creator,
 			@NonNull Workflow workflow, @NonNull Date expiry) {
 		this.id = randomUUID().toString();
@@ -149,7 +148,6 @@ public class ExampleRun implements TavernaRun, TavernaSecurityContext {
 		}
 
 		@Override
-		@java.lang.SuppressWarnings("null")
 		public TavernaRun create(UsernamePrincipal creator, Workflow workflow) {
 			@NonNull
 			Calendar c = GregorianCalendar.getInstance();
@@ -181,7 +179,6 @@ public class ExampleRun implements TavernaRun, TavernaSecurityContext {
 			return "default";
 		}
 
-		@java.lang.SuppressWarnings("null")
 		@Override
 		public String[] listProperties() {
 			return emptyArray;
@@ -204,7 +201,6 @@ public class ExampleRun implements TavernaRun, TavernaSecurityContext {
 		return inputBaclava;
 	}
 
-	@java.lang.SuppressWarnings("null")
 	@Override
 	public List<Input> getInputs() {
 		return unmodifiableList(inputs);
@@ -384,7 +380,6 @@ public class ExampleRun implements TavernaRun, TavernaSecurityContext {
 						throw new UnsupportedOperationException();
 					}
 
-					@java.lang.SuppressWarnings("null")
 					@Override
 					public Set<String> getPermittedDestroyers() {
 						return emptySet();
@@ -394,7 +389,6 @@ public class ExampleRun implements TavernaRun, TavernaSecurityContext {
 					public void setPermittedDestroyers(Set<String> destroyers) {
 					}
 
-					@java.lang.SuppressWarnings("null")
 					@Override
 					public Set<String> getPermittedUpdaters() {
 						return emptySet();
@@ -404,7 +398,6 @@ public class ExampleRun implements TavernaRun, TavernaSecurityContext {
 					public void setPermittedUpdaters(Set<String> updaters) {
 					}
 
-					@java.lang.SuppressWarnings("null")
 					@Override
 					public Set<String> getPermittedReaders() {
 						return Collections.emptySet();

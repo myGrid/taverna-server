@@ -10,6 +10,8 @@ import org.taverna.server.master.factories.ListenerFactory;
 import org.taverna.server.master.interfaces.Listener;
 import org.taverna.server.master.interfaces.TavernaRun;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+
 /**
  * A factory for event listener. The factory is configured using Spring.
  * 
@@ -58,6 +60,7 @@ public class SimpleListenerFactory implements ListenerFactory {
 		 *             If the listener construction failed or the
 		 *             <b>configuration</b> document was bad in some way.
 		 */
+		@NonNull
 		public Listener build(TavernaRun run, String configuration)
 				throws NoListenerException;
 	}

@@ -104,7 +104,6 @@ public abstract class SecurityContextDelegate implements TavernaSecurityContext 
 	}
 
 	@Override
-	@SuppressWarnings("null")
 	public Credential[] getCredentials() {
 		synchronized (lock) {
 			return credentials.toArray(new Credential[credentials.size()]);
@@ -150,7 +149,6 @@ public abstract class SecurityContextDelegate implements TavernaSecurityContext 
 	}
 
 	@Override
-	@SuppressWarnings("null")
 	public Trust[] getTrusted() {
 		synchronized (lock) {
 			return trusted.toArray(new Trust[trusted.size()]);
@@ -182,7 +180,6 @@ public abstract class SecurityContextDelegate implements TavernaSecurityContext 
 			throws InvalidCredentialException;
 
 	@Override
-	@SuppressWarnings("null")
 	public void validateTrusted(Trust t) throws InvalidCredentialException {
 		InputStream contentsAsStream;
 		if (t.certificateBytes != null && t.certificateBytes.length > 0) {
@@ -390,7 +387,6 @@ public abstract class SecurityContextDelegate implements TavernaSecurityContext 
 	 * @return A new password with a reasonable level of randomness.
 	 */
 	@NonNull
-	@SuppressWarnings("null")
 	protected final char[] generateNewPassword() {
 		return randomUUID().toString().toCharArray();
 	}
@@ -572,7 +568,6 @@ public abstract class SecurityContextDelegate implements TavernaSecurityContext 
 		 * @throws GeneralSecurityException
 		 *             If anything goes wrong.
 		 */
-		@SuppressWarnings("null")
 		@NonNull
 		public byte[] serialize() throws GeneralSecurityException, IOException {
 			if (ks == null)
@@ -655,7 +650,6 @@ public abstract class SecurityContextDelegate implements TavernaSecurityContext 
 		 * @throws GeneralSecurityException
 		 *             If anything goes wrong.
 		 */
-		@SuppressWarnings("null")
 		@NonNull
 		public byte[] serialize() throws GeneralSecurityException {
 			if (ks == null)

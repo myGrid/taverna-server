@@ -359,13 +359,11 @@ public class LocalWorker extends UnicastRemoteObject implements RemoteSingleRun 
 	}
 
 	@Override
-	@java.lang.SuppressWarnings("null")
 	public List<String> getListenerTypes() {
 		return emptyList();
 	}
 
 	@Override
-	@java.lang.SuppressWarnings("null")
 	public List<RemoteListener> getListeners() {
 		return singletonList(core.getDefaultListener());
 	}

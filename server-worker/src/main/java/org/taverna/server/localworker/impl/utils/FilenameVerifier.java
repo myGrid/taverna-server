@@ -10,73 +10,86 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
+
 /**
  * Utility class that handles filename validation on different target platforms.
  * 
  * @author Donal Fellows.
  */
 public abstract class FilenameVerifier {
-	private FilenameVerifier(){}
+	private FilenameVerifier() {
+	}
 
-	static final boolean IS_WINDOWS = System.getProperty("os.name").toLowerCase().contains("win");
+	static final boolean IS_WINDOWS = System.getProperty("os.name")
+			.toLowerCase().contains("win");
 
 	@SuppressWarnings("serial")
-	private static final Set<String> ILLEGAL_NAMES = new HashSet<String>(){{
-		add("");
-		add("..");
-		add(".");
-		if (IS_WINDOWS) {
-			add("con");
-			add("prn");
-			add("nul");
-			add("aux");
-			for (int i = 1; i <= 9; i++) {
-				add("com" + i);
-				add("lpt" + i);
-			}
-		}
-	}};
-	@SuppressWarnings("serial")
-	private static final Set<Character> ILLEGAL_CHARS = new HashSet<Character>(){{
-		add('/');
-		for (char i=0 ; i<32 ; i++)
-			add(i);
-		if (IS_WINDOWS) {
-			add('\\');
-			add('>');
-			add('<');
-			add(':');
-			add('"');
-			add('|');
-			add('?');
-			add('*');
-		} else {
-			add(' '); // whitespace; too much trouble from these
-			add('\t');
-			add('\r');
-			add('\n');
-		}
-	}};
-	@SuppressWarnings("serial")
-	private static final Set<String> ILLEGAL_PREFIXES = new HashSet<String>(){{
-		if (IS_WINDOWS) {
-			add("con.");
-			add("prn.");
-			add("nul.");
-			add("aux.");
-			for (int i = 1; i <= 9; i++) {
-				add("com" + i + ".");
-				add("lpt" + i + ".");
-			}
-		}
-	}};
-	@SuppressWarnings("serial")
-	private static final Set<String> ILLEGAL_SUFFIXES = new HashSet<String>(){{
-		if (IS_WINDOWS) {
-			add(" ");
+	private static final Set<String> ILLEGAL_NAMES = new HashSet<String>() {
+		{
+			add("");
+			add("..");
 			add(".");
+			if (IS_WINDOWS) {
+				add("con");
+				add("prn");
+				add("nul");
+				add("aux");
+				for (int i = 1; i <= 9; i++) {
+					add("com" + i);
+					add("lpt" + i);
+				}
+			}
 		}
-	}};
+	};
+	@SuppressWarnings("serial")
+	private static final Set<Character> ILLEGAL_CHARS = new HashSet<Character>() {
+		{
+			add('/');
+			for (char i = 0; i < 32; i++)
+				add(i);
+			if (IS_WINDOWS) {
+				add('\\');
+				add('>');
+				add('<');
+				add(':');
+				add('"');
+				add('|');
+				add('?');
+				add('*');
+			} else {
+				add(' '); // whitespace; too much trouble from these
+				add('\t');
+				add('\r');
+				add('\n');
+			}
+		}
+	};
+	@SuppressWarnings("serial")
+	private static final Set<String> ILLEGAL_PREFIXES = new HashSet<String>() {
+		{
+			if (IS_WINDOWS) {
+				add("con.");
+				add("prn.");
+				add("nul.");
+				add("aux.");
+				for (int i = 1; i <= 9; i++) {
+					add("com" + i + ".");
+					add("lpt" + i + ".");
+				}
+			}
+		}
+	};
+	@SuppressWarnings("serial")
+	private static final Set<String> ILLEGAL_SUFFIXES = new HashSet<String>() {
+		{
+			if (IS_WINDOWS) {
+				add(" ");
+				add(".");
+			}
+		}
+	};
 
 	/**
 	 * Construct a file handle, applying platform-specific filename validation
@@ -92,12 +105,15 @@ public abstract class FilenameVerifier {
 	 * @throws IOException
 	 *             If validation fails.
 	 */
-	public static File getValidatedFile(File dir, String... names)
+	@NonNull
+	public static File getValidatedFile(@Nullable File dir, String... names)
 			throws IOException {
-		if (names.length == 0)
+		if (names == null || names.length == 0)
 			throw new IOException("empty filename");
 		File f = dir;
 		for (String name : names) {
+			if (name == null || name.length() == 0)
+				throw new IOException("empty filename");
 			String low = name.toLowerCase();
 			if (ILLEGAL_NAMES.contains(low))
 				throw new IOException("illegal filename");
@@ -112,7 +128,8 @@ public abstract class FilenameVerifier {
 					throw new IOException("illegal filename");
 			f = new File(f, name);
 		}
-		assert f != null;
+		if (f == null)
+			throw new IOException("empty filename");
 		return f;
 	}
 
@@ -127,8 +144,9 @@ public abstract class FilenameVerifier {
 	 * @throws IOException
 	 *             If validation fails or the file doesn't exist.
 	 */
-	public static File getValidatedExistingFile(File dir, String name)
-			throws IOException {
+	@NonNull
+	public static File getValidatedExistingFile(@NonNull File dir,
+			@NonNull String name) throws IOException {
 		File f = getValidatedFile(dir, name);
 		if (!f.exists())
 			throw new IOException("doesn't exist");
@@ -146,8 +164,9 @@ public abstract class FilenameVerifier {
 	 * @throws IOException
 	 *             If validation fails or the file does exist.
 	 */
-	public static File getValidatedNewFile(File dir, String name)
-			throws IOException {
+	@NonNull
+	public static File getValidatedNewFile(@NonNull File dir,
+			@NonNull String name) throws IOException {
 		File f = getValidatedFile(dir, name);
 		if (f.exists())
 			throw new IOException("already exists");

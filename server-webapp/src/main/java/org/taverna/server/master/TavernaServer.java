@@ -1127,6 +1127,8 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 			NoUpdateException, NoListenerException {
 		if (runName == null)
 			throw new UnknownRunException();
+		if (listenerType == null || configuration == null)
+			throw new NoListenerException("null argument");
 		return support.makeListener(support.getRun(runName), listenerType,
 				configuration).getName();
 	}
@@ -1140,6 +1142,8 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 			NoListenerException {
 		if (runName == null)
 			throw new UnknownRunException();
+		if (listenerName == null)
+			throw new NoListenerException("null argument");
 		return support.getListener(runName, listenerName).getConfiguration();
 	}
 
@@ -1179,7 +1183,7 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 			NoUpdateException, NoListenerException {
 		if (runName == null)
 			throw new UnknownRunException();
-		if (listenerName == null || propName == null)
+		if (listenerName == null || propName == null || value == null)
 			throw new NoListenerException("null argument");
 		TavernaRun w = support.getRun(runName);
 		support.permitUpdate(w);
@@ -1359,7 +1363,6 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 	}
 
 	@NonNull
-	@java.lang.SuppressWarnings("null")
 	private URI getPossiblyInsecureBaseUri() {
 		// See if JAX-RS can supply the info
 		UriInfo ui = getUriInfo();
@@ -1389,6 +1392,7 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 		return secure(getPossiblyInsecureBaseUri(), uri).toString();
 	}
 
+	@NonNull
 	private Map<String, TavernaRun> runs() {
 		return runStore.listRuns(support.getPrincipal(), policy);
 	}

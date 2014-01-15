@@ -86,7 +86,6 @@ public class ContentsDescriptorBuilder {
 		portDepth = xp.compile("./t2:depth/text()");
 	}
 
-	@SuppressWarnings("null")
 	@NonNull
 	private Element dataflow(Element root) throws XPathExpressionException {
 		return (Element) dataflow.evaluate(root, NODE);
@@ -354,7 +353,6 @@ public class ContentsDescriptorBuilder {
 		return descriptor;
 	}
 
-	@SuppressWarnings("null")
 	@NonNull
 	private UriBuilder getRunUriBuilder(@NonNull TavernaRun run,
 			@Nullable UriInfo ui) {

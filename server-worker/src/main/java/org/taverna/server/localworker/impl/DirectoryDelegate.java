@@ -25,6 +25,7 @@ import org.taverna.server.localworker.remote.RemoteDirectoryEntry;
 import org.taverna.server.localworker.remote.RemoteFile;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 /**
  * This class acts as a remote-aware delegate for the workflow run's working
@@ -37,8 +38,11 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 @SuppressWarnings("serial")
 public class DirectoryDelegate extends UnicastRemoteObject implements
 		RemoteDirectory {
-	private File dir;
-	private DirectoryDelegate parent;
+	@NonNull
+	private final File dir;
+	@Nullable
+	private final DirectoryDelegate parent;
+	@NonNull
 	private ReferenceMap localCache;
 
 	/**
@@ -118,7 +122,8 @@ public class DirectoryDelegate extends UnicastRemoteObject implements
 	@SuppressWarnings("unchecked")
 	@Override
 	public void destroy() throws IOException {
-		if (parent == null)
+		DirectoryDelegate p = parent;
+		if (p == null)
 			throw new IOException("tried to destroy main job working directory");
 		Collection<RemoteDirectoryEntry> values;
 		synchronized (localCache) {
@@ -133,7 +138,7 @@ public class DirectoryDelegate extends UnicastRemoteObject implements
 			}
 		}
 		forceDelete(dir);
-		parent.forgetEntry(this);
+		p.forgetEntry(this);
 	}
 
 	@Override

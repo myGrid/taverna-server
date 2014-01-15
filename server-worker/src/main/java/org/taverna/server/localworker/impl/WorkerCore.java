@@ -105,7 +105,6 @@ public class WorkerCore extends UnicastRemoteObject implements Worker,
 		final String TIMERE = "([0-9.:]+)";
 		final String TERMS = "(real|user|system|sys|elapsed)";
 		@NonNull
-		@java.lang.SuppressWarnings("null")
 		Pattern re = Pattern.compile(TIMERE + " *" + TERMS + "[ \t]*" + TIMERE
 				+ " *" + TERMS + "[ \t]*" + TIMERE + " *" + TERMS);
 		TimeRE = re;
@@ -233,7 +232,6 @@ public class WorkerCore extends UnicastRemoteObject implements Worker,
 		return subprocess != null;
 	}
 
-	@java.lang.SuppressWarnings("null")
 	private void startExecutorSubprocess(@NonNull ProcessBuilder pb,
 			@Nullable char[] password) throws IOException {
 		// Start the subprocess
@@ -670,13 +668,11 @@ public class WorkerCore extends UnicastRemoteObject implements Worker,
 	}
 
 	@Override
-	@java.lang.SuppressWarnings("null")
 	public String getName() {
 		return DEFAULT_LISTENER_NAME;
 	}
 
 	@Override
-	@java.lang.SuppressWarnings("null")
 	@SuppressWarnings("REC_CATCH_EXCEPTION")
 	public String getProperty(String propName) throws RemoteException {
 		switch (Property.is(propName)) {
@@ -725,7 +721,6 @@ public class WorkerCore extends UnicastRemoteObject implements Worker,
 	}
 
 	@Override
-	@java.lang.SuppressWarnings("null")
 	public String getType() {
 		return DEFAULT_LISTENER_NAME;
 	}
@@ -885,7 +880,6 @@ enum Property {
 	}
 
 	@NonNull
-	@java.lang.SuppressWarnings("null")
 	public static String[] names() {
 		return pmap.keySet().toArray(new String[pmap.size()]);
 	}

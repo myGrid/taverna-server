@@ -48,7 +48,6 @@ public class FilenameUtils {
 	 *             If the directory isn't specified or isn't readable.
 	 */
 	@NonNull
-	@SuppressWarnings("null")
 	public DirectoryEntry getDirEntry(@NonNull TavernaRun run,
 			@NonNull String name) throws FilesystemAccessException,
 			NoDirectoryEntryException {
@@ -90,7 +89,6 @@ public class FilenameUtils {
 	 *             If the directory isn't specified or isn't readable.
 	 */
 	@NonNull
-	@SuppressWarnings("null")
 	public DirectoryEntry getDirEntry(@NonNull TavernaRun run,
 			@Nullable List<PathSegment> d) throws FilesystemAccessException,
 			NoDirectoryEntryException {
@@ -133,7 +131,6 @@ public class FilenameUtils {
 	 *             If there is no such entry.
 	 */
 	@NonNull
-	@SuppressWarnings("null")
 	public DirectoryEntry getDirEntry(@NonNull TavernaRun run,
 			@Nullable DirEntryReference d) throws FilesystemAccessException,
 			NoDirectoryEntryException {
