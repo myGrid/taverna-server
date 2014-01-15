@@ -1,6 +1,7 @@
 package org.taverna.server.master;
 
 import static at.ac.tuwien.ifs.dp.plato.ExecutablePlanType.T_2_FLOW;
+import static java.lang.String.format;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.serverError;
 import static javax.ws.rs.core.Response.status;
@@ -35,6 +36,7 @@ import javax.xml.transform.stream.StreamResult;
 
 import org.apache.commons.logging.Log;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.taverna.server.master.common.Namespaces;
 import org.taverna.server.master.common.Uri;
 import org.taverna.server.master.common.Workflow;
 import org.taverna.server.master.exceptions.BadStateChangeException;
@@ -110,7 +112,7 @@ public class ScapeExecutor implements ScapeExecutionService {
 	@CallCounted
 	@RolesAllowed(USER)
 	@NonNull
-	public Response startJob(@NonNull PreservationActionPlan plan,
+	public Response startJob(@Nullable PreservationActionPlan plan,
 			@NonNull UriInfo ui) throws NoCreateException {
 		if (plan == null)
 			throw new BadInputException("what?");
@@ -131,6 +133,11 @@ public class ScapeExecutor implements ScapeExecutionService {
 		Element workflow = ep.getAny();
 		if (workflow == null)
 			throw new BadInputException("the executable plan must be present");
+		if (!"workflow".equals(workflow.getLocalName())
+				|| Namespaces.T2FLOW.equals(workflow.getNamespaceURI()))
+			throw new BadInputException(format(
+					"bad content of executable plan: {%s}%s",
+					workflow.getNamespaceURI(), workflow.getLocalName()));
 
 		@NonNull
 		String id;
