@@ -51,11 +51,12 @@ import org.taverna.server.master.rest.TavernaServerREST.ServerDescription;
 import org.taverna.server.master.rest.TavernaServerRunREST.RunDescription;
 import org.taverna.server.master.rest.TavernaServerSecurityREST;
 import org.taverna.server.master.rest.TavernaServerSecurityREST.CredentialHolder;
-import org.taverna.server.master.rest.scape.PreservationActionPlan;
 import org.taverna.server.master.rest.scape.ScapeExecutionService;
 import org.taverna.server.master.soap.DirEntry;
 import org.taverna.server.master.soap.FileContents;
 import org.taverna.server.master.soap.PermissionList;
+
+import at.ac.tuwien.ifs.dp.plato.PreservationActionPlan;
 
 /**
  * This test file ensures that the JAXB bindings will work once deployed instead

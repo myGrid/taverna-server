@@ -39,6 +39,8 @@ import org.taverna.server.master.utils.CallTimeLogger.PerfLogged;
 import org.taverna.server.master.utils.InvocationCounter.CallCounted;
 import org.taverna.server.port_description.InputDescription;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+
 /**
  * RESTful interface to the input descriptor of a single workflow run.
  * 
@@ -75,25 +77,33 @@ class InputREST implements TavernaServerInputREST, InputBean {
 		return this;
 	}
 
+	@NonNull
+	private TavernaRun run() {
+		TavernaRun r = run;
+		if (r == null)
+			throw new IllegalStateException("incomplete initialization");
+		return r;
+	}
+
 	@Override
 	@CallCounted
 	@PerfLogged
 	public InputsDescriptor get() {
-		return new InputsDescriptor(ui, run);
+		return new InputsDescriptor(ui, run());
 	}
 
 	@Override
 	@CallCounted
 	@PerfLogged
 	public InputDescription getExpected() {
-		return cdBuilder.makeInputDescriptor(run, ui);
+		return cdBuilder.makeInputDescriptor(run(), ui);
 	}
 
 	@Override
 	@CallCounted
 	@PerfLogged
 	public String getBaclavaFile() {
-		String i = run.getInputBaclavaFile();
+		String i = run().getInputBaclavaFile();
 		return i == null ? "" : i;
 	}
 
@@ -101,7 +111,7 @@ class InputREST implements TavernaServerInputREST, InputBean {
 	@CallCounted
 	@PerfLogged
 	public InDesc getInput(String name) throws BadInputPortNameException {
-		Input i = support.getInput(run, name);
+		Input i = support.getInput(run(), name);
 		if (i == null)
 			throw new BadInputPortNameException("unknown input port name");
 		return new InDesc(i);
@@ -112,7 +122,7 @@ class InputREST implements TavernaServerInputREST, InputBean {
 	@PerfLogged
 	public String setBaclavaFile(String filename) throws NoUpdateException,
 			BadStateChangeException, FilesystemAccessException {
-		support.permitUpdate(run);
+		support.permitUpdate(run());
 		run.setInputBaclavaFile(filename);
 		String i = run.getInputBaclavaFile();
 		return i == null ? "" : i;
@@ -130,22 +140,29 @@ class InputREST implements TavernaServerInputREST, InputBean {
 			throw new BadInputPortNameException("bad input name");
 		if (ac == null)
 			throw new BadPropertyValueException("no content!");
+
 		if (ac instanceof InDesc.Reference)
 			return setRemoteInput(name, (InDesc.Reference) ac);
+
+		String value = ac.contents;
+		if (value == null)
+			throw new BadPropertyValueException("no content!");
 		if (!(ac instanceof InDesc.File || ac instanceof InDesc.Value))
 			throw new BadPropertyValueException("unknown content type");
-		support.permitUpdate(run);
-		Input i = support.getInput(run, name);
+
+		support.permitUpdate(run());
+		Input i = support.getInput(run(), name);
 		if (i == null)
-			i = run.makeInput(name);
+			i = run().makeInput(name);
 		if (ac instanceof InDesc.File)
-			i.setFile(ac.contents);
+			i.setFile(value);
 		else
-			i.setValue(ac.contents);
+			i.setValue(value);
 		return new InDesc(i);
 	}
 
-	private InDesc setRemoteInput(String name, Reference ref)
+	@NonNull
+	private InDesc setRemoteInput(@NonNull String name, @NonNull Reference ref)
 			throws BadStateChangeException, BadPropertyValueException,
 			FilesystemAccessException {
 		URITemplate tmpl = new URITemplate(ui.getBaseUri()
@@ -164,9 +181,9 @@ class InputREST implements TavernaServerInputREST, InputBean {
 
 			to.copy(from);
 
-			Input i = support.getInput(run, name);
+			Input i = support.getInput(run(), name);
 			if (i == null)
-				i = run.makeInput(name);
+				i = run().makeInput(name);
 			i.setFile(to.getFullName());
 			return new InDesc(i);
 		} catch (UnknownRunException e) {
@@ -206,7 +223,9 @@ class InputREST implements TavernaServerInputREST, InputBean {
  * 
  * @author Donal Fellows
  */
+@SuppressWarnings("null")
 class SyntheticDirectoryEntry implements DirectoryEntry {
+	@NonNull
 	public static DirEntryReference make(String path) {
 		return DirEntryReference.newInstance(new SyntheticDirectoryEntry(path));
 	}
@@ -221,7 +240,7 @@ class SyntheticDirectoryEntry implements DirectoryEntry {
 
 	@Override
 	public String getName() {
-		return null;
+		return "";
 	}
 
 	@Override

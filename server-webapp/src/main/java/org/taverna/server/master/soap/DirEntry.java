@@ -18,6 +18,8 @@ import javax.xml.bind.annotation.XmlType;
 
 import org.taverna.server.master.common.DirEntryReference;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+
 /**
  * A more Taverna-friendly version of the directory entry descriptor classes.
  * 
@@ -84,7 +86,8 @@ public class DirEntry {
 	 *            The subclass of this class to convert.
 	 * @return The converted reference.
 	 */
-	public static DirEntryReference convert(DirEntry de) {
+	@NonNull
+	public static DirEntryReference convert(@NonNull DirEntry de) {
 		DirEntryReference result;
 		if (de instanceof Directory)
 			result = new DirEntryReference.DirectoryReference();

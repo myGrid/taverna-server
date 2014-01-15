@@ -9,6 +9,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
  * The interface supported by all notification message dispatchers.
+ * 
  * @author Donal Fellows
  */
 public interface MessageDispatcher {
@@ -23,6 +24,7 @@ public interface MessageDispatcher {
 	 *         supported by it (for a non-universal dispatcher) and the name of
 	 *         the message generator used to produce the message.
 	 */
+	@NonNull
 	String getName();
 
 	/**

@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Plato: Executable Plan
+      Version: 1.1
+      * added QLDs
+      * added id for executable plan
+ -->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns="http://ifs.tuwien.ac.at/dp/plato" xmlns:tav="http://taverna.sf.net/2008/xml/t2flow" targetNamespace="http://ifs.tuwien.ac.at/dp/plato" elementFormDefault="qualified" version="1.1">
+<!-- 	<xs:import namespace="http://taverna.sf.net/2008/xml/t2flow" schemaLocation="t2flow.xsd"/> -->
+	<xs:element name="preservationActionPlan" type="PreservationActionPlan"/>
+	<xs:complexType name="PreservationActionPlan">
+		<xs:annotation>
+			<xs:documentation>
+				Describes a preservation action plan: 
+				* Identifies the collection it was created for, 
+				* the objects it should be applied to,  
+				* the executable plan itself, and
+				* the expected quality criteria of the resulting object
+				TBD: 
+				* More information on the preservation plan? 
+				* describe when the plan has to be applied (on ingest, to existing objects...)
+			</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element name="collection" type="Collection"/>
+			<xs:element name="objects" type="Objects"/>
+			<xs:element name="executablePlan" type="ExecutablePlan"/>
+			<xs:element name="qualityLevelDescription" type="QualityLevelDescription" minOccurs="0"/>
+		</xs:sequence>
+		<xs:attribute name="schemaVersion" type="Version1" />
+	</xs:complexType>
+	<xs:complexType name="Collection">
+		<xs:annotation>
+			<xs:documentation> Identifies the collection this action plan should be applied to. </xs:documentation>
+		</xs:annotation>
+		<xs:sequence/>
+		<xs:attribute name="uid" type="xs:string" use="required"/>
+		<xs:attribute name="name" type="xs:string"/>
+	</xs:complexType>
+	<xs:complexType name="Objects">
+		<xs:annotation>
+			<xs:documentation> Defines the objects this action plan should be applied to. 
+			This can be done either explicit, by providing a list of objects, or by providing an SRU query. </xs:documentation>
+		</xs:annotation>
+		<xs:choice>
+			<xs:sequence>
+				<xs:element name="object" type="Object" maxOccurs="unbounded"/>
+			</xs:sequence>
+			<!-- 
+		<xs:element name="query" type="ObjectQuery"/>
+        -->
+		</xs:choice>
+	</xs:complexType>
+	<xs:complexType name="Object">
+		<xs:annotation>
+			<xs:documentation>The object, identified by a unique identifier which must be suitable for the SCAPE Data Connector API</xs:documentation>
+		</xs:annotation>	
+		<xs:sequence/>
+		<xs:attribute name="uid" type="xs:string" use="required"/>
+	</xs:complexType>
+	<xs:complexType name="QualityLevelDescription">
+		<xs:annotation>
+			<xs:documentation>Quality Level Description for characterization and quality assurance outputs of the migrated object.</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:any namespace="##other" processContents="skip"></xs:any>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="ExecutablePlan">
+		<xs:annotation>
+			<xs:documentation> The executable plan itself, which can be applied to objects. </xs:documentation>
+		</xs:annotation>
+		<xs:choice>
+			<xs:any processContents="skip" minOccurs="1" maxOccurs="1" namespace="##other">
+				<xs:annotation>
+					<xs:documentation>
+						A taverna workflow adhering to the SCAPE component profile Executable Plan
+						see: https://github.com/openplanets/scape-component-profiles/blob/master/profiles/MigrationExecutablePlanComponentProfile.xml
+					</xs:documentation>
+				</xs:annotation>
+			</xs:any>
+		</xs:choice>
+		<xs:attribute name="type" type="ExecutablePlanType"/>
+		<xs:attribute name="id" type="xs:string"/>
+	</xs:complexType>
+	<xs:simpleType name="ExecutablePlanType">
+		<xs:annotation>
+			<xs:documentation>The type of the executable plan, at the moment only taverna workflows are supported</xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="t2flow"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="Version1">
+		<xs:annotation>
+			<xs:documentation>Version of preservation action plan covered by this schema -
+				restricted to "1" or "1.x" - for instance "1.2" would be allowed.
+			</xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="xs:string">
+			<xs:pattern value="1(|\..*)"/>
+		</xs:restriction>
+	</xs:simpleType>	
+</xs:schema>

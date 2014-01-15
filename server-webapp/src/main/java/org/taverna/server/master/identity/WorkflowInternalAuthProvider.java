@@ -93,7 +93,7 @@ public class WorkflowInternalAuthProvider extends
 		authorizedAddresses = new HashSet<String>(localAddresses);
 	}
 
-    /**
+	/**
 	 * Check that the authentication request is actually valid for the given
 	 * user record.
 	 * 
@@ -119,6 +119,7 @@ public class WorkflowInternalAuthProvider extends
 			@NonNull Object principal, @NonNull Object credentials)
 			throws Exception {
 		@NonNull
+		@SuppressWarnings("null")
 		HttpServletRequest req = ((ServletRequestAttributes) currentRequestAttributes())
 				.getRequest();
 
@@ -127,8 +128,10 @@ public class WorkflowInternalAuthProvider extends
 				&& !authorizedAddresses.contains(req.getRemoteAddr())) {
 			if (logDecisions)
 				log.info("attempt to use workflow magic token from untrusted address:"
-						+ " token=" + userRecord.getUsername()
-						+ ", address=" + req.getRemoteAddr());
+						+ " token="
+						+ userRecord.getUsername()
+						+ ", address="
+						+ req.getRemoteAddr());
 			throw new BadCredentialsException("bad login token");
 		}
 
@@ -136,8 +139,10 @@ public class WorkflowInternalAuthProvider extends
 		if (!credentials.equals(userRecord.getPassword())) {
 			if (logDecisions)
 				log.info("workflow magic token is untrusted due to password mismatch:"
-						+ " wanted=" + userRecord.getPassword()
-						+ ", got=" + credentials);
+						+ " wanted="
+						+ userRecord.getPassword()
+						+ ", got="
+						+ credentials);
 			throw new BadCredentialsException("bad login token");
 		}
 
@@ -146,7 +151,7 @@ public class WorkflowInternalAuthProvider extends
 					+ userRecord.getUsername());
 	}
 
-    /**
+	/**
 	 * Retrieve the <code>UserDetails</code> from the relevant store, with the
 	 * option of throwing an <code>AuthenticationException</code> immediately if
 	 * the presented credentials are incorrect (this is especially useful if it
@@ -170,7 +175,9 @@ public class WorkflowInternalAuthProvider extends
 	 *             a general AuthenticationException.
 	 */
 	@NonNull
-	protected UserDetails retrieveUser(String username, Object details) throws Exception {
+	@SuppressWarnings("null")
+	protected UserDetails retrieveUser(String username, Object details)
+			throws Exception {
 		if (details == null || !(details instanceof WebAuthenticationDetails))
 			throw new UsernameNotFoundException("context unsupported");
 		if (!username.startsWith(PREFIX))
@@ -193,6 +200,7 @@ public class WorkflowInternalAuthProvider extends
 	}
 
 	@Override
+	@SuppressWarnings("null")
 	protected final void additionalAuthenticationChecks(UserDetails userRecord,
 			UsernamePasswordAuthenticationToken token) {
 		try {
@@ -217,16 +225,18 @@ public class WorkflowInternalAuthProvider extends
 			throw e;
 		} catch (Exception e) {
 			log.warn("unexpected failure in authentication", e);
-			throw new AuthenticationServiceException("unexpected failure in authentication", e);
+			throw new AuthenticationServiceException(
+					"unexpected failure in authentication", e);
 		}
 	}
 
 	@SuppressWarnings("serial")
 	public static class WorkflowSelfAuthority extends LiteralGrantedAuthority {
-		public WorkflowSelfAuthority(String wfid) {
+		public WorkflowSelfAuthority(@NonNull String wfid) {
 			super(wfid);
 		}
 
+		@NonNull
 		public String getWorkflowID() {
 			return getAuthority();
 		}
@@ -253,8 +263,8 @@ public class WorkflowInternalAuthProvider extends
 
 		private String getUsernameForSelfAccess(WorkflowSelfAuthority authority)
 				throws UnknownRunException {
-			return runStore.getRun(authority.getWorkflowID()).getSecurityContext()
-					.getOwner().getName();
+			return runStore.getRun(authority.getWorkflowID())
+					.getSecurityContext().getOwner().getName();
 		}
 
 		@Override

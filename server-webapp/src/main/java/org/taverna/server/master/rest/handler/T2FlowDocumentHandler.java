@@ -33,6 +33,8 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xml.sax.SAXException;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+
 /**
  * Handler that allows a .t2flow document to be read from and written to a REST
  * message directly.
@@ -68,6 +70,7 @@ public class T2FlowDocumentHandler implements MessageBodyReader<Workflow>,
 	}
 
 	@Override
+	@NonNull
 	public Workflow readFrom(Class<Workflow> type, Type genericType,
 			Annotation[] annotations, MediaType mediaType,
 			MultivaluedMap<String, String> httpHeaders, InputStream entityStream)

@@ -55,6 +55,13 @@ public class DirectoryDelegate extends UnicastRemoteObject implements
 		this.parent = parent;
 	}
 
+	DirectoryDelegate(@NonNull File dir) throws RemoteException {
+		super();
+		this.localCache = new ReferenceMap();
+		this.dir = dir;
+		this.parent = null;
+	}
+
 	@Override
 	public Collection<RemoteDirectoryEntry> getContents()
 			throws RemoteException {

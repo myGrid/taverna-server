@@ -16,6 +16,8 @@ import javax.ws.rs.core.Response;
 import org.taverna.server.master.exceptions.FilesystemAccessException;
 import org.taverna.server.master.interfaces.File;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+
 /**
  * Representation of a segment of a file to be read by JAX-RS.
  * 
@@ -68,6 +70,8 @@ public class FileSegment {
 	 *            The expected type of the data.
 	 * @return A JAX-RS response.
 	 */
+	@NonNull
+	@SuppressWarnings("null")
 	public Response toResponse(MediaType type) {
 		if (from == null && to == null)
 			return ok(file).type(type).build();

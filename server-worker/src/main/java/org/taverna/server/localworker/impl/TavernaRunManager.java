@@ -49,6 +49,8 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import edu.umd.cs.findbugs.annotations.SuppressWarnings;
 
 /**
@@ -63,16 +65,21 @@ import edu.umd.cs.findbugs.annotations.SuppressWarnings;
 @java.lang.SuppressWarnings("serial")
 public class TavernaRunManager extends UnicastRemoteObject implements
 		RemoteRunFactory, RunAccounting, WorkerFactory {
-	DocumentBuilderFactory dbf;
-	TransformerFactory tf;
-	String command;
+	@NonNull
+	final DocumentBuilderFactory dbf;
+	@NonNull
+	final TransformerFactory tf;
+	@NonNull
+	final String command;
 	// Hacks!
 	public static String interactionHost;
 	public static String interactionPort;
 	public static String interactionWebdavPath;
 	public static String interactionFeedPath;
-	Map<String, String> seedEnvironment = new HashMap<String, String>();
-	List<String> javaInitParams = new ArrayList<String>();
+	@NonNull
+	final Map<String, String> seedEnvironment = new HashMap<String, String>();
+	@NonNull
+	final List<String> javaInitParams = new ArrayList<String>();
 	private int activeRuns = 0;
 
 	/**
@@ -98,7 +105,8 @@ public class TavernaRunManager extends UnicastRemoteObject implements
 	 * @throws RemoteException
 	 *             If anything goes wrong during creation of the instance.
 	 */
-	public TavernaRunManager(String command) throws RemoteException {
+	@java.lang.SuppressWarnings("null")
+	public TavernaRunManager(@NonNull String command) throws RemoteException {
 		this.command = command;
 		this.dbf = DocumentBuilderFactory.newInstance();
 		this.dbf.setNamespaceAware(true);
@@ -118,9 +126,11 @@ public class TavernaRunManager extends UnicastRemoteObject implements
 	 * @throws RemoteException
 	 *             If anything goes wrong.
 	 */
+	@java.lang.SuppressWarnings("null")
 	@SuppressWarnings("REC_CATCH_EXCEPTION")
-	private String unwrapWorkflow(String workflow, Holder<String> wfid)
-			throws RemoteException {
+	@NonNull
+	private String unwrapWorkflow(@NonNull String workflow,
+			@NonNull Holder<String> wfid) throws RemoteException {
 		StringReader sr = new StringReader(workflow);
 		StringWriter sw = new StringWriter();
 		try {
@@ -142,16 +152,28 @@ public class TavernaRunManager extends UnicastRemoteObject implements
 	}
 
 	@Override
-	public RemoteSingleRun make(String workflow, String creator,
-			UsageRecordReceiver urReceiver, UUID id) throws RemoteException {
+	public RemoteSingleRun make(@Nullable String workflow,
+			@Nullable String creator, @Nullable UsageRecordReceiver urReceiver,
+			@Nullable UUID id) throws RemoteException {
+		if (workflow == null)
+			throw new RemoteException("no workflow");
 		if (creator == null)
 			throw new RemoteException("no creator");
+		if (urReceiver == null)
+			urReceiver = new UsageRecordReceiver() {
+				@Override
+				public void acceptUsageRecord(String usageRecord)
+						throws RemoteException {
+				}
+			};
+
 		try {
 			Holder<String> wfid = new Holder<String>("???");
-			workflow = unwrapWorkflow(workflow, wfid);
+			@NonNull
+			String wf = unwrapWorkflow(workflow, wfid);
 			out.println("Creating run from workflow <" + wfid.value + "> for <"
 					+ creator + ">");
-			return new LocalWorker(command, workflow, urReceiver, id,
+			return new LocalWorker(command, wf, urReceiver, id,
 					seedEnvironment, javaInitParams, this);
 		} catch (RemoteException e) {
 			throw e;
@@ -226,7 +248,7 @@ public class TavernaRunManager extends UnicastRemoteObject implements
 	 *             the workflow, or if we can't build the worker instance, or
 	 *             register it. Also if the arguments are wrong.
 	 */
-	public static void main(String[] args) throws Exception {
+	public static void main(@NonNull String[] args) throws Exception {
 		if (args.length < 2)
 			throw new Exception("wrong # args: must be \"" + usage + "\"");
 		if (!getProperty(UNSECURE_PROP, "no").equals("yes")) {
@@ -236,6 +258,7 @@ public class TavernaRunManager extends UnicastRemoteObject implements
 		}
 		setSecurityManager(new RMISecurityManager());
 		factoryName = args[args.length - 1];
+		@java.lang.SuppressWarnings("null")
 		TavernaRunManager man = new TavernaRunManager(args[0]);
 		for (int i = 1; i < args.length - 1; i++)
 			man.addArgument(args[i]);

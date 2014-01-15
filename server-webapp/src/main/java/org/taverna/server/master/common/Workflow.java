@@ -38,6 +38,8 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+
 /**
  * Encapsulation of a T2flow document.
  * 
@@ -75,7 +77,8 @@ public class Workflow implements Serializable,Externalizable {
 		return (Workflow) unmarshaller.unmarshal(sr);
 	}
 
-	public String marshal() throws JAXBException {
+	@SuppressWarnings("null")
+	public @NonNull String marshal() throws JAXBException {
 		StringWriter sw = new StringWriter();
 		marshaller.marshal(this, sw);
 		return sw.toString();

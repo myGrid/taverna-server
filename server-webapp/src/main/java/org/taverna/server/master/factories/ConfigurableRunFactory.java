@@ -5,6 +5,8 @@
  */
 package org.taverna.server.master.factories;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+
 /**
  * Interface to run factories for the purpose of configuration.
  * 
@@ -63,19 +65,20 @@ public interface ConfigurableRunFactory extends RunFactory {
 	 * How do we start the file system access process? Extra arguments to pass.
 	 * Getter
 	 */
+	@NonNull
 	String[] getExtraArguments();
 
 	/**
 	 * How do we start the file system access process? Extra arguments to pass.
 	 * Setter
 	 */
-	void setExtraArguments(String[] firstArguments);
+	void setExtraArguments(@NonNull String[] firstArguments);
 
 	/** Where is Java? Getter */
-	String getJavaBinary();
+	@NonNull String getJavaBinary();
 
 	/** Where is Java? Setter */
-	void setJavaBinary(String javaBinary);
+	void setJavaBinary(@NonNull String javaBinary);
 
 	/** Where do we get passwords from? Getter */
 	String getPasswordFile();

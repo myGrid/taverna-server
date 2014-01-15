@@ -23,6 +23,8 @@ import org.apache.abdera.model.Entry;
 import org.joda.time.DateTime;
 import org.taverna.server.master.utils.UsernamePrincipal;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+
 /**
  * Parent class of all events that may appear on the feed for a workflow run.
  * 
@@ -96,6 +98,7 @@ public class Event implements Serializable {
 		return link;
 	}
 
+	@NonNull
 	public Entry getEntry(Abdera abdera, String language) {
 		Entry entry = abdera.getFactory().newEntry();
 		entry.setId(id);

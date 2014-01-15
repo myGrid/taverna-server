@@ -50,6 +50,9 @@ import org.taverna.server.port_description.OutputDescription.OutputPort;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
+
 /**
  * A class that is used to build descriptions of the contents of a workflow
  * run's filesystem.
@@ -83,6 +86,8 @@ public class ContentsDescriptorBuilder {
 		portDepth = xp.compile("./t2:depth/text()");
 	}
 
+	@SuppressWarnings("null")
+	@NonNull
 	private Element dataflow(Element root) throws XPathExpressionException {
 		return (Element) dataflow.evaluate(root, NODE);
 	}
@@ -131,8 +136,10 @@ public class ContentsDescriptorBuilder {
 
 	// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-	private Element fillInFromWorkflow(TavernaRun run, UriBuilder ub,
-			AbstractPortDescription portDesc) throws XPathExpressionException {
+	@NonNull
+	private Element fillInFromWorkflow(@NonNull TavernaRun run,
+			@NonNull UriBuilder ub, @NonNull AbstractPortDescription portDesc)
+			throws XPathExpressionException {
 		Element elem = run.getWorkflow().getWorkflowRoot();
 		portDesc.fillInBaseData(elem.getAttribute("id"), run.getId(),
 				ub.build());
@@ -157,8 +164,9 @@ public class ContentsDescriptorBuilder {
 	 * @throws FilesystemAccessException
 	 * @throws XPathExpressionException
 	 */
-	private void constructPorts(TavernaRun run, Element dataflow,
-			UriBuilder ub, OutputDescription descriptor)
+	private void constructPorts(@NonNull TavernaRun run,
+			@NonNull Element dataflow, @NonNull UriBuilder ub,
+			@NonNull OutputDescription descriptor)
 			throws FilesystemAccessException, NoDirectoryEntryException,
 			XPathExpressionException {
 		Collection<DirectoryEntry> outs = null;
@@ -330,8 +338,9 @@ public class ContentsDescriptorBuilder {
 	 * @throws NoDirectoryEntryException
 	 *             If something goes wrong reading the directories.
 	 */
-	public OutputDescription makeOutputDescriptor(TavernaRun run, UriInfo ui)
-			throws FilesystemAccessException, NoDirectoryEntryException {
+	public OutputDescription makeOutputDescriptor(@NonNull TavernaRun run,
+			@Nullable UriInfo ui) throws FilesystemAccessException,
+			NoDirectoryEntryException {
 		OutputDescription descriptor = new OutputDescription();
 		try {
 			UriBuilder ub = getRunUriBuilder(run, ui);
@@ -345,7 +354,10 @@ public class ContentsDescriptorBuilder {
 		return descriptor;
 	}
 
-	private UriBuilder getRunUriBuilder(TavernaRun run, UriInfo ui) {
+	@SuppressWarnings("null")
+	@NonNull
+	private UriBuilder getRunUriBuilder(@NonNull TavernaRun run,
+			@Nullable UriInfo ui) {
 		if (ui == null)
 			return secure(uriBuilderFactory.getRunUriBuilder(run));
 		else
@@ -362,9 +374,12 @@ public class ContentsDescriptorBuilder {
 	 *            The mechanism for building URIs.
 	 * @return The description of the <i>expected</i> inputs of the run.
 	 */
-	public InputDescription makeInputDescriptor(TavernaRun run, UriInfo ui) {
+	@NonNull
+	public InputDescription makeInputDescriptor(@NonNull TavernaRun run,
+			@Nullable UriInfo ui) {
 		InputDescription desc = new InputDescription();
 		try {
+			@NonNull
 			UriBuilder ub = getRunUriBuilder(run, ui);
 			Element dataflow = fillInFromWorkflow(run, ub, desc);
 			ub = ub.path("input/{name}");

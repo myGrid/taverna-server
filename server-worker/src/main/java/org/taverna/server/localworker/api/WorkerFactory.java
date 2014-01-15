@@ -1,5 +1,6 @@
 package org.taverna.server.localworker.api;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
  * Class that manufactures instances of {@link Worker}.
@@ -14,5 +15,6 @@ public interface WorkerFactory {
 	 * @throws Exception
 	 *             If anything goes wrong.
 	 */
+	@NonNull
 	Worker makeInstance() throws Exception;
 }

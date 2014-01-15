@@ -18,6 +18,9 @@ import org.springframework.beans.factory.annotation.Required;
 import org.taverna.server.master.interfaces.MessageDispatcher;
 import org.taverna.server.master.interfaces.TavernaRun;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
+
 /**
  * A common object for handling dispatch of event-driven messages.
  * 
@@ -48,8 +51,9 @@ public class NotificationEngine {
 		this.universalDispatchers = dispatcherList;
 	}
 
-	private void dispatchToChosenTarget(TavernaRun originator, String scheme,
-			String target, Message message) throws Exception {
+	private void dispatchToChosenTarget(@NonNull TavernaRun originator,
+			@NonNull String scheme, @NonNull String target,
+			@NonNull Message message) throws Exception {
 		try {
 			MessageDispatcher d = dispatchers.get(scheme);
 			if (d != null && d.isAvailable())
@@ -78,12 +82,13 @@ public class NotificationEngine {
 		}
 	}
 
-	private void dispatchUniversally(TavernaRun originator, Message message) throws Exception {
+	private void dispatchUniversally(@NonNull TavernaRun originator,
+			@NonNull Message message) throws Exception {
 		for (MessageDispatcher d : universalDispatchers)
 			try {
 				if (d.isAvailable())
 					d.dispatch(originator, message.getTitle(d.getName()),
-							message.getContent(d.getName()), null);
+							message.getContent(d.getName()), "");
 			} catch (Exception e) {
 				log.warn("problem in universal dispatcher", e);
 			}
@@ -107,7 +112,10 @@ public class NotificationEngine {
 	 * @throws Exception
 	 *             If anything goes wrong with the dispatch process.
 	 */
-	public void dispatchMessage(TavernaRun originator, String destination, Message message) throws Exception {
+	@SuppressWarnings("null")
+	public void dispatchMessage(@NonNull TavernaRun originator,
+			@Nullable String destination, @NonNull Message message)
+			throws Exception {
 		if (destination != null && !destination.trim().isEmpty()) {
 			try {
 				URI toURI = new URI(destination.trim());
@@ -135,7 +143,8 @@ public class NotificationEngine {
 	}
 
 	public interface Message {
-		String getContent(String type);
-		String getTitle(String type);
+		@NonNull String getContent(@NonNull String type);
+
+		@NonNull String getTitle(@NonNull String type);
 	}
 }

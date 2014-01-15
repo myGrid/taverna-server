@@ -58,6 +58,8 @@ import org.taverna.server.master.worker.FactoryBean;
 import org.taverna.server.master.worker.RemoteRunDelegate;
 import org.taverna.server.master.worker.RunFactoryConfiguration;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+
 /**
  * Bridge to remote runs via RMI.
  * 
@@ -130,6 +132,7 @@ public abstract class AbstractRemoteRunFactory extends RunFactoryConfiguration
 		}
 	}
 
+	@SuppressWarnings("null")
 	protected void initInteractionDetails(RemoteRunFactory factory)
 			throws RemoteException {
 		if (interhost != null) {
@@ -326,7 +329,7 @@ public abstract class AbstractRemoteRunFactory extends RunFactoryConfiguration
 	}
 
 	@Override
-	public TavernaRun create(UsernamePrincipal creator, Workflow workflow)
+	public TavernaRun create(@NonNull UsernamePrincipal creator, Workflow workflow)
 			throws NoCreateException {
 		try {
 			Date now = new Date();
@@ -335,7 +338,11 @@ public abstract class AbstractRemoteRunFactory extends RunFactoryConfiguration
 			RemoteRunDelegate run = new RemoteRunDelegate(now, workflow, rsr,
 					state.getDefaultLifetime(), runDB, id, this);
 			run.setSecurityContext(securityFactory.create(run, creator));
+			@SuppressWarnings("null")
+			@NonNull
 			URL feedUrl = interactionFeedSupport.getFeedURI(run).toURL();
+			@SuppressWarnings("null")
+			@NonNull
 			URL webdavUrl = baseurifactory.getRunUriBuilder(run)
 					.path(DIR + "/interactions").build().toURL();
 			rsr.setInteractionServiceDetails(feedUrl, webdavUrl);
@@ -362,7 +369,7 @@ public abstract class AbstractRemoteRunFactory extends RunFactoryConfiguration
 	 * @throws Exception
 	 *             Just about anything can go wrong...
 	 */
-	protected abstract RemoteSingleRun getRealRun(UsernamePrincipal creator,
+	protected abstract RemoteSingleRun getRealRun(@NonNull UsernamePrincipal creator,
 			Workflow workflow, UUID id) throws Exception;
 
 	/**
@@ -374,6 +381,7 @@ public abstract class AbstractRemoteRunFactory extends RunFactoryConfiguration
 	 * @throws JAXBException
 	 *             If serialization fails.
 	 */
+	@NonNull
 	protected String serializeWorkflow(Workflow workflow) throws JAXBException {
 		return workflow.marshal();
 	}

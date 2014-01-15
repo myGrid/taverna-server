@@ -181,6 +181,9 @@ public class ForkRunFactory extends AbstractRemoteRunFactory implements
 				lastException = e;
 			}
 		}
+		if (lastException == null)
+			throw new RuntimeException("hang while waiting for "
+					+ "factory process to initialize");
 		throw lastException;
 	}
 
@@ -340,7 +343,7 @@ public class ForkRunFactory extends AbstractRemoteRunFactory implements
 	 */
 	private RemoteSingleRun getRealRun(@NonNull UsernamePrincipal creator,
 			@NonNull String wf, UUID id) throws RemoteException {
-		String globaluser = "Unknown Person";
+		@NonNull String globaluser = "Unknown Person";
 		if (creator != null)
 			globaluser = creator.getName();
 		RemoteSingleRun rsr = getFactory().make(wf, globaluser,
@@ -350,9 +353,9 @@ public class ForkRunFactory extends AbstractRemoteRunFactory implements
 	}
 
 	@Override
-	protected RemoteSingleRun getRealRun(UsernamePrincipal creator,
+	protected RemoteSingleRun getRealRun(@NonNull UsernamePrincipal creator,
 			Workflow workflow, UUID id) throws Exception {
-		String wf = serializeWorkflow(workflow);
+		@NonNull String wf = serializeWorkflow(workflow);
 		for (int i = 0; i < 3; i++) {
 			initFactory();
 			try {

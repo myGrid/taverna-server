@@ -91,6 +91,8 @@ class PolicyImpl implements Policy {
 
 	@Override
 	public boolean permitAccess(UsernamePrincipal user, TavernaRun run) {
+		if (user == null)
+			return false;
 		String username = user.getName();
 		TavernaSecurityContext context = run.getSecurityContext();
 		if (context.getOwner().getName().equals(username)) {

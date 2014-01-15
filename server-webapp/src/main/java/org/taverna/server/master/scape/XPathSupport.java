@@ -40,6 +40,9 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
+
 class XPathSupport {
 	XPathSupport(Log log, String... map) {
 		Map<String, String> nsmap = new HashMap<String, String>();
@@ -104,11 +107,24 @@ class XPathSupport {
 		return result;
 	}
 
+	@NonNull
 	public Element get(Element context, String expression, Object... args)
+			throws XPathExpressionException {
+		Element e = (Element) xp(expression, args).evaluate(context, NODE);
+		if (e == null)
+			throw new RuntimeException("nothing matched "
+					+ format(expression, args));
+		return e;
+	}
+
+	@Nullable
+	public Element getMaybe(Element context, String expression, Object... args)
 			throws XPathExpressionException {
 		return (Element) xp(expression, args).evaluate(context, NODE);
 	}
 
+	@NonNull
+	@SuppressWarnings("null")
 	public String text(Element context, String expression, Object... args)
 			throws XPathExpressionException {
 		return (String) xp(expression, args).evaluate(context, STRING);

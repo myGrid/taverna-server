@@ -6,6 +6,7 @@
 package org.taverna.server.master.mocks;
 
 import static java.util.Calendar.MINUTE;
+import static java.util.Collections.emptySet;
 import static java.util.Collections.unmodifiableList;
 import static java.util.UUID.randomUUID;
 import static org.taverna.server.master.common.Status.Initialized;
@@ -15,6 +16,7 @@ import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashSet;
@@ -25,6 +27,7 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.xml.ws.handler.MessageContext;
 
 import org.springframework.security.core.context.SecurityContext;
+import org.taverna.server.localworker.remote.ImplementationException;
 import org.taverna.server.master.common.Credential;
 import org.taverna.server.master.common.Status;
 import org.taverna.server.master.common.Trust;
@@ -42,24 +45,34 @@ import org.taverna.server.master.interfaces.TavernaRun;
 import org.taverna.server.master.interfaces.TavernaSecurityContext;
 import org.taverna.server.master.utils.UsernamePrincipal;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.SuppressWarnings;
 
 @SuppressWarnings
 @java.lang.SuppressWarnings("serial")
 public class ExampleRun implements TavernaRun, TavernaSecurityContext {
+	@NonNull
 	String id;
+	@NonNull
 	List<Listener> listeners;
+	@NonNull
 	Workflow workflow;
+	@NonNull
 	Status status;
+	@NonNull
 	Date expiry;
+	@NonNull
 	UsernamePrincipal owner;
 	String inputBaclava;
 	String outputBaclava;
 	java.io.File realRoot;
 	List<Input> inputs;
-	String name;
+	@NonNull
+	String name = "";
 
-	public ExampleRun(UsernamePrincipal creator, Workflow workflow, Date expiry) {
+	@java.lang.SuppressWarnings("null")
+	public ExampleRun(@NonNull UsernamePrincipal creator,
+			@NonNull Workflow workflow, @NonNull Date expiry) {
 		this.id = randomUUID().toString();
 		this.listeners = new ArrayList<Listener>();
 		this.status = Initialized;
@@ -136,7 +149,9 @@ public class ExampleRun implements TavernaRun, TavernaSecurityContext {
 		}
 
 		@Override
+		@java.lang.SuppressWarnings("null")
 		public TavernaRun create(UsernamePrincipal creator, Workflow workflow) {
+			@NonNull
 			Calendar c = GregorianCalendar.getInstance();
 			c.add(MINUTE, lifetime);
 			return new ExampleRun(creator, workflow, c.getTime());
@@ -166,6 +181,7 @@ public class ExampleRun implements TavernaRun, TavernaSecurityContext {
 			return "default";
 		}
 
+		@java.lang.SuppressWarnings("null")
 		@Override
 		public String[] listProperties() {
 			return emptyArray;
@@ -188,6 +204,7 @@ public class ExampleRun implements TavernaRun, TavernaSecurityContext {
 		return inputBaclava;
 	}
 
+	@java.lang.SuppressWarnings("null")
 	@Override
 	public List<Input> getInputs() {
 		return unmodifiableList(inputs);
@@ -199,11 +216,12 @@ public class ExampleRun implements TavernaRun, TavernaSecurityContext {
 	}
 
 	class ExampleInput implements Input {
+		@NonNull
 		public String name;
 		public String file;
 		public String value;
 
-		public ExampleInput(String name) {
+		public ExampleInput(@NonNull String name) {
 			this.name = name;
 		}
 
@@ -288,6 +306,7 @@ public class ExampleRun implements TavernaRun, TavernaSecurityContext {
 	}
 
 	private Date created = new Date();
+
 	@Override
 	public Date getCreationTimestamp() {
 		return created;
@@ -355,12 +374,119 @@ public class ExampleRun implements TavernaRun, TavernaSecurityContext {
 
 	@Override
 	public SecurityContextFactory getFactory() {
-		return null;
+		return new SecurityContextFactory() {
+			@Override
+			public TavernaSecurityContext create(TavernaRun run,
+					UsernamePrincipal owner) throws Exception {
+				return new TavernaSecurityContext() {
+					@Override
+					public UsernamePrincipal getOwner() {
+						throw new UnsupportedOperationException();
+					}
+
+					@java.lang.SuppressWarnings("null")
+					@Override
+					public Set<String> getPermittedDestroyers() {
+						return emptySet();
+					}
+
+					@Override
+					public void setPermittedDestroyers(Set<String> destroyers) {
+					}
+
+					@java.lang.SuppressWarnings("null")
+					@Override
+					public Set<String> getPermittedUpdaters() {
+						return emptySet();
+					}
+
+					@Override
+					public void setPermittedUpdaters(Set<String> updaters) {
+					}
+
+					@java.lang.SuppressWarnings("null")
+					@Override
+					public Set<String> getPermittedReaders() {
+						return Collections.emptySet();
+					}
+
+					@Override
+					public void setPermittedReaders(Set<String> readers) {
+					}
+
+					@Override
+					public Credential[] getCredentials() {
+						return new Credential[0];
+					}
+
+					@Override
+					public void addCredential(Credential toAdd) {
+					}
+
+					@Override
+					public void deleteCredential(Credential toDelete) {
+					}
+
+					@Override
+					public void validateCredential(Credential c)
+							throws InvalidCredentialException {
+					}
+
+					@Override
+					public Trust[] getTrusted() {
+						return new Trust[0];
+					}
+
+					@Override
+					public void addTrusted(Trust toAdd) {
+					}
+
+					@Override
+					public void deleteTrusted(Trust toDelete) {
+					}
+
+					@Override
+					public void validateTrusted(Trust t)
+							throws InvalidCredentialException {
+					}
+
+					@Override
+					public void initializeSecurityFromContext(
+							SecurityContext securityContext) throws Exception {
+					}
+
+					@Override
+					public void initializeSecurityFromSOAPContext(
+							MessageContext context) {
+					}
+
+					@Override
+					public void initializeSecurityFromRESTContext(
+							HttpHeaders headers) {
+					}
+
+					@Override
+					public void conveySecurity()
+							throws GeneralSecurityException, IOException,
+							ImplementationException {
+					}
+
+					@Override
+					public SecurityContextFactory getFactory() {
+						throw new UnsupportedOperationException();
+					}
+				};
+			}
+		};
 	}
 
+	@NonNull
 	private Set<String> destroyers = new HashSet<String>();
+	@NonNull
 	private Set<String> updaters = new HashSet<String>();
+	@NonNull
 	private Set<String> readers = new HashSet<String>();
+
 	@Override
 	public Set<String> getPermittedDestroyers() {
 		return destroyers;

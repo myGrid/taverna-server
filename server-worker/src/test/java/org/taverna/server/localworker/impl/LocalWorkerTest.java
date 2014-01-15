@@ -40,6 +40,7 @@ import org.taverna.server.localworker.server.UsageRecordReceiver;
 import edu.umd.cs.findbugs.annotations.SuppressWarnings;
 
 @SuppressWarnings
+@java.lang.SuppressWarnings("null")
 public class LocalWorkerTest {
 	LocalWorker lw;
 	static List<String> events;
@@ -156,8 +157,13 @@ public class LocalWorkerTest {
 
 	@Before
 	public void setUp() throws Exception {
-		lw = new LocalWorker("XWC", "WF", null, randomUUID(),
-				new HashMap<String, String>(), new ArrayList<String>(), factory);
+		lw = new LocalWorker("XWC", "WF", new UsageRecordReceiver() {
+			@Override
+			public void acceptUsageRecord(String usageRecord)
+					throws RemoteException {
+			}
+		}, randomUUID(), new HashMap<String, String>(),
+				new ArrayList<String>(), factory);
 		events = new ArrayList<String>();
 		returnThisStatus = RemoteStatus.Operating;
 	}
@@ -215,7 +221,38 @@ public class LocalWorkerTest {
 	public void testAddListener() {
 		Throwable t = null;
 		try {
-			lw.addListener(null);
+			lw.addListener(new RemoteListener() {
+				@Override
+				public String getName() throws RemoteException {
+					return "";
+				}
+
+				@Override
+				public String getType() throws RemoteException {
+					return "";
+				}
+
+				@Override
+				public String getConfiguration() throws RemoteException {
+					return "";
+				}
+
+				@Override
+				public String[] listProperties() throws RemoteException {
+					return new String[0];
+				}
+
+				@Override
+				public String getProperty(String propName)
+						throws RemoteException {
+					return "";
+				}
+
+				@Override
+				public void setProperty(String propName, String value)
+						throws RemoteException {
+				}
+			});
 		} catch (Throwable caught) {
 			t = caught;
 		}

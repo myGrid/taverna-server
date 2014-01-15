@@ -44,6 +44,7 @@ import org.springframework.jmx.export.annotation.ManagedMetric;
 import org.springframework.jmx.export.annotation.ManagedResource;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.taverna.server.master.api.ManagementModel;
@@ -139,6 +140,7 @@ public class TavernaServerSupport {
 	/**
 	 * @return Current number of runs.
 	 */
+	@java.lang.SuppressWarnings("null")
 	@ManagedMetric(description = "Current number of runs.", metricType = GAUGE, category = "utilization")
 	public int getCurrentRunCount() {
 		return runStore.listRuns(null, policy).size();
@@ -232,6 +234,7 @@ public class TavernaServerSupport {
 	@Autowired
 	private T2FlowDocumentHandler t2flowHandler;
 
+	@NonNull
 	public Workflow getWorkflowDocumentFromURI(URI uri)
 			throws WebApplicationException, IOException {
 		URLConnection conn = uri.toURL().openConnection();
@@ -252,7 +255,7 @@ public class TavernaServerSupport {
 	 *            The policy being installed by Spring.
 	 */
 	@Required
-	public void setPolicy(Policy policy) {
+	public void setPolicy(@NonNull Policy policy) {
 		this.policy = policy;
 	}
 
@@ -261,7 +264,7 @@ public class TavernaServerSupport {
 	 *            The listener factory being installed by Spring.
 	 */
 	@Required
-	public void setListenerFactory(ListenerFactory listenerFactory) {
+	public void setListenerFactory(@NonNull ListenerFactory listenerFactory) {
 		this.listenerFactory = listenerFactory;
 	}
 
@@ -270,7 +273,7 @@ public class TavernaServerSupport {
 	 *            The run factory being installed by Spring.
 	 */
 	@Required
-	public void setRunFactory(RunFactory runFactory) {
+	public void setRunFactory(@NonNull RunFactory runFactory) {
 		this.runFactory = runFactory;
 	}
 
@@ -388,7 +391,8 @@ public class TavernaServerSupport {
 	 * @throws NoDestroyException
 	 *             If the current user is not permitted to destroy the run.
 	 */
-	public void permitDestroy(TavernaRun run) throws NoDestroyException {
+	public void permitDestroy(@NonNull TavernaRun run)
+			throws NoDestroyException {
 		if (isSuperUser()) {
 			accessLog
 					.warn("check for admin powers passed; elevated access rights granted for destroy");
@@ -447,6 +451,7 @@ public class TavernaServerSupport {
 	 *             have permission to see it.
 	 */
 	@NonNull
+	@java.lang.SuppressWarnings("null")
 	public TavernaRun getRun(@NonNull String name) throws UnknownRunException {
 		if (isSuperUser()) {
 			accessLog
@@ -527,9 +532,9 @@ public class TavernaServerSupport {
 	 *             If no run with that name exists.
 	 */
 	@NonNull
-	public String getProperty(String runName, String listenerName,
-			String propertyName) throws NoListenerException,
-			UnknownRunException {
+	public String getProperty(@NonNull String runName,
+			@NonNull String listenerName, @NonNull String propertyName)
+			throws NoListenerException, UnknownRunException {
 		return getListener(runName, listenerName).getProperty(propertyName);
 	}
 
@@ -549,8 +554,9 @@ public class TavernaServerSupport {
 	 *             that name exists.
 	 */
 	@NonNull
-	public String getProperty(TavernaRun run, String listenerName,
-			String propertyName) throws NoListenerException {
+	public String getProperty(@NonNull TavernaRun run,
+			@NonNull String listenerName, @NonNull String propertyName)
+			throws NoListenerException {
 		return getListener(run, listenerName).getProperty(propertyName);
 	}
 
@@ -667,14 +673,15 @@ public class TavernaServerSupport {
 	 * @param runName
 	 *            The name of the run.
 	 * @param run
-	 *            The workflow run. <i>Must</i> correspond to the name.
+	 *            The workflow run. <i>Must</i> correspond to the name <i>or</i>
+	 *            be <tt>null</tt>.
 	 * @throws NoDestroyException
 	 *             If the user is not permitted to destroy the workflow run.
 	 * @throws UnknownRunException
 	 *             If the run is unknown (e.g., because it is already
 	 *             destroyed).
 	 */
-	public void unregisterRun(@NonNull String runName, @NonNull TavernaRun run)
+	public void unregisterRun(@NonNull String runName, @Nullable TavernaRun run)
 			throws NoDestroyException, UnknownRunException {
 		if (run == null)
 			run = getRun(runName);
@@ -714,7 +721,9 @@ public class TavernaServerSupport {
 	 * @throws NoCreateException
 	 *             If the user is not permitted to create workflows.
 	 */
-	public String buildWorkflow(Workflow workflow) throws NoCreateException {
+	@NonNull
+	public String buildWorkflow(@NonNull Workflow workflow)
+			throws NoCreateException {
 		UsernamePrincipal p = getPrincipal();
 		if (getSelfAuthority() != null)
 			throw new NoCreateException(
@@ -741,7 +750,10 @@ public class TavernaServerSupport {
 		try {
 			run = runFactory.create(p, workflow);
 			TavernaSecurityContext c = run.getSecurityContext();
-			c.initializeSecurityFromContext(SecurityContextHolder.getContext());
+			@NonNull
+			@java.lang.SuppressWarnings("null")
+			SecurityContext ctxt = SecurityContextHolder.getContext();
+			c.initializeSecurityFromContext(ctxt);
 			/*
 			 * These next pieces of security initialisation are (hopefully)
 			 * obsolete now that we use Spring Security, but we keep them Just
@@ -806,8 +818,9 @@ public class TavernaServerSupport {
 	 *             If no such workflow run exists, or if the user does not have
 	 *             permission to access it.
 	 */
-	public Listener getListener(String runName, String listenerName)
-			throws NoListenerException, UnknownRunException {
+	public Listener getListener(@NonNull String runName,
+			@NonNull String listenerName) throws NoListenerException,
+			UnknownRunException {
 		return getListener(getRun(runName), listenerName);
 	}
 
@@ -822,6 +835,7 @@ public class TavernaServerSupport {
 	 *         "application/octet-stream".
 	 */
 	@NonNull
+	@java.lang.SuppressWarnings("null")
 	public String getEstimatedContentType(@NonNull File f) {
 		String name = f.getName();
 		for (int idx = name.indexOf('.'); idx != -1; idx = name.indexOf('.',
@@ -895,7 +909,8 @@ public class TavernaServerSupport {
 			"logs/detail.log.3", "logs/detail.log.2", "logs/detail.log.1",
 			"logs/detail.log" };
 
-	public FileConcatenation getLogs(TavernaRun run) {
+	@java.lang.SuppressWarnings("null")
+	public FileConcatenation getLogs(@NonNull TavernaRun run) {
 		FileConcatenation fc = new FileConcatenation();
 		for (String name : LOGS) {
 			try {
@@ -916,7 +931,9 @@ public class TavernaServerSupport {
 
 	static final String PROV_BUNDLE = "out.robundle.zip";
 
-	public FileConcatenation getProv(TavernaRun run) {
+	@NonNull
+	@java.lang.SuppressWarnings("null")
+	public FileConcatenation getProv(@NonNull TavernaRun run) {
 		FileConcatenation fc = new FileConcatenation();
 		try {
 			fc.add(fileUtils.getFile(run, PROV_BUNDLE));

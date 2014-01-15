@@ -27,6 +27,10 @@ import org.taverna.server.master.exceptions.NoCreateException;
 import org.taverna.server.master.exceptions.NoDestroyException;
 import org.taverna.server.master.exceptions.UnknownRunException;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+
+import at.ac.tuwien.ifs.dp.plato.PreservationActionPlan;
+
 @RolesAllowed(USER)
 @Description("This is SCAPE service interface sitting on top of Taverna "
 		+ Version.JAVA + " Server.")
@@ -35,22 +39,25 @@ public interface ScapeExecutionService {
 	@Path("/")
 	@Produces(XML)
 	@RolesAllowed(USER)
-	Jobs listJobs(@Context UriInfo ui);
+	Jobs listJobs(@NonNull @Context UriInfo ui);
 
 	@POST
 	@Path("/")
 	@Consumes(XML)
 	@RolesAllowed(USER)
-	Response startJob(PreservationActionPlan plan, @Context UriInfo ui) throws NoCreateException;
+	Response startJob(@NonNull PreservationActionPlan plan,
+			@Context @NonNull UriInfo ui) throws NoCreateException;
 
 	@GET
 	@Path("{id}")
 	@Produces(XML)
-	Job getStatus(@PathParam("id") String id, @Context UriInfo ui) throws UnknownRunException;
+	Job getStatus(@NonNull @PathParam("id") String id,
+			@Context @NonNull UriInfo ui) throws UnknownRunException;
 
 	@DELETE
 	@Path("{id}")
-	Response deleteJob(@PathParam("id") String id) throws UnknownRunException, NoDestroyException;
+	Response deleteJob(@NonNull @PathParam("id") String id)
+			throws UnknownRunException, NoDestroyException;
 
 	@XmlRootElement(name = "jobs")
 	public static class Jobs {

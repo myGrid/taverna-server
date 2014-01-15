@@ -104,8 +104,11 @@ public class WorkerCore extends UnicastRemoteObject implements Worker,
 	static {
 		final String TIMERE = "([0-9.:]+)";
 		final String TERMS = "(real|user|system|sys|elapsed)";
-		TimeRE = Pattern.compile(TIMERE + " *" + TERMS + "[ \t]*" + TIMERE
+		@NonNull
+		@java.lang.SuppressWarnings("null")
+		Pattern re = Pattern.compile(TIMERE + " *" + TERMS + "[ \t]*" + TIMERE
 				+ " *" + TERMS + "[ \t]*" + TIMERE + " *" + TERMS);
+		TimeRE = re;
 	}
 
 	/**
@@ -230,22 +233,24 @@ public class WorkerCore extends UnicastRemoteObject implements Worker,
 		return subprocess != null;
 	}
 
+	@java.lang.SuppressWarnings("null")
 	private void startExecutorSubprocess(@NonNull ProcessBuilder pb,
 			@Nullable char[] password) throws IOException {
 		// Start the subprocess
 		out.println("starting " + pb.command() + " in directory "
 				+ pb.directory() + " with environment " + pb.environment());
-		subprocess = pb.start();
-		if (subprocess == null)
+		Process p = pb.start();
+		subprocess = p;
+		if (p == null)
 			throw new IOException("unknown failure creating process");
 		start = new Date();
 		accounting.runStarted();
 
 		// Capture its stdout and stderr
-		new AsyncCopy(subprocess.getInputStream(), stdout, pid);
-		new AsyncCopy(subprocess.getErrorStream(), stderr);
+		new AsyncCopy(p.getInputStream(), stdout, pid);
+		new AsyncCopy(p.getErrorStream(), stderr);
 		if (password != null)
-			new PasswordWriterThread(subprocess, password);
+			new PasswordWriterThread(p, password);
 	}
 
 	/**
@@ -292,10 +297,10 @@ public class WorkerCore extends UnicastRemoteObject implements Worker,
 			@NonNull Map<String, File> inputFiles,
 			@NonNull Map<String, String> inputValues,
 			@Nullable File outputBaclava, @NonNull File securityDir,
-			@NonNull char[] password, @NonNull Map<String, String> environment,
-			@NonNull String token, @NonNull List<String> runtime)
-			throws IOException, UnsupportedEncodingException,
-			FileNotFoundException {
+			@Nullable char[] password,
+			@NonNull Map<String, String> environment, @NonNull String token,
+			@NonNull List<String> runtime) throws IOException,
+			UnsupportedEncodingException, FileNotFoundException {
 		ProcessBuilder pb = new ProcessBuilder();
 		pb.command().add(TIME);
 		/*
@@ -391,12 +396,12 @@ public class WorkerCore extends UnicastRemoteObject implements Worker,
 		}
 
 		// Add an argument holding the workflow
-		workflowFile = createTempFile(".wf_", ".t2flow", workingDir);
-		write(workflowFile, workflow, "UTF-8");
-		if (!workflowFile.exists())
+		File wff = workflowFile = createTempFile(".wf_", ".t2flow", workingDir);
+		write(wff, workflow, "UTF-8");
+		if (!wff.exists())
 			throw new IOException("failed to instantiate workflow file at "
-					+ workflowFile);
-		pb.command().add(workflowFile.getAbsolutePath());
+					+ wff);
+		pb.command().add(wff.getAbsolutePath());
 
 		// Indicate what working directory to use
 		pb.directory(workingDir);
@@ -458,13 +463,14 @@ public class WorkerCore extends UnicastRemoteObject implements Worker,
 	 */
 	@Override
 	public void killWorker() {
-		if (!finished && subprocess != null) {
+		final Process p = subprocess;
+		if (!finished && p != null) {
 			final Holder<Integer> code = new Holder<Integer>();
 			for (TimingOutTask tot : new TimingOutTask[] { new TimingOutTask() {
 				/** Check if the workflow terminated of its own accord */
 				@Override
 				public void doIt() throws IOException {
-					code.value = subprocess.exitValue();
+					code.value = p.exitValue();
 					accounting.runCeased();
 					buildUR(code.value == 0 ? Completed : Failed, code.value);
 				}
@@ -524,7 +530,8 @@ public class WorkerCore extends UnicastRemoteObject implements Worker,
 			Date now = new Date();
 			long user = -1, sys = -1, real = -1;
 			Matcher m = TimeRE.matcher(stderr.toString());
-			ur = newUR();
+			JobUsageRecord ur;
+			this.ur = ur = newUR();
 			while (m.find())
 				for (int i = 1; i < 6; i += 2)
 					if (m.group(i + 1).equals("user"))
@@ -543,8 +550,11 @@ public class WorkerCore extends UnicastRemoteObject implements Worker,
 			ur.addStartAndEnd(start, now);
 			if (real != -1)
 				ur.addWallDuration(real);
-			else
-				ur.addWallDuration(now.getTime() - start.getTime());
+			else {
+				Date start = this.start;
+				ur.addWallDuration(now.getTime()
+						- (start == null ? 0L : start.getTime()));
+			}
 			ur.setStatus(status.toString());
 			ur.addHost(getLocalHost().getHostName());
 			ur.addResource("exitcode", Integer.toString(exitCode));
@@ -558,13 +568,15 @@ public class WorkerCore extends UnicastRemoteObject implements Worker,
 		}
 	}
 
-	private long parseDuration(@NonNull String durationString) {
+	private long parseDuration(@Nullable String durationString) {
+		if (durationString == null)
+			return 0L;
 		try {
 			return (long) (parseDouble(durationString) * 1000);
 		} catch (NumberFormatException nfe) {
 			// Not a double; maybe MM:SS.mm or HH:MM:SS.mm
 		}
-		long dur = 0;
+		long dur = 0L;
 		for (String d : durationString.split(":"))
 			try {
 				dur = 60 * dur + parseLong(d);
@@ -575,11 +587,14 @@ public class WorkerCore extends UnicastRemoteObject implements Worker,
 		return dur * 1000;
 	}
 
-	private void signal(@NonNull String signal) throws Exception {
+	@NonNull
+	private Process signal(@NonNull String signal) throws Exception {
 		int pid = getPID();
-		if (pid > 0
+		Process p = subprocess;
+		if (p != null
+				&& pid > 0
 				&& getRuntime().exec("kill -" + signal + " " + pid).waitFor() == 0)
-			return;
+			return p;
 		throw new Exception("failed to send signal " + signal + " to process "
 				+ pid);
 	}
@@ -587,8 +602,7 @@ public class WorkerCore extends UnicastRemoteObject implements Worker,
 	@Nullable
 	private Integer killNicely() {
 		try {
-			signal("TERM");
-			return subprocess.waitFor();
+			return signal("TERM").waitFor();
 		} catch (Exception e) {
 			return null;
 		}
@@ -597,8 +611,7 @@ public class WorkerCore extends UnicastRemoteObject implements Worker,
 	@Nullable
 	private Integer killHard() {
 		try {
-			signal("QUIT");
-			return subprocess.waitFor();
+			return signal("QUIT").waitFor();
 		} catch (Exception e) {
 			return null;
 		}
@@ -632,16 +645,19 @@ public class WorkerCore extends UnicastRemoteObject implements Worker,
 	 */
 	@Override
 	public RemoteStatus getWorkerStatus() {
-		if (subprocess == null)
+		Process p = subprocess;
+		if (p == null)
 			return Initialized;
 		if (finished)
 			return Finished;
 		try {
-			exitCode = subprocess.exitValue();
+			exitCode = p.exitValue();
 			finished = true;
 			readyToSendEmail = true;
 			accounting.runCeased();
-			buildUR(exitCode.intValue() == 0 ? Completed : Failed, exitCode);
+			Integer ecBox = exitCode;
+			int ec = ecBox == null ? 0 : ecBox;
+			buildUR(ec == 0 ? Completed : Failed, ec);
 			return Finished;
 		} catch (IllegalThreadStateException e) {
 			return Operating;
@@ -654,11 +670,13 @@ public class WorkerCore extends UnicastRemoteObject implements Worker,
 	}
 
 	@Override
+	@java.lang.SuppressWarnings("null")
 	public String getName() {
 		return DEFAULT_LISTENER_NAME;
 	}
 
 	@Override
+	@java.lang.SuppressWarnings("null")
 	@SuppressWarnings("REC_CATCH_EXCEPTION")
 	public String getProperty(String propName) throws RemoteException {
 		switch (Property.is(propName)) {
@@ -667,24 +685,30 @@ public class WorkerCore extends UnicastRemoteObject implements Worker,
 		case STDERR:
 			return stderr.toString();
 		case EXIT_CODE:
-			return (exitCode == null) ? "" : exitCode.toString();
+			Integer ec = exitCode;
+			return (ec == null) ? "" : ec.toString();
 		case EMAIL:
-			return emailAddress;
+			String em = emailAddress;
+			return em == null ? "" : em;
 		case READY_TO_NOTIFY:
 			return Boolean.toString(readyToSendEmail);
 		case USAGE:
 			try {
+				@NonNull
 				JobUsageRecord toReturn;
 				if (subprocess == null) {
 					toReturn = newUR();
 					toReturn.setStatus(Held.toString());
-				} else if (ur == null) {
-					toReturn = newUR();
-					toReturn.setStatus(Started.toString());
-					toReturn.addStartAndEnd(start, new Date());
-					toReturn.addUser(System.getProperty("user.name"), null);
 				} else {
-					toReturn = ur;
+					JobUsageRecord ur2 = ur;
+					if (ur2 != null) {
+						toReturn = ur2;
+					} else {
+						toReturn = newUR();
+						toReturn.setStatus(Started.toString());
+						toReturn.addStartAndEnd(start, new Date());
+						toReturn.addUser(System.getProperty("user.name"), null);
+					}
 				}
 				/*
 				 * Note that this record is not to be pushed to the server. That
@@ -701,6 +725,7 @@ public class WorkerCore extends UnicastRemoteObject implements Worker,
 	}
 
 	@Override
+	@java.lang.SuppressWarnings("null")
 	public String getType() {
 		return DEFAULT_LISTENER_NAME;
 	}
@@ -854,11 +879,13 @@ enum Property {
 		return s;
 	}
 
+	@Nullable
 	public static Property is(@NonNull String s) {
 		return pmap.get(s);
 	}
 
 	@NonNull
+	@java.lang.SuppressWarnings("null")
 	public static String[] names() {
 		return pmap.keySet().toArray(new String[pmap.size()]);
 	}

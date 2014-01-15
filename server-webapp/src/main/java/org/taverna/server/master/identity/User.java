@@ -23,6 +23,8 @@ import javax.xml.bind.annotation.XmlType;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+
 /**
  * The rrepresentation of a user in the database.
  * 
@@ -50,6 +52,7 @@ public class User implements UserDetails {
 	@Persistent
 	private String localUsername;
 
+	@SuppressWarnings("null")
 	@Override
 	public Collection<GrantedAuthority> getAuthorities() {
 		List<GrantedAuthority> auths = new ArrayList<GrantedAuthority>();
@@ -123,17 +126,20 @@ public class User implements UserDetails {
 
 @SuppressWarnings("serial")
 class LiteralGrantedAuthority implements GrantedAuthority {
+	@NonNull
 	private String auth;
 
-	LiteralGrantedAuthority(String auth) {
+	LiteralGrantedAuthority(@NonNull String auth) {
 		this.auth = auth;
 	}
 
+	@NonNull
 	@Override
 	public String getAuthority() {
 		return auth;
 	}
 
+	@NonNull
 	@Override
 	public String toString() {
 		return "AUTHORITY(" + auth + ")";

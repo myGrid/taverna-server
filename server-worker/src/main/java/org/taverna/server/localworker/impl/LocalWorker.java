@@ -59,6 +59,8 @@ import org.taverna.server.localworker.remote.RemoteStatus;
 import org.taverna.server.localworker.remote.StillWorkingOnItException;
 import org.taverna.server.localworker.server.UsageRecordReceiver;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import edu.umd.cs.findbugs.annotations.SuppressWarnings;
 
 /**
@@ -98,62 +100,79 @@ public class LocalWorker extends UnicastRemoteObject implements RemoteSingleRun 
 	static boolean DO_MKDIR = true;
 
 	/** What to use to run a workflow engine. */
+	@NonNull
 	private final String executeWorkflowCommand;
 	/** What workflow to run. */
+	@NonNull
 	private final String workflow;
 	/** The remote access object for the working directory. */
+	@NonNull
 	private final DirectoryDelegate baseDir;
 	/** What inputs to pass as files. */
+	@NonNull
 	final Map<String, String> inputFiles;
 	/** What inputs to pass as files (as file refs). */
+	@NonNull
 	final Map<String, File> inputRealFiles;
 	/** What inputs to pass as direct values. */
+	@NonNull
 	final Map<String, String> inputValues;
 	/** The interface to the workflow engine subprocess. */
+	@NonNull
 	private final Worker core;
 	/** Our descriptor token (UUID). */
+	@NonNull
 	private final String masterToken;
 	/**
 	 * The root working directory for a workflow run, or <tt>null</tt> if it has
 	 * been deleted.
 	 */
+	@Nullable
 	private File base;
 	/**
 	 * When did this workflow start running, or <tt>null</tt> for
 	 * "never/not yet".
 	 */
+	@Nullable
 	private Date start;
 	/**
 	 * When did this workflow finish running, or <tt>null</tt> for
 	 * "never/not yet".
 	 */
+	@Nullable
 	private Date finish;
 	/** The cached status of the workflow run. */
+	@NonNull
 	RemoteStatus status;
 	/**
 	 * The name of the input Baclava document, or <tt>null</tt> to not do it
 	 * that way.
 	 */
+	@Nullable
 	String inputBaclava;
 	/**
 	 * The name of the output Baclava document, or <tt>null</tt> to not do it
 	 * that way.
 	 */
+	@Nullable
 	String outputBaclava;
 	/**
 	 * The file containing the input Baclava document, or <tt>null</tt> to not
 	 * do it that way.
 	 */
+	@Nullable
 	private File inputBaclavaFile;
 	/**
 	 * The file containing the output Baclava document, or <tt>null</tt> to not
 	 * do it that way.
 	 */
+	@Nullable
 	private File outputBaclavaFile;
 	/**
 	 * Registered shutdown hook so that we clean up when this process is killed
 	 * off, or <tt>null</tt> if that is no longer necessary.
 	 */
+	@Nullable
 	Thread shutdownHook;
 	/** Location for security information to be written to. */
 	File securityDirectory;
@@ -162,9 +181,11 @@ public class LocalWorker extends UnicastRemoteObject implements RemoteSingleRun 
 	 */
 	char[] keystorePassword = KEYSTORE_PASSWORD;
 	/** Additional server-specified environment settings. */
-	Map<String, String> environment = new HashMap<String, String>();
+	@NonNull
+	final Map<String, String> environment = new HashMap<String, String>();
 	/** Additional server-specified java runtime settings. */
-	List<String> runtimeSettings = new ArrayList<String>();
+	@NonNull
+	final List<String> runtimeSettings = new ArrayList<String>();
 	URL interactionFeedURL;
 	URL webdavURL;
 
@@ -195,30 +216,32 @@ public class LocalWorker extends UnicastRemoteObject implements RemoteSingleRun 
 	 * @throws ImplementationException
 	 *             If something goes wrong during local setup.
 	 */
-	protected LocalWorker(String executeWorkflowCommand, String workflow,
-			UsageRecordReceiver urReceiver, UUID id,
-			Map<String, String> seedEnvironment, List<String> javaParams,
-			WorkerFactory workerFactory) throws RemoteException,
+	protected LocalWorker(@NonNull String executeWorkflowCommand,
+			@NonNull String workflow, @NonNull UsageRecordReceiver urReceiver,
+			@Nullable UUID id, @NonNull Map<String, String> seedEnvironment,
+			@NonNull List<String> javaParams,
+			@NonNull WorkerFactory workerFactory) throws RemoteException,
 			ImplementationException {
 		super();
 		if (id == null)
-			id = randomUUID();
-		masterToken = id.toString();
+			masterToken = randomUUID().toString();
+		else
+			masterToken = id.toString();
 		this.workflow = workflow;
 		this.executeWorkflowCommand = executeWorkflowCommand;
 		String sharedDir = getProperty(SHARED_DIR_PROP, SLASHTEMP);
-		base = new File(sharedDir, masterToken);
-		out.println("about to create " + base);
+		File b = base = new File(sharedDir, masterToken);
+		out.println("about to create " + b);
 		try {
-			forceMkdir(base);
+			forceMkdir(b);
 			for (String subdir : SUBDIR_LIST) {
-				new File(base, subdir).mkdir();
+				new File(b, subdir).mkdir();
 			}
 		} catch (IOException e) {
 			throw new ImplementationException(
 					"problem creating run working directory", e);
 		}
-		baseDir = new DirectoryDelegate(base, null);
+		baseDir = new DirectoryDelegate(b);
 		inputFiles = new HashMap<String, String>();
 		inputRealFiles = new HashMap<String, File>();
 		inputValues = new HashMap<String, String>();
@@ -330,16 +353,19 @@ public class LocalWorker extends UnicastRemoteObject implements RemoteSingleRun 
 	public List<RemoteInput> getInputs() throws RemoteException {
 		ArrayList<RemoteInput> result = new ArrayList<RemoteInput>();
 		for (String name : inputFiles.keySet())
-			result.add(new InputDelegate(name));
+			if (name != null)
+				result.add(new InputDelegate(name));
 		return result;
 	}
 
 	@Override
+	@java.lang.SuppressWarnings("null")
 	public List<String> getListenerTypes() {
 		return emptyList();
 	}
 
 	@Override
+	@java.lang.SuppressWarnings("null")
 	public List<RemoteListener> getListeners() {
 		return singletonList(core.getDefaultListener());
 	}
@@ -440,8 +466,8 @@ public class LocalWorker extends UnicastRemoteObject implements RemoteSingleRun 
 		}
 
 		@Override
-		public void setKeystore(byte[] keystore) throws RemoteException,
-				ImplementationException {
+		public void setKeystore(@Nullable byte[] keystore)
+				throws RemoteException, ImplementationException {
 			if (status != Initialized)
 				throw new RemoteException("not initializing");
 			if (keystore == null)
@@ -450,7 +476,8 @@ public class LocalWorker extends UnicastRemoteObject implements RemoteSingleRun 
 		}
 
 		@Override
-		public void setPassword(char[] password) throws RemoteException {
+		public void setPassword(@Nullable char[] password)
+				throws RemoteException {
 			if (status != Initialized)
 				throw new RemoteException("not initializing");
 			if (password == null)
@@ -459,8 +486,8 @@ public class LocalWorker extends UnicastRemoteObject implements RemoteSingleRun 
 		}
 
 		@Override
-		public void setTruststore(byte[] truststore) throws RemoteException,
-				ImplementationException {
+		public void setTruststore(@Nullable byte[] truststore)
+				throws RemoteException, ImplementationException {
 			if (status != Initialized)
 				throw new RemoteException("not initializing");
 			if (truststore == null)
@@ -469,7 +496,8 @@ public class LocalWorker extends UnicastRemoteObject implements RemoteSingleRun 
 		}
 
 		@Override
-		public void setUriToAliasMap(HashMap<URI, String> uriToAliasMap)
+		public void setUriToAliasMap(
+				@Nullable HashMap<URI, String> uriToAliasMap)
 				throws RemoteException {
 			if (status != Initialized)
 				throw new RemoteException("not initializing");
@@ -534,9 +562,10 @@ public class LocalWorker extends UnicastRemoteObject implements RemoteSingleRun 
 
 	@SuppressWarnings("SE_INNER_CLASS")
 	class InputDelegate extends UnicastRemoteObject implements RemoteInput {
+		@NonNull
 		private String name;
 
-		InputDelegate(String name) throws RemoteException {
+		InputDelegate(@NonNull String name) throws RemoteException {
 			super();
 			this.name = name;
 			if (!inputFiles.containsKey(name)) {
@@ -702,26 +731,37 @@ public class LocalWorker extends UnicastRemoteObject implements RemoteSingleRun 
 	private boolean createWorker() throws Exception {
 		start = new Date();
 		char[] pw = keystorePassword;
+		if (pw == null)
+			throw new IllegalStateException("null keystore password");
 		keystorePassword = null;
+		File securityDir = securityDirectory;
+		if (securityDir == null)
+			throw new IllegalStateException(
+					"already deleted security directory");
 		/*
 		 * Do not clear the keystorePassword array here; its ownership is
 		 * *transferred* to the worker core which doesn't copy it but *does*
 		 * clear it after use.
 		 */
-		return core.initWorker(this, executeWorkflowCommand, workflow, base,
+		File f = base;
+		if (f == null)
+			throw new IllegalStateException("base directory deleted");
+		return core.initWorker(this, executeWorkflowCommand, workflow, f,
 				inputBaclavaFile, inputRealFiles, inputValues,
-				outputBaclavaFile, securityDirectory, pw, environment,
-				masterToken, runtimeSettings);
+				outputBaclavaFile, securityDir, pw, environment, masterToken,
+				runtimeSettings);
 	}
 
 	@Override
 	public Date getFinishTimestamp() {
-		return finish == null ? null : new Date(finish.getTime());
+		Date d = finish;
+		return d == null ? null : new Date(d.getTime());
 	}
 
 	@Override
 	public Date getStartTimestamp() {
-		return start == null ? null : new Date(start.getTime());
+		Date d = start;
+		return d == null ? null : new Date(d.getTime());
 	}
 
 	@Override

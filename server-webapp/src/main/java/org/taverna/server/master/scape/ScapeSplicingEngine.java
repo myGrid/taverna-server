@@ -59,12 +59,14 @@ public class ScapeSplicingEngine extends SplicingEngine {
 
 	public static enum Model {
 		One2OneNoSchema("1to1"), One2OneSchema("1to1_schema");
+		@NonNull
 		private final String key;
 
-		Model(String key) {
+		private Model(@NonNull String key) {
 			this.key = key;
 		}
 
+		@NonNull
 		public String getKey() {
 			return key;
 		}
@@ -125,6 +127,7 @@ public class ScapeSplicingEngine extends SplicingEngine {
 		dummyProcessorName = name;
 	}
 
+	@NonNull
 	public Workflow constructWorkflow(@NonNull Element executablePlan,
 			@NonNull Model model) throws Exception {
 		return constructWorkflow(executablePlan, model.getKey());
@@ -144,16 +147,19 @@ public class ScapeSplicingEngine extends SplicingEngine {
 			@NonNull Set<String> createdOutputNames) throws Exception {
 		connectInnerInputsToTop(topDataflow, linkingDataflow, insertedDataflow,
 				createdInputNames);
+		@NonNull
 		Set<String> linkingOutputNames = connectInnerOutputsToTop(topDataflow,
 				insertedDataflow, linkingDataflow, createdOutputNames);
 		concatenateDocuments(topDataflow, linkingOutputNames);
 	}
 
-	private void concatenateDocuments(Element topMaster,
-			Set<String> subjectPorts) throws Exception {
+	private void concatenateDocuments(@NonNull Element topMaster,
+			@NonNull Set<String> subjectPorts) throws Exception {
 		int counter = 0;
 		String sourceProcessor = null, currentPort = null;
 		for (String portName : subjectPorts) {
+			if (portName == null)
+				continue;
 			if (currentPort == null) {
 				sourceProcessor = linkingDataflowName;
 				currentPort = portName;
@@ -175,12 +181,13 @@ public class ScapeSplicingEngine extends SplicingEngine {
 		for (Element e : select(topMaster, NAMED_PROCESSOR, dummyProcessorName))
 			e.getParentNode().removeChild(e);
 
-		for (Element e : select(topMaster, DATALINK_FROM_PROCESSOR,
-				dummyProcessorName)) {
-			datalink(topMaster, sourceProcessor, currentPort,
-					text(e, "t:sink/t:processor"), text(e, "t:sink/t:port"));
-			e.getParentNode().removeChild(e);
-		}
+		if (currentPort != null)
+			for (Element e : select(topMaster, DATALINK_FROM_PROCESSOR,
+					dummyProcessorName)) {
+				datalink(topMaster, sourceProcessor, currentPort,
+						text(e, "t:sink/t:processor"), text(e, "t:sink/t:port"));
+				e.getParentNode().removeChild(e);
+			}
 	}
 
 	protected boolean getSubjectType(String name, Element port,
@@ -193,9 +200,10 @@ public class ScapeSplicingEngine extends SplicingEngine {
 		return true;
 	}
 
-	private Set<String> connectInnerOutputsToTop(Element topMaster,
-			Element innerMaster, Element outerMaster, Set<String> createdOut)
-			throws Exception {
+	@NonNull
+	private Set<String> connectInnerOutputsToTop(@NonNull Element topMaster,
+			@NonNull Element innerMaster, @NonNull Element outerMaster,
+			@NonNull Set<String> createdOut) throws Exception {
 		Map<String, List<String>> types = new HashMap<String, List<String>>();
 		Set<String> topPortSet = new HashSet<String>();
 		Element outPorts = get(outerMaster, OUTPUT_PORT_LIST);
@@ -216,7 +224,8 @@ public class ScapeSplicingEngine extends SplicingEngine {
 				Element outp = branch(outPorts, "port");
 				leaf(outp, "name", mp);
 				branch(outp, "annotations");
-				port(topPorts, mp, 0, 0);
+				if (topPorts != null)
+					port(topPorts, mp, 0, 0);
 				mapOutput(topProcessor, mp);
 			}
 			types.get(subject.value).add(type.value);
@@ -253,14 +262,18 @@ public class ScapeSplicingEngine extends SplicingEngine {
 			Element docBuilder = makeComponent(outerMaster, dbName, repository,
 					utilityFamily, builderName, builderVersion, new String[] {
 							TYPES, VALUES, SUBJECT }, new String[] { OUT });
-			get(docBuilder, INPUT_PORT_LIST + NAMED_PORT + "/" + PORT_DEPTH,
-					VALUES).setTextContent("1");
+			Element inputPortDepth = get(docBuilder, INPUT_PORT_LIST
+					+ NAMED_PORT + "/" + PORT_DEPTH, VALUES);
+			if (inputPortDepth != null)
+				inputPortDepth.setTextContent("1");
 			Element istrat = get(docBuilder,
 					"t:iterationStrategyStack/t:iteration/t:strategy");
 			Element cross = branch(istrat, "cross");
 			Element values = get(istrat, "t:dot/t:port[@name = \"%s\"]", VALUES);
-			values.setAttribute("depth", "1");
-			cross.appendChild(values);
+			if (values != null) {
+				values.setAttribute("depth", "1");
+				cross.appendChild(values);
+			}
 			cross.appendChild(get(istrat, "t:dot"));
 
 			datalink(outerMaster, subjectName, "value", dbName, SUBJECT);
@@ -270,18 +283,20 @@ public class ScapeSplicingEngine extends SplicingEngine {
 		return topPortSet;
 	}
 
-	private void connectInnerInputsToTop(Element topMaster,
-			Element outerMaster, Element innerMaster, Set<String> createdIn)
-			throws Exception {
+	private void connectInnerInputsToTop(@NonNull Element topMaster,
+			@NonNull Element outerMaster, @NonNull Element innerMaster,
+			@NonNull Set<String> createdIn) throws Exception {
 		Element outProc = get(outerMaster, NAMED_PROCESSOR + REQUIRE_NESTED,
 				innerProcessorName);
-		Element top = get(topMaster, NAMED_PROCESSOR + REQUIRE_NESTED,
+		Element top = getMaybe(topMaster, NAMED_PROCESSOR + REQUIRE_NESTED,
 				linkingDataflowName);
 		if (top == null)
 			throw new Exception(format("no top context!: " + NAMED_PROCESSOR
 					+ REQUIRE_NESTED, linkingDataflowName));
 		Element cross = get(top, ITERATION_STRATEGY + "/t:cross");
 		for (String in : createdIn) {
+			if (in == null)
+				continue;
 			Element inPort = get(innerMaster, INPUT_PORT_LIST + NAMED_PORT, in);
 			get(outerMaster, INPUT_PORT_LIST).appendChild(
 					inPort.cloneNode(true));
@@ -308,6 +323,8 @@ public class ScapeSplicingEngine extends SplicingEngine {
 		e.setLinkingDataflowName(CONTAINER_NAME);
 		e.setInnerProcessorName(SPLICE_PROCESSOR_NAME);
 		e.setDummyProcessorName(DUMMY_PROCESSOR_NAME);
+		@SuppressWarnings("null")
+		@NonNull
 		Element executablePlan = e.parse(new InputSource(from));
 
 		System.out.println("setup ok");

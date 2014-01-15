@@ -15,6 +15,9 @@ import org.taverna.server.master.exceptions.NoDestroyException;
 import org.taverna.server.master.exceptions.NoUpdateException;
 import org.taverna.server.master.utils.UsernamePrincipal;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
+
 /**
  * Simple policy interface.
  * 
@@ -35,7 +38,8 @@ public interface Policy {
 	 *         per-user limit is imposed and only system-wide limits are to be
 	 *         enforced.
 	 */
-	Integer getMaxRuns(UsernamePrincipal user);
+	@Nullable
+	Integer getMaxRuns(@NonNull UsernamePrincipal user);
 
 	/**
 	 * Test whether the user can create an instance of the given workflow.
@@ -47,8 +51,8 @@ public interface Policy {
 	 * @throws NoCreateException
 	 *             If they may not instantiate it.
 	 */
-	void permitCreate(UsernamePrincipal user, Workflow workflow)
-			throws NoCreateException;
+	void permitCreate(@Nullable UsernamePrincipal user,
+			@NonNull Workflow workflow) throws NoCreateException;
 
 	/**
 	 * Test whether the user can destroy a workflow instance run or manipulate
@@ -61,7 +65,7 @@ public interface Policy {
 	 * @throws NoDestroyException
 	 *             If they may not destroy it.
 	 */
-	void permitDestroy(UsernamePrincipal user, TavernaRun run)
+	void permitDestroy(@Nullable UsernamePrincipal user, @NonNull TavernaRun run)
 			throws NoDestroyException;
 
 	/**
@@ -76,7 +80,8 @@ public interface Policy {
 	 *         before testing whether the workflow can be updated or deleted by
 	 *         the user.
 	 */
-	boolean permitAccess(UsernamePrincipal user, TavernaRun run);
+	boolean permitAccess(@Nullable UsernamePrincipal user,
+			@NonNull TavernaRun run);
 
 	/**
 	 * Test whether the user can modify a workflow run (other than for its
@@ -89,18 +94,20 @@ public interface Policy {
 	 * @throws NoUpdateException
 	 *             If they may not modify it.
 	 */
-	void permitUpdate(UsernamePrincipal user, TavernaRun run)
+	void permitUpdate(@Nullable UsernamePrincipal user, @NonNull TavernaRun run)
 			throws NoUpdateException;
 
 	/**
 	 * Get the URIs of the workflows that the given user may execute.
 	 * 
 	 * @param user
-	 *            Who are we finding out on behalf of.
+	 *            Who are we finding out on behalf of, or <tt>null</tt> where we
+	 *            are only finding public information.
 	 * @return A list of workflow URIs that they may instantiate, or
 	 *         <tt>null</tt> if any workflow may be submitted.
 	 */
-	List<URI> listPermittedWorkflowURIs(UsernamePrincipal user);
+	@Nullable
+	List<URI> listPermittedWorkflowURIs(@Nullable UsernamePrincipal user);
 
 	/**
 	 * @return The maximum number of {@linkplain Status#Operating operating}
@@ -112,9 +119,11 @@ public interface Policy {
 	 * Set the URIs of the workflows that the given user may execute.
 	 * 
 	 * @param user
-	 *            Who are we finding out on behalf of.
+	 *            Who are we finding out on behalf of, or <tt>null</tt> where we
+	 *            are setting this for everyone.
 	 * @param permitted
 	 *            A list of workflow URIs that they may instantiate.
 	 */
-	void setPermittedWorkflowURIs(UsernamePrincipal user, List<URI> permitted);
+	void setPermittedWorkflowURIs(@Nullable UsernamePrincipal user,
+			@Nullable List<URI> permitted);
 }

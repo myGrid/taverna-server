@@ -20,6 +20,8 @@ import org.taverna.server.master.common.Trust;
 import org.taverna.server.master.exceptions.InvalidCredentialException;
 import org.taverna.server.master.utils.UsernamePrincipal;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+
 /**
  * Security context for a workflow run.
  * 
@@ -29,6 +31,7 @@ public interface TavernaSecurityContext {
 	/**
 	 * @return Who owns the security context.
 	 */
+	@NonNull
 	UsernamePrincipal getOwner();
 
 	/**
@@ -38,6 +41,7 @@ public interface TavernaSecurityContext {
 	 * 
 	 * @return The names of the users who may use destroy operations. Read-only.
 	 */
+	@NonNull
 	Set<String> getPermittedDestroyers();
 
 	/**
@@ -48,7 +52,7 @@ public interface TavernaSecurityContext {
 	 * @param destroyers
 	 *            The names of the users who may use destroy operations.
 	 */
-	void setPermittedDestroyers(Set<String> destroyers);
+	void setPermittedDestroyers(@NonNull Set<String> destroyers);
 
 	/**
 	 * Describe the names of the users (as extracted from their
@@ -57,6 +61,7 @@ public interface TavernaSecurityContext {
 	 * 
 	 * @return The names of the users who may use update operations. Read-only.
 	 */
+	@NonNull
 	Set<String> getPermittedUpdaters();
 
 	/**
@@ -67,7 +72,7 @@ public interface TavernaSecurityContext {
 	 * @param updaters
 	 *            The names of the users who may use update operations.
 	 */
-	void setPermittedUpdaters(Set<String> updaters);
+	void setPermittedUpdaters(@NonNull Set<String> updaters);
 
 	/**
 	 * Describe the names of the users (as extracted from their
@@ -76,6 +81,7 @@ public interface TavernaSecurityContext {
 	 * 
 	 * @return The names of the users who may use read operations. Read-only.
 	 */
+	@NonNull
 	Set<String> getPermittedReaders();
 
 	/**
@@ -86,11 +92,12 @@ public interface TavernaSecurityContext {
 	 * @param readers
 	 *            The names of the users who may use read operations.
 	 */
-	void setPermittedReaders(Set<String> readers);
+	void setPermittedReaders(@NonNull Set<String> readers);
 
 	/**
 	 * @return The credentials owned by the user. Never <tt>null</tt>.
 	 */
+	@NonNull
 	Credential[] getCredentials();
 
 	/**
@@ -100,7 +107,7 @@ public interface TavernaSecurityContext {
 	 * @param toAdd
 	 *            The credential to add.
 	 */
-	void addCredential(Credential toAdd);
+	void addCredential(@NonNull Credential toAdd);
 
 	/**
 	 * Remove a credential from the owned set. It's not a failure to remove
@@ -109,7 +116,7 @@ public interface TavernaSecurityContext {
 	 * @param toDelete
 	 *            The credential to remove.
 	 */
-	void deleteCredential(Credential toDelete);
+	void deleteCredential(@NonNull Credential toDelete);
 
 	/**
 	 * Tests if the credential is valid. This includes testing whether the
@@ -121,11 +128,13 @@ public interface TavernaSecurityContext {
 	 * @throws InvalidCredentialException
 	 *             If it is invalid.
 	 */
-	void validateCredential(Credential c) throws InvalidCredentialException;
+	void validateCredential(@NonNull Credential c)
+			throws InvalidCredentialException;
 
 	/**
 	 * @return The identities trusted by the user. Never <tt>null</tt>.
 	 */
+	@NonNull
 	Trust[] getTrusted();
 
 	/**
@@ -134,7 +143,7 @@ public interface TavernaSecurityContext {
 	 * @param toAdd
 	 *            The identity to add.
 	 */
-	void addTrusted(Trust toAdd);
+	void addTrusted(@NonNull Trust toAdd);
 
 	/**
 	 * Remove an identity from the trusted set. It's not a failure to remove
@@ -143,7 +152,7 @@ public interface TavernaSecurityContext {
 	 * @param toDelete
 	 *            The identity to remove.
 	 */
-	void deleteTrusted(Trust toDelete);
+	void deleteTrusted(@NonNull Trust toDelete);
 
 	/**
 	 * Tests if the trusted identity descriptor is valid. This includes checking
@@ -154,7 +163,7 @@ public interface TavernaSecurityContext {
 	 * @throws InvalidCredentialException
 	 *             If it is invalid.
 	 */
-	void validateTrusted(Trust t) throws InvalidCredentialException;
+	void validateTrusted(@NonNull Trust t) throws InvalidCredentialException;
 
 	/**
 	 * Establish the security context from how the owning workflow run was
@@ -167,7 +176,7 @@ public interface TavernaSecurityContext {
 	 * @throws Exception
 	 *             If anything goes wrong.
 	 */
-	void initializeSecurityFromContext(SecurityContext securityContext)
+	void initializeSecurityFromContext(@NonNull SecurityContext securityContext)
 			throws Exception;
 
 	/**
@@ -179,7 +188,7 @@ public interface TavernaSecurityContext {
 	 *            The full information about the request that caused the
 	 *            workflow to be created.
 	 */
-	void initializeSecurityFromSOAPContext(MessageContext context);
+	void initializeSecurityFromSOAPContext(@NonNull MessageContext context);
 
 	/**
 	 * Establish the security context from how the owning workflow run was
@@ -190,7 +199,7 @@ public interface TavernaSecurityContext {
 	 *            The full information about the request that caused the
 	 *            workflow to be created.
 	 */
-	void initializeSecurityFromRESTContext(HttpHeaders headers);
+	void initializeSecurityFromRESTContext(@NonNull HttpHeaders headers);
 
 	/**
 	 * Transfer the security context to the remote system.
@@ -209,5 +218,6 @@ public interface TavernaSecurityContext {
 	/**
 	 * @return The factory that created this security context.
 	 */
+	@NonNull
 	SecurityContextFactory getFactory();
 }

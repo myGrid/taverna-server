@@ -272,6 +272,7 @@ public class IdAwareForkRunFactory extends AbstractRemoteRunFactory implements
 	private RemoteSingleRun getRealRun(@NonNull UsernamePrincipal creator,
 			@NonNull String username, @NonNull String wf, UUID id)
 			throws RemoteException {
+		@NonNull
 		String globaluser = "Unknown Person";
 		if (creator != null)
 			globaluser = creator.getName();
@@ -556,6 +557,9 @@ class SecureFork implements IdAwareForkRunFactory.MetaFactory {
 				lastException = e;
 			}
 		}
+		if (lastException == null)
+			throw new RuntimeException("hang while waiting for "
+					+ "factory process to initialize");
 		throw lastException;
 	}
 

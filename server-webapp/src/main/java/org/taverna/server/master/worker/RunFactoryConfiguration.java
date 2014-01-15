@@ -332,6 +332,7 @@ public abstract class RunFactoryConfiguration implements ConfigurableRunFactory 
 
 	@NonNull
 	@Override
+	@SuppressWarnings("null")
 	@ManagedAttribute(description = "The names of the current runs.", currencyTimeLimit = 5)
 	public final String[] getCurrentRunNames() {
 		List<String> names = runDB.listRunNames();

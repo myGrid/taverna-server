@@ -43,6 +43,7 @@ import org.taverna.server.master.exceptions.NoUpdateException;
 import org.taverna.server.master.interfaces.Listener;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 /**
  * This represents <i>all</i> the event listeners attached to a workflow run.
@@ -224,7 +225,7 @@ public interface TavernaServerListenersREST {
 		@Produces(TEXT)
 		@Description("Get the value of the particular property of an event "
 				+ "listener attached to a workflow run.")
-		@NonNull
+		@Nullable
 		String getValue();
 
 		/**
@@ -303,16 +304,18 @@ public interface TavernaServerListenersREST {
 		 * @param ub
 		 *            The factory for URIs. Must have already been secured.
 		 */
-		public ListenerDescription(Listener listener, UriBuilder ub) {
+		public ListenerDescription(@NonNull Listener listener,
+				@NonNull UriBuilder ub) {
 			super(true);
 			name = listener.getName();
 			type = listener.getType();
 			configuration = new Uri(ub.clone().path("configuration"));
-			UriBuilder ub2 = ub.clone().path("properties/{prop}");
+			@NonNull UriBuilder ub2 = ub.clone().path("properties/{prop}");
 			properties = new ArrayList<PropertyDescription>(
 					listener.listProperties().length);
 			for (String propName : listener.listProperties())
-				properties.add(new PropertyDescription(propName, ub2));
+				if (propName != null)
+					properties.add(new PropertyDescription(propName, ub2));
 		}
 	}
 
@@ -345,7 +348,7 @@ public interface TavernaServerListenersREST {
 		 * @param ub
 		 *            The factory for URIs. Must have already been secured.
 		 */
-		PropertyDescription(String propName, UriBuilder ub) {
+		PropertyDescription(@NonNull String propName, @NonNull UriBuilder ub) {
 			super(ub, propName);
 			this.name = propName;
 		}
@@ -419,11 +422,12 @@ public interface TavernaServerListenersREST {
 		 * @param properties
 		 *            The names of the properties.
 		 */
-		public Properties(UriBuilder ub, String[] properties) {
+		public Properties(@NonNull UriBuilder ub, @NonNull String[] properties) {
 			super(true);
 			property = new ArrayList<PropertyDescription>(properties.length);
 			for (String propName : properties)
-				property.add(new PropertyDescription(propName, ub));
+				if (propName != null)
+					property.add(new PropertyDescription(propName, ub));
 		}
 	}
 }

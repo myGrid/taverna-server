@@ -117,7 +117,7 @@ public class TavernaServerImplTest {
 
 					@Override
 					protected InteractionFeed makeInteractionFeed() {
-						return null; // TODO...
+						throw new UnsupportedOperationException();
 					}
 				};
 			}

@@ -9,6 +9,9 @@ import org.taverna.server.master.common.Status;
 import org.taverna.server.master.exceptions.BadStateChangeException;
 import org.taverna.server.master.exceptions.FilesystemAccessException;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
+
 /**
  * This represents the assignment of inputs to input ports of the workflow. Note
  * that the <tt>file</tt> and <tt>value</tt> properties are never set at the
@@ -21,17 +24,20 @@ public interface Input {
 	 * @return The file currently assigned to this input port, or <tt>null</tt>
 	 *         if no file is assigned.
 	 */
+	@Nullable
 	public String getFile();
 
 	/**
 	 * @return The name of this input port. This may not be changed.
 	 */
+	@NonNull
 	public String getName();
 
 	/**
 	 * @return The value currently assigned to this input port, or <tt>null</tt>
 	 *         if no value is assigned.
 	 */
+	@Nullable
 	public String getValue();
 
 	/**
@@ -48,7 +54,7 @@ public interface Input {
 	 *             If the run isn't in the {@link Status#Initialized
 	 *             Initialized} state.
 	 */
-	public void setFile(String file) throws FilesystemAccessException,
+	public void setFile(@NonNull String file) throws FilesystemAccessException,
 			BadStateChangeException;
 
 	/**
@@ -61,5 +67,5 @@ public interface Input {
 	 *             If the run isn't in the {@link Status#Initialized
 	 *             Initialized} state.
 	 */
-	public void setValue(String value) throws BadStateChangeException;
+	public void setValue(@NonNull String value) throws BadStateChangeException;
 }

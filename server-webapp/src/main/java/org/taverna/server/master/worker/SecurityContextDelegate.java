@@ -52,6 +52,7 @@ import org.taverna.server.master.interfaces.File;
 import org.taverna.server.master.interfaces.TavernaSecurityContext;
 import org.taverna.server.master.utils.UsernamePrincipal;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 
 /**
@@ -61,11 +62,14 @@ import edu.umd.cs.findbugs.annotations.Nullable;
  */
 public abstract class SecurityContextDelegate implements TavernaSecurityContext {
 	Log log = LogFactory.getLog("Taverna.Server.Worker");
+	@NonNull
 	private final UsernamePrincipal owner;
 	private final List<Credential> credentials = new ArrayList<Credential>();
 	private final List<Trust> trusted = new ArrayList<Trust>();
+	@NonNull
 	private final RemoteRunDelegate run;
 	private final Object lock = new Object();
+	@NonNull
 	final SecurityContextFactory factory;
 
 	private transient Keystore keystore;
@@ -81,8 +85,9 @@ public abstract class SecurityContextDelegate implements TavernaSecurityContext 
 	 * @param factory
 	 *            What class built this object?
 	 */
-	protected SecurityContextDelegate(RemoteRunDelegate run,
-			UsernamePrincipal owner, SecurityContextFactory factory) {
+	protected SecurityContextDelegate(@NonNull RemoteRunDelegate run,
+			@NonNull UsernamePrincipal owner,
+			@NonNull SecurityContextFactory factory) {
 		this.run = run;
 		this.owner = owner;
 		this.factory = factory;
@@ -99,6 +104,7 @@ public abstract class SecurityContextDelegate implements TavernaSecurityContext 
 	}
 
 	@Override
+	@SuppressWarnings("null")
 	public Credential[] getCredentials() {
 		synchronized (lock) {
 			return credentials.toArray(new Credential[credentials.size()]);
@@ -144,6 +150,7 @@ public abstract class SecurityContextDelegate implements TavernaSecurityContext 
 	}
 
 	@Override
+	@SuppressWarnings("null")
 	public Trust[] getTrusted() {
 		synchronized (lock) {
 			return trusted.toArray(new Trust[trusted.size()]);
@@ -175,6 +182,7 @@ public abstract class SecurityContextDelegate implements TavernaSecurityContext 
 			throws InvalidCredentialException;
 
 	@Override
+	@SuppressWarnings("null")
 	public void validateTrusted(Trust t) throws InvalidCredentialException {
 		InputStream contentsAsStream;
 		if (t.certificateBytes != null && t.certificateBytes.length > 0) {
@@ -230,17 +238,20 @@ public abstract class SecurityContextDelegate implements TavernaSecurityContext 
 	private UriBuilder getUB() {
 		return factory.uriSource.getRunUriBuilder(run);
 	}
+
 	private RunDatabaseDAO getDAO() {
 		return ((RunDatabase) factory.db).dao;
 	}
+
 	@Nullable
-	private List<X509Certificate> getCerts(URI uri) throws IOException, GeneralSecurityException {
+	private List<X509Certificate> getCerts(URI uri) throws IOException,
+			GeneralSecurityException {
 		return factory.certFetcher.getTrustsForURI(uri);
 	}
 
-	private void installLocalPasswordCredential(
-			List<Credential> credentials, List<Trust> trusts)
-			throws InvalidCredentialException, IOException, GeneralSecurityException {
+	private void installLocalPasswordCredential(List<Credential> credentials,
+			List<Trust> trusts) throws InvalidCredentialException, IOException,
+			GeneralSecurityException {
 		Credential.Password pw = new Credential.Password();
 		pw.id = "run:self";
 		pw.username = PREFIX + run.id;
@@ -277,7 +288,8 @@ public abstract class SecurityContextDelegate implements TavernaSecurityContext 
 
 		List<Trust> trusted = new ArrayList<Trust>(this.trusted);
 		this.trusted.clear();
-		List<Credential> credentials = new ArrayList<Credential>(this.credentials);
+		List<Credential> credentials = new ArrayList<Credential>(
+				this.credentials);
 		this.credentials.clear();
 
 		try {
@@ -312,6 +324,8 @@ public abstract class SecurityContextDelegate implements TavernaSecurityContext 
 					this.uriToAliasMap = uriToAliasMap;
 					this.keystore = keystore;
 					for (Credential c : credentials) {
+						if (c == null)
+							continue;
 						addCredentialToKeystore(c);
 						keyCount++;
 					}
@@ -375,6 +389,8 @@ public abstract class SecurityContextDelegate implements TavernaSecurityContext 
 	/**
 	 * @return A new password with a reasonable level of randomness.
 	 */
+	@NonNull
+	@SuppressWarnings("null")
 	protected final char[] generateNewPassword() {
 		return randomUUID().toString().toCharArray();
 	}
@@ -388,8 +404,8 @@ public abstract class SecurityContextDelegate implements TavernaSecurityContext 
 	 *            The key-pair.
 	 * @throws KeyStoreException
 	 */
-	protected final void addKeypairToKeystore(String alias, Credential c)
-			throws KeyStoreException {
+	protected final void addKeypairToKeystore(@NonNull String alias,
+			@NonNull Credential c) throws KeyStoreException {
 		if (c.loadedKey == null)
 			throw new KeyStoreException("critical: credential was not verified");
 		if (uriToAliasMap.containsKey(c.serviceURI))
@@ -405,7 +421,7 @@ public abstract class SecurityContextDelegate implements TavernaSecurityContext 
 	 *            The credential to add.
 	 * @throws KeyStoreException
 	 */
-	public abstract void addCredentialToKeystore(Credential c)
+	public abstract void addCredentialToKeystore(@NonNull Credential c)
 			throws KeyStoreException;
 
 	/**
@@ -418,7 +434,8 @@ public abstract class SecurityContextDelegate implements TavernaSecurityContext 
 	 * @throws InvalidCredentialException
 	 *             If anything goes wrong.
 	 */
-	final InputStream contents(String name) throws InvalidCredentialException {
+	final InputStream contents(@NonNull String name)
+			throws InvalidCredentialException {
 		try {
 			File f = (File) factory.fileUtils.getDirEntry(run, name);
 			long size = f.getSize();
@@ -435,13 +452,14 @@ public abstract class SecurityContextDelegate implements TavernaSecurityContext 
 		}
 	}
 
+	@NonNull
 	@Override
 	public Set<String> getPermittedDestroyers() {
 		return run.getDestroyers();
 	}
 
 	@Override
-	public void setPermittedDestroyers(Set<String> destroyers) {
+	public void setPermittedDestroyers(@NonNull Set<String> destroyers) {
 		run.setDestroyers(destroyers);
 	}
 
@@ -480,6 +498,8 @@ public abstract class SecurityContextDelegate implements TavernaSecurityContext 
 			if (credentials != null)
 				for (Credential c : credentials)
 					try {
+						if (c == null)
+							continue;
 						validateCredential(c);
 						this.credentials.add(c);
 					} catch (InvalidCredentialException e) {
@@ -489,6 +509,8 @@ public abstract class SecurityContextDelegate implements TavernaSecurityContext 
 			if (trust != null)
 				for (Trust t : trust)
 					try {
+						if (t == null)
+							continue;
 						validateTrusted(t);
 						this.trusted.add(t);
 					} catch (InvalidCredentialException e) {
@@ -550,6 +572,8 @@ public abstract class SecurityContextDelegate implements TavernaSecurityContext 
 		 * @throws GeneralSecurityException
 		 *             If anything goes wrong.
 		 */
+		@SuppressWarnings("null")
+		@NonNull
 		public byte[] serialize() throws GeneralSecurityException, IOException {
 			if (ks == null)
 				throw new IllegalStateException("truststore already written");
@@ -631,6 +655,8 @@ public abstract class SecurityContextDelegate implements TavernaSecurityContext 
 		 * @throws GeneralSecurityException
 		 *             If anything goes wrong.
 		 */
+		@SuppressWarnings("null")
+		@NonNull
 		public byte[] serialize() throws GeneralSecurityException {
 			if (ks == null)
 				throw new IllegalStateException("keystore already written");

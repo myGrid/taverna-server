@@ -15,6 +15,9 @@ import org.taverna.server.localworker.remote.RemoteListener;
 import org.taverna.server.localworker.remote.RemoteStatus;
 import org.taverna.server.localworker.server.UsageRecordReceiver;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
+
 /**
  * The interface between the connectivity layer and the thunk to the
  * subprocesses.
@@ -65,12 +68,16 @@ public interface Worker {
 	 * @throws Exception
 	 *             If any of quite a large number of things goes wrong.
 	 */
-	boolean initWorker(LocalWorker local, String executeWorkflowCommand,
-			String workflow, File workingDir, File inputBaclavaFile,
-			Map<String, File> inputRealFiles, Map<String, String> inputValues,
-			File outputBaclavaFile, File contextDirectory,
-			char[] keystorePassword, Map<String, String> environment,
-			String masterToken, List<String> runtimeSettings) throws Exception;
+	boolean initWorker(@NonNull LocalWorker local,
+			@NonNull String executeWorkflowCommand, @NonNull String workflow,
+			@NonNull File workingDir, @Nullable File inputBaclavaFile,
+			@NonNull Map<String, File> inputRealFiles,
+			@NonNull Map<String, String> inputValues,
+			@Nullable File outputBaclavaFile, @NonNull File contextDirectory,
+			@NonNull char[] keystorePassword,
+			@NonNull Map<String, String> environment,
+			@NonNull String masterToken, @NonNull List<String> runtimeSettings)
+			throws Exception;
 
 	/**
 	 * Kills off the subprocess if it exists and is alive.
@@ -116,7 +123,7 @@ public interface Worker {
 	 *            The destination where any final usage records are to be
 	 *            written in order to log them back to the server.
 	 */
-	void setURReceiver(UsageRecordReceiver receiver);
+	void setURReceiver(@NonNull UsageRecordReceiver receiver);
 
 	/**
 	 * Arrange for the deletion of any resources created during worker process

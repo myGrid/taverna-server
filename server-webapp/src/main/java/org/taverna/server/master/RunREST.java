@@ -51,6 +51,8 @@ import org.taverna.server.master.utils.CallTimeLogger.PerfLogged;
 import org.taverna.server.master.utils.InvocationCounter.CallCounted;
 import org.taverna.server.port_description.OutputDescription;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+
 /**
  * RESTful interface to a single workflow run.
  * 
@@ -237,9 +239,10 @@ abstract class RunREST implements TavernaServerRunREST, RunBean {
 	public String setOutputFile(String filename) throws NoUpdateException,
 			FilesystemAccessException, BadStateChangeException {
 		support.permitUpdate(run);
-		if (filename != null && filename.length() == 0)
-			filename = null;
-		run.setOutputBaclavaFile(filename);
+		if (filename.trim().length() == 0)
+			run.setOutputBaclavaFile(null);
+		else
+			run.setOutputBaclavaFile(filename);
 		String o = run.getOutputBaclavaFile();
 		return o == null ? "" : o;
 	}
@@ -337,6 +340,7 @@ abstract class RunREST implements TavernaServerRunREST, RunBean {
 	 * 
 	 * @return The handle to the interface, as decorated by Spring.
 	 */
+	@NonNull
 	protected abstract DirectoryREST makeDirectoryInterface();
 
 	/**
@@ -344,6 +348,7 @@ abstract class RunREST implements TavernaServerRunREST, RunBean {
 	 * 
 	 * @return The handle to the interface, as decorated by Spring.
 	 */
+	@NonNull
 	protected abstract InputREST makeInputInterface();
 
 	/**
@@ -351,6 +356,7 @@ abstract class RunREST implements TavernaServerRunREST, RunBean {
 	 * 
 	 * @return The handle to the interface, as decorated by Spring.
 	 */
+	@NonNull
 	protected abstract ListenersREST makeListenersInterface();
 
 	/**
@@ -358,6 +364,7 @@ abstract class RunREST implements TavernaServerRunREST, RunBean {
 	 * 
 	 * @return The handle to the interface, as decorated by Spring.
 	 */
+	@NonNull
 	protected abstract RunSecurityREST makeSecurityInterface();
 
 	/**
@@ -365,6 +372,7 @@ abstract class RunREST implements TavernaServerRunREST, RunBean {
 	 * 
 	 * @return The handle to the interaface, as decorated by Spring.
 	 */
+	@NonNull
 	protected abstract InteractionFeed makeInteractionFeed();
 
 	@Override

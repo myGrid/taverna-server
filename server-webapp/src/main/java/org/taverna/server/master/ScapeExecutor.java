@@ -1,6 +1,8 @@
 package org.taverna.server.master;
 
+import static at.ac.tuwien.ifs.dp.plato.ExecutablePlanType.T_2_FLOW;
 import static javax.ws.rs.core.Response.created;
+import static javax.ws.rs.core.Response.serverError;
 import static javax.ws.rs.core.Response.status;
 import static javax.xml.transform.OutputKeys.OMIT_XML_DECLARATION;
 import static javax.xml.transform.OutputKeys.STANDALONE;
@@ -8,30 +10,31 @@ import static org.apache.commons.logging.LogFactory.getLog;
 import static org.taverna.server.master.common.Roles.USER;
 import static org.taverna.server.master.common.Status.Finished;
 import static org.taverna.server.master.common.Status.Operating;
-import static org.taverna.server.master.rest.scape.PreservationActionPlan.ExecutablePlan.ExecutablePlanType.Taverna2;
 import static org.taverna.server.master.scape.ScapeSplicingEngine.Model.One2OneNoSchema;
 import static org.taverna.server.master.scape.ScapeSplicingEngine.Model.One2OneSchema;
 
+import java.io.Serializable;
 import java.io.StringWriter;
 import java.util.List;
 import java.util.Map.Entry;
 
 import javax.annotation.security.RolesAllowed;
+import javax.jdo.annotations.Column;
+import javax.jdo.annotations.PersistenceAware;
+import javax.jdo.annotations.PersistenceCapable;
+import javax.jdo.annotations.Persistent;
 import javax.ws.rs.Path;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.TransformerFactoryConfigurationError;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
 import org.apache.commons.logging.Log;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.taverna.server.master.common.Status;
 import org.taverna.server.master.common.Uri;
 import org.taverna.server.master.common.Workflow;
 import org.taverna.server.master.exceptions.BadStateChangeException;
@@ -41,30 +44,53 @@ import org.taverna.server.master.exceptions.UnknownRunException;
 import org.taverna.server.master.interfaces.Policy;
 import org.taverna.server.master.interfaces.RunStore;
 import org.taverna.server.master.interfaces.TavernaRun;
-import org.taverna.server.master.rest.scape.PreservationActionPlan;
-import org.taverna.server.master.rest.scape.PreservationActionPlan.DigitalObject;
 import org.taverna.server.master.rest.scape.ScapeExecutionService;
 import org.taverna.server.master.scape.ScapeSplicingEngine;
 import org.taverna.server.master.scape.ScapeSplicingEngine.Model;
 import org.taverna.server.master.utils.InvocationCounter.CallCounted;
-import org.taverna.server.master.utils.UsernamePrincipal;
+import org.taverna.server.master.utils.JDOSupport;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
+import at.ac.tuwien.ifs.dp.plato.ExecutablePlan;
+import at.ac.tuwien.ifs.dp.plato.Object;
+import at.ac.tuwien.ifs.dp.plato.Objects;
+import at.ac.tuwien.ifs.dp.plato.PreservationActionPlan;
+import at.ac.tuwien.ifs.dp.plato.QualityLevelDescription;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 
 @Path("/")
 public class ScapeExecutor implements ScapeExecutionService {
 	final Log log = getLog("Taverna.Server.Webapp.SCAPE");
-	@Autowired
+	@Autowired(required = true)
 	private TavernaServerSupport support;
-	@Autowired
+	@Autowired(required = true)
 	private RunStore runStore;
-	@Autowired
+	@Autowired(required = true)
 	private Policy policy;
-	@Autowired
+	@Autowired(required = true)
 	private ScapeSplicingEngine splicer;
+	@Autowired(required = true)
+	private ScapeJobDAO dao;
+
+	@NonNull
+	private Policy policy() {
+		Policy p = policy;
+		if (p == null)
+			throw new WebApplicationException(serverError().entity(
+					"failed to configure policy").build());
+		return p;
+	}
+
+	@NonNull
+	private TavernaRun run(@NonNull String id) throws UnknownRunException {
+		Policy p = policy;
+		if (p == null)
+			throw new WebApplicationException(serverError().entity(
+					"failed to configure policy").build());
+		return runStore.getRun(support.getPrincipal(), p, id);
+	}
 
 	@Override
 	@CallCounted
@@ -73,10 +99,9 @@ public class ScapeExecutor implements ScapeExecutionService {
 	public Jobs listJobs(@NonNull UriInfo ui) {
 		@NonNull
 		Jobs jobs = new Jobs();
-		for (@NonNull
-		Entry<String, TavernaRun> entry : runStore.listRuns(
-				support.getPrincipal(), policy).entrySet())
-			if (isScapeRun(entry.getValue()))
+		for (Entry<String, TavernaRun> entry : runStore.listRuns(
+				support.getPrincipal(), policy()).entrySet())
+			if (entry != null && isScapeRun(entry.getValue()))
 				jobs.job.add(new Uri(ui, "{id}", entry.getKey()));
 		return jobs;
 	}
@@ -87,22 +112,32 @@ public class ScapeExecutor implements ScapeExecutionService {
 	@NonNull
 	public Response startJob(@NonNull PreservationActionPlan plan,
 			@NonNull UriInfo ui) throws NoCreateException {
-		@NonNull
-		List<DigitalObject> objs = plan.object;
-		if (objs.size() == 0)
-			return status(400).entity("no objects to act on").build();
-		if (plan.executablePlan.type != Taverna2)
-			return status(400).entity("that type of plan not supported")
-					.build();
+		if (plan == null)
+			throw new BadInputException("what?");
+
+		Objects objs = plan.getObjects();
+		ExecutablePlan ep = plan.getExecutablePlan();
+		QualityLevelDescription qld = plan.getQualityLevelDescription();
+
+		if (objs == null)
+			throw new BadInputException("no objects to act on");
+		List<Object> objectList = objs.getObject();
+		if (objectList == null || objectList.size() == 0)
+			throw new BadInputException("no objects to act on");
+		if (ep == null)
+			throw new BadInputException("the executable plan must be present");
+		if (ep.getType() != T_2_FLOW)
+			throw new BadInputException("that type of plan not supported");
+		Element workflow = ep.getAny();
+		if (workflow == null)
+			throw new BadInputException("the executable plan must be present");
+
 		@NonNull
 		String id;
 		try {
-			// TODO Find a better way of picking which model workflow to use
-			Model model = plan.qualityLevelDescription.schematronDocument != null ? One2OneSchema
-					: One2OneNoSchema;
-			id = submitAndStart(splicer.constructWorkflow(
-					plan.executablePlan.workflowDocument, model), objs,
-					plan.qualityLevelDescription.schematronDocument);
+			Model model = pickExecutionModel(plan);
+			id = submitAndStart(splicer.constructWorkflow(workflow, model),
+					objectList, qld == null ? null : qld.getAny());
 		} catch (NoCreateException e) {
 			throw e;
 		} catch (Exception e) {
@@ -112,14 +147,25 @@ public class ScapeExecutor implements ScapeExecutionService {
 				.build();
 	}
 
+	@NonNull
+	private Model pickExecutionModel(PreservationActionPlan plan) {
+		// TODO Find a better way of picking which model workflow to use
+		QualityLevelDescription qld = plan.getQualityLevelDescription();
+		if (qld == null)
+			return One2OneNoSchema;
+		return qld.getAny() != null ? One2OneSchema : One2OneNoSchema;
+	}
+
 	@Override
 	@CallCounted
 	@RolesAllowed(USER)
 	@NonNull
 	public Job getStatus(@NonNull String id, @NonNull UriInfo ui)
 			throws UnknownRunException {
+		if (id == null || id.isEmpty())
+			throw new BadInputException("what?");
 		@NonNull
-		TavernaRun r = runStore.getRun(support.getPrincipal(), policy, id);
+		TavernaRun r = run(id);
 		if (!isScapeRun(r))
 			throw new UnknownRunException();
 		Job job = new Job();
@@ -138,33 +184,36 @@ public class ScapeExecutor implements ScapeExecutionService {
 	@NonNull
 	public Response deleteJob(@NonNull String id) throws UnknownRunException,
 			NoDestroyException {
-		TavernaRun r = runStore.getRun(support.getPrincipal(), policy, id);
+		if (id == null || id.isEmpty())
+			throw new BadInputException("what?");
+		TavernaRun r = run(id);
 		if (!isScapeRun(r))
 			throw new UnknownRunException();
 		support.unregisterRun(id, null);
 		return Response.noContent().build();
 	}
 
-	private boolean isScapeRun(@NonNull TavernaRun run) {
-		// TODO: Filtering by what API created the job
-		return true;
+	private boolean isScapeRun(@Nullable TavernaRun run) {
+		if (run == null)
+			return false;
+		return dao.isScapeJob(run.getId());
 	}
 
+	@NonNull
 	private String submitAndStart(@NonNull Workflow w,
-			@NonNull final List<DigitalObject> objs,
-			@Nullable final Element schematron) throws NoCreateException {
-		@NonNull
-		final String id = support.buildWorkflow(w);
-		// final UsernamePrincipal principal = support.getPrincipal();
-		// TODO Mark as scape run
+			@NonNull final List<Object> objs, @Nullable final Element schematron)
+			throws NoCreateException, UnknownRunException {
+		String id = support.buildWorkflow(w);
+		dao.setScapeJob(id);
+		final TavernaRun run = run(id);
 		Thread worker = new Thread(new Runnable() {
 			@Override
 			public void run() {
 				try {
-					initObjects(id, objs);
+					initObjects(run, objs);
 					if (schematron != null)
-						initSLA(id, schematron);
-					setExecuting(id);
+						initSLA(run, schematron);
+					setExecuting(run);
 				} catch (Exception e) {
 					log.warn("failed to initialize SCAPE workflow", e);
 				}
@@ -175,21 +224,22 @@ public class ScapeExecutor implements ScapeExecutionService {
 		return id;
 	}
 
-	protected void initObjects(@NonNull String id,
-			@NonNull List<DigitalObject> objs) throws BadStateChangeException,
-			UnknownRunException {
+	@SuppressWarnings("null")
+	protected void initObjects(@NonNull TavernaRun run,
+			@NonNull List<Object> objs) throws BadStateChangeException {
 		StringBuffer sb = new StringBuffer();
-		for (DigitalObject d_o : objs)
-			sb.append(d_o.uid).append('\n');
-		runStore.getRun(id).makeInput("objects").setValue(sb.toString());
+		for (Object object : objs)
+			sb.append(object.getUid()).append('\n');
+		run.makeInput("objects").setValue(sb.toString());
 	}
 
-	protected void initSLA(@NonNull String id, @NonNull Element schematron)
-			throws BadStateChangeException, UnknownRunException,
-			TransformerException {
-		runStore.getRun(id).makeInput("sla").setValue(serializeXml(schematron));
+	protected void initSLA(@NonNull TavernaRun run, @NonNull Element schematron)
+			throws BadStateChangeException, TransformerException {
+		run.makeInput("sla").setValue(serializeXml(schematron));
 	}
 
+	@NonNull
+	@SuppressWarnings("null")
 	private String serializeXml(@NonNull Node node) throws TransformerException {
 		Transformer writer = TransformerFactory.newInstance().newTransformer();
 		writer.setOutputProperty(OMIT_XML_DECLARATION, "yes");
@@ -199,8 +249,87 @@ public class ScapeExecutor implements ScapeExecutionService {
 		return sw.toString();
 	}
 
-	protected void setExecuting(@NonNull String id)
-			throws BadStateChangeException, UnknownRunException {
-		runStore.getRun(id).setStatus(Operating);
+	protected void setExecuting(@NonNull TavernaRun run)
+			throws BadStateChangeException {
+		while (run.setStatus(Operating) != null)
+			try {
+				Thread.sleep(5000);
+			} catch (InterruptedException e) {
+				throw new BadStateChangeException(
+						"interrupted while trying to start");
+			}
+	}
+
+	@SuppressWarnings("serial")
+	public static class BadInputException extends WebApplicationException {
+		public BadInputException(String message) {
+			super(status(400).entity(message).build());
+		}
+
+		public BadInputException(String message, Throwable t) {
+			super(t, status(400).entity(message).build());
+		}
+	}
+
+	@PersistenceAware
+	public static class ScapeJobDAO extends JDOSupport<ScapeJob> {
+		protected ScapeJobDAO() {
+			super(ScapeJob.class);
+		}
+
+		@WithinSingleTransaction
+		public void setScapeJob(@NonNull String id) {
+			this.persist(new ScapeJob(id));
+		}
+
+		@WithinSingleTransaction
+		public boolean isScapeJob(@NonNull String id) {
+			return (getById(id) != null);
+		}
+
+		@WithinSingleTransaction
+		public void deleteJob(@NonNull String id) {
+			delete(getById(id));
+		}
+
+		@WithinSingleTransaction
+		@Nullable
+		public String getNotify(String id) {
+			ScapeJob job = getById(id);
+			return job == null ? null : job.getNotify();
+		}
+	}
+}
+
+@SuppressWarnings("serial")
+@PersistenceCapable(schema = "SCAPE", table = "JOB")
+class ScapeJob implements Serializable {
+	@Persistent(primaryKey = "true")
+	@Column(length = 48)
+	private String id;
+	@Persistent
+	private String notify;
+
+	public ScapeJob() {
+	}
+
+	public ScapeJob(@NonNull String id) {
+		this.id = id;
+	}
+
+	public ScapeJob(@NonNull String id, @NonNull String notify) {
+		this.id = id;
+		this.notify = notify;
+	}
+
+	@NonNull
+	@SuppressWarnings("null")
+	public String getId() {
+		return id;
+	}
+
+	@Nullable
+	public String getNotify() {
+		return notify;
 	}
 }

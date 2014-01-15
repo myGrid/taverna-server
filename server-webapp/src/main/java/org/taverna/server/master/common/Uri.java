@@ -68,7 +68,7 @@ public class Uri {
 	 * @param strings
 	 *            The parameters to the factory.
 	 */
-	public Uri(@NonNull UriBuilder ub, String... strings) {
+	public Uri(@NonNull UriBuilder ub, @NonNull String... strings) {
 		ref = secure(ub).build((Object[]) strings);
 	}
 
@@ -100,6 +100,8 @@ public class Uri {
 	 */
 	public Uri(@NonNull UriInfo ui, boolean secure, @NonNull String path,
 			String... strings) {
+		@NonNull
+		@java.lang.SuppressWarnings("null")
 		UriBuilder ub = ui.getAbsolutePathBuilder();
 		if (secure) {
 			ub = secure(ub);
@@ -107,21 +109,30 @@ public class Uri {
 		ref = ub.path(path).build((Object[]) strings);
 	}
 
-	public static UriBuilder secure(UriBuilder ub) {
+	@NonNull
+	public static UriBuilder secure(@NonNull UriBuilder ub) {
 		return Rewriter.getInstance().getSecuredUriBuilder(ub);
 	}
 
-	public static UriBuilder secure(UriInfo ui) {
+	@NonNull
+	@java.lang.SuppressWarnings("null")
+	public static UriBuilder secure(@NonNull UriInfo ui) {
 		return secure(ui.getAbsolutePathBuilder());
 	}
 
-	public static URI secure(URI uri) {
+	@NonNull
+	public static URI secure(@NonNull URI uri) {
+		@NonNull
+		@java.lang.SuppressWarnings("null")
 		URI newURI = secure(fromUri(uri)).build();
 		log.debug("rewrote " + uri + " to " + newURI);
 		return newURI;
 	}
 
-	public static URI secure(URI base, String uri) {
+	@NonNull
+	public static URI secure(@NonNull URI base, @NonNull String uri) {
+		@NonNull
+		@java.lang.SuppressWarnings("null")
 		URI newURI = secure(fromUri(base.resolve(uri))).build();
 		log.debug("rewrote " + uri + " to " + newURI);
 		return newURI;
@@ -182,7 +193,7 @@ public class Uri {
 				this.rewriteTarget = "://" + rewriteTarget;
 		}
 
-		private Integer lookupHttpsPort(URI uri) {
+		private Integer lookupHttpsPort(@NonNull URI uri) {
 			if (portMapper != null)
 				return portMapper.lookupHttpsPort(uri.getPort());
 			return null;
@@ -201,6 +212,7 @@ public class Uri {
 		}
 
 		@NonNull
+		@java.lang.SuppressWarnings("null")
 		URI rewrite(@NonNull String url) {
 			if (rewriteTarget != null)
 				url = url.replaceFirst(rewriteRE, rewriteTarget);
@@ -208,6 +220,7 @@ public class Uri {
 		}
 
 		@NonNull
+		@java.lang.SuppressWarnings("null")
 		public UriBuilder getSecuredUriBuilder(@NonNull UriBuilder uribuilder) {
 			if (suppress)
 				return uribuilder.clone();
@@ -235,6 +248,7 @@ public class Uri {
 		 * 
 		 * @author Donal Fellows
 		 */
+		@java.lang.SuppressWarnings("null")
 		class RewritingUriBuilder extends UriBuilder {
 			private UriBuilder wrapped;
 

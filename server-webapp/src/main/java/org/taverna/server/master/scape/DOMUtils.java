@@ -19,12 +19,15 @@ abstract class DOMUtils {
 		return element;
 	}
 
-	static Element branch(Element parent, String... name) {
+	@NonNull
+	static Element branch(@NonNull Element parent, String... name) {
 		if (name.length == 0)
 			throw new IllegalArgumentException("need at least one element name");
 		Document doc = parent.getOwnerDocument();
 		Element elem = parent;
 		for (String n : name) {
+			@NonNull
+			@SuppressWarnings("null")
 			Element created = doc.createElementNS(elem.getNamespaceURI(), n);
 			elem.appendChild(created);
 			elem = created;
@@ -40,7 +43,7 @@ abstract class DOMUtils {
 		return elem;
 	}
 
-	static void cls(Element parent, String group, String artifact,
+	static void cls(@NonNull Element parent, String group, String artifact,
 			String version, String clazz) {
 		Element raven = branch(parent, "raven");
 		leaf(raven, "group", group);
@@ -49,7 +52,7 @@ abstract class DOMUtils {
 		leaf(parent, "class", clazz);
 	}
 
-	static Element config(Element parent, String name) {
+	static Element config(@NonNull Element parent, String name) {
 		Element config = attrs(branch(parent, "configBean"), "encoding",
 				"xstream");
 		Element created = parent.getOwnerDocument().createElementNS("", name);
@@ -58,7 +61,7 @@ abstract class DOMUtils {
 		return created;
 	}
 
-	static Element datalink(Element datalinks, String fromProc,
+	static Element datalink(@NonNull Element datalinks, String fromProc,
 			String fromPort, String toProc, String toPort) {
 		Element link = branch(datalinks, "datalink");
 		Element sink = attrs(branch(link, "sink"), "type",

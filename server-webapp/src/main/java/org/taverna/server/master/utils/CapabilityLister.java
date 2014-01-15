@@ -12,6 +12,8 @@ import javax.annotation.PostConstruct;
 
 import org.taverna.server.master.common.Capability;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+
 /**
  * Utility for listing the capabilities supported by this Taverna Server
  * installation.
@@ -32,6 +34,7 @@ public class CapabilityLister {
 		}
 	}
 
+	@NonNull
 	public List<Capability> getCapabilities() {
 		List<Capability> caps = new ArrayList<Capability>();
 		for (Entry<Object, Object> entry : properties.entrySet()) {
