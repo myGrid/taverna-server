@@ -13,6 +13,7 @@ import static org.taverna.server.master.common.Status.Finished;
 import static org.taverna.server.master.common.Status.Operating;
 import static org.taverna.server.master.scape.ScapeSplicingEngine.Model.One2OneNoSchema;
 import static org.taverna.server.master.scape.ScapeSplicingEngine.Model.One2OneSchema;
+import static org.taverna.server.master.utils.RestUtils.opt;
 
 import java.io.Serializable;
 import java.io.StringWriter;
@@ -36,12 +37,14 @@ import javax.xml.transform.stream.StreamResult;
 
 import org.apache.commons.logging.Log;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.taverna.server.master.common.Namespaces;
 import org.taverna.server.master.common.Uri;
 import org.taverna.server.master.common.Workflow;
 import org.taverna.server.master.exceptions.BadStateChangeException;
 import org.taverna.server.master.exceptions.NoCreateException;
 import org.taverna.server.master.exceptions.NoDestroyException;
+import org.taverna.server.master.exceptions.NoUpdateException;
 import org.taverna.server.master.exceptions.UnknownRunException;
 import org.taverna.server.master.interfaces.Policy;
 import org.taverna.server.master.interfaces.RunStore;
@@ -178,6 +181,8 @@ public class ScapeExecutor implements ScapeExecutionService {
 		Job job = new Job();
 		job.status = r.getStatus();
 		job.serverJob = new Uri(ui.getBaseUriBuilder(), "rest/runs/{id}", id);
+		job.enactedWorkflow = new Uri(ui.getBaseUriBuilder(),
+				"rest/runs/{id}/workflow", id);
 		// TODO Consider doing output by a special URL
 		if (job.status == Finished)
 			job.output = new Uri(ui.getBaseUriBuilder(),
@@ -265,6 +270,31 @@ public class ScapeExecutor implements ScapeExecutionService {
 			}
 	}
 
+	@Scheduled(fixedDelay = 30000)// FIXME see <annotation-driven> in http://docs.spring.io/spring/docs/3.0.x/reference/scheduling.html
+	public void detectCompletion() {
+		for (String id : dao.listNotifiableJobs()) {
+			TavernaRun r;
+			try {
+				r = runStore.getRun(id);
+			} catch (UnknownRunException e) {
+				continue;
+			}
+			if (r.getStatus() == Finished) {
+				try {
+					doNotify(r, dao.getNotify(id));
+				} catch (Exception e) {
+					log.warn("failure in notification", e);
+				}
+				dao.setNotify(id, null);
+			}
+		}
+	}
+
+	private void doNotify(TavernaRun r, String notifyAddress) {
+		// FIXME Auto-generated method stub
+		
+	}
+
 	@SuppressWarnings("serial")
 	public static class BadInputException extends WebApplicationException {
 		public BadInputException(String message) {
@@ -280,6 +310,12 @@ public class ScapeExecutor implements ScapeExecutionService {
 	public static class ScapeJobDAO extends JDOSupport<ScapeJob> {
 		protected ScapeJobDAO() {
 			super(ScapeJob.class);
+		}
+
+		@WithinSingleTransaction
+		public List<String> listNotifiableJobs() {
+			// FIXME Auto-generated method stub
+			return null;
 		}
 
 		@WithinSingleTransaction
@@ -299,10 +335,69 @@ public class ScapeExecutor implements ScapeExecutionService {
 
 		@WithinSingleTransaction
 		@Nullable
-		public String getNotify(String id) {
+		public String getNotify(@NonNull String id) {
 			ScapeJob job = getById(id);
 			return job == null ? null : job.getNotify();
 		}
+
+		@WithinSingleTransaction
+		public void setNotify(@NonNull String id, @Nullable String notify) {
+			ScapeJob job = getById(id);
+			if (job != null)
+				job.setNotify(notify == null || notify.trim().isEmpty() ? null
+						: notify.trim());
+		}
+
+		@WithinSingleTransaction
+		@Nullable
+		public String updateNotify(@NonNull String id, @Nullable String notify) {
+			setNotify(id, notify);
+			return getNotify(id);
+		}
+	}
+
+	@Override
+	public String getNotification(String id) throws UnknownRunException {
+		if (id == null || id.isEmpty())
+			throw new BadInputException("what?");
+		run(id);
+		if (!dao.isScapeJob(id))
+			throw new UnknownRunException();
+		String addr = dao.getNotify(id);
+		return (addr == null ? "" : addr);
+	}
+
+	@Override
+	public String setNotification(String id, String newValue)
+			throws UnknownRunException, NoUpdateException {
+		if (id == null || id.isEmpty())
+			throw new BadInputException("what?");
+		run(id);
+		if (!dao.isScapeJob(id))
+			throw new UnknownRunException();
+		String addr = dao.updateNotify(id, newValue);
+		return (addr == null ? "" : addr);
+	}
+
+	@Override
+	public Response rootOpt() {
+		return opt("POST");
+	}
+
+	@Override
+	public Response jobOpt(String id) throws UnknownRunException {
+		if (id == null || id.isEmpty())
+			throw new BadInputException("what?");
+		run(id);
+		return opt("DELETE");
+	}
+
+	@Override
+	public Response notifyOpt(String id) throws UnknownRunException {
+		if (id == null || id.isEmpty())
+			throw new BadInputException("what?");
+		run(id);
+		return opt("PUT");
 	}
 }
 
@@ -335,5 +430,9 @@ class ScapeJob implements Serializable {
 	@Nullable
 	public String getNotify() {
 		return notify;
+	}
+
+	public void setNotify(@Nullable String notify) {
+		this.notify = notify;
 	}
 }
