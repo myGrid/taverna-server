@@ -30,10 +30,9 @@ import org.taverna.server.master.exceptions.NoCreateException;
 import org.taverna.server.master.exceptions.NoDestroyException;
 import org.taverna.server.master.exceptions.NoUpdateException;
 import org.taverna.server.master.exceptions.UnknownRunException;
-import org.taverna.server.master.rest.ContentTypes;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
 import at.ac.tuwien.ifs.dp.plato.PreservationActionPlan;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 @RolesAllowed(USER)
 @Description("This is SCAPE service interface sitting on top of Taverna "
@@ -104,6 +103,8 @@ public interface ScapeExecutionService {
 		public Uri serverJob;
 		@XmlElement
 		public Uri output;
+		@XmlElement
+		public Uri provenance;
 		@XmlElement
 		public Uri enactedWorkflow;
 		@XmlElement

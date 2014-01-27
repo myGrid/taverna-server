@@ -184,9 +184,12 @@ public class ScapeExecutor implements ScapeExecutionService {
 		job.enactedWorkflow = new Uri(ui.getBaseUriBuilder(),
 				"rest/runs/{id}/workflow", id);
 		// TODO Consider doing output by a special URL
-		if (job.status == Finished)
+		if (job.status == Finished) {
 			job.output = new Uri(ui.getBaseUriBuilder(),
 					"rest/runs/{id}/wd/out", id);
+			job.provenance = new Uri(ui.getBaseUriBuilder(),
+					"rest/runs/{id}/run-bundle", id);
+		}
 		return job;
 	}
 
@@ -222,6 +225,7 @@ public class ScapeExecutor implements ScapeExecutionService {
 			@Override
 			public void run() {
 				try {
+					//FIXME turn on provenance generation
 					initObjects(run, objs);
 					if (schematron != null)
 						initSLA(run, schematron);
