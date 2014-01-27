@@ -318,7 +318,8 @@ public class ContentsDescriptorBuilder {
 				av = constructLeafValue((File) entry);
 			else
 				av = constructListValue((Directory) entry, ub);
-			av.href = ub.build(entry.getFullName().replaceFirst("^/", ""));
+			String fullPath = entry.getFullName().replaceFirst("^/", "");
+			av.href = ub.clone().path(fullPath).build();
 			return av;
 		}
 		return new AbsentValue();
@@ -346,7 +347,7 @@ public class ContentsDescriptorBuilder {
 			Element dataflow = fillInFromWorkflow(run, ub, descriptor);
 			if (dataflow == null || run.getOutputBaclavaFile() != null)
 				return descriptor;
-			constructPorts(run, dataflow, ub.path("wd/{path}"), descriptor);
+			constructPorts(run, dataflow, ub.path("wd"), descriptor);
 		} catch (XPathExpressionException e) {
 			log.info("failure in XPath evaluation", e);
 		}

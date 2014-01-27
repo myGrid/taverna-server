@@ -376,6 +376,22 @@ public class LocalWorkerState extends JDOSupport<PersistedState> implements
 			self.store();
 	}
 
+	public static final boolean DEFAULT_GENERATE_PROVENANCE = false;
+	private Boolean generateProvenance;
+
+	@Override
+	public boolean getGenerateProvenance() {
+		Boolean g = generateProvenance;
+		return g == null ? DEFAULT_GENERATE_PROVENANCE : (boolean) g;
+	}
+
+	@Override
+	public void setGenerateProvenance(boolean generate) {
+		this.generateProvenance = generate;
+		if (loadedState)
+			self.store();
+	}
+
 	// --------------------------------------------------------------
 
 	private boolean loadedState;
@@ -408,6 +424,7 @@ public class LocalWorkerState extends JDOSupport<PersistedState> implements
 		List<URI> pwu = state.getPermittedWorkflowURIs();
 		permittedWorkflows = (URI[]) pwu.toArray(new URI[pwu.size()]);
 		registryJar = state.getRegistryJar();
+		generateProvenance = state.getGenerateProvenance();
 
 		loadedState = true;
 	}
@@ -438,6 +455,7 @@ public class LocalWorkerState extends JDOSupport<PersistedState> implements
 		if (permittedWorkflows != null)
 			state.setPermittedWorkflowURIs(asList(permittedWorkflows));
 		state.setRegistryJar(registryJar);
+		state.setGenerateProvenance(generateProvenance);
 
 		loadedState = true;
 	}

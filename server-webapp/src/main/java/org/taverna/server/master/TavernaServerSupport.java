@@ -928,7 +928,7 @@ public class TavernaServerSupport {
 		return capabilitySource.getCapabilities();
 	}
 
-	static final String PROV_BUNDLE = "out.robundle.zip";
+	static final String PROV_BUNDLE = "out.bundle.zip";
 
 	@NonNull
 	public FileConcatenation getProv(@NonNull TavernaRun run) {

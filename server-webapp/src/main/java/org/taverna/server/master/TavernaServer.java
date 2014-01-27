@@ -655,6 +655,26 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 		return fc;
 	}
 
+	@Override
+	@CallCounted
+	@PerfLogged
+	@RolesAllowed(USER)
+	public boolean getRunGenerateProvenance(String runName)
+			throws UnknownRunException {
+		return support.getRun(runName).getGenerateProvenance();
+	}
+
+	@Override
+	@CallCounted
+	@PerfLogged
+	@RolesAllowed(USER)
+	public void setRunGenerateProvenance(String runName, boolean generate)
+			throws UnknownRunException, NoUpdateException {
+		TavernaRun run = support.getRun(runName);
+		support.permitUpdate(run);
+		run.setGenerateProvenance(generate);
+	}
+
 	// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	// SOAP INTERFACE - Security
 

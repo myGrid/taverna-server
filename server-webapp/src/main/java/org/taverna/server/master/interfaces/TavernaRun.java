@@ -14,6 +14,7 @@ import org.taverna.server.master.common.Status;
 import org.taverna.server.master.exceptions.BadStateChangeException;
 import org.taverna.server.master.exceptions.FilesystemAccessException;
 import org.taverna.server.master.exceptions.NoDestroyException;
+import org.taverna.server.master.exceptions.UnknownRunException;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
@@ -210,4 +211,28 @@ public interface TavernaRun extends Serializable {
 	 */
 	@Nullable
 	Date getFinishTimestamp();
+
+	/**
+	 * Test if this run is really there.
+	 * 
+	 * <p>
+	 * <i>Implementation note:</i> Used to test communication fabrics, etc. so
+	 * implementations of this interface that do not delegate to another object
+	 * should do nothing.
+	 * 
+	 * @throws UnknownRunException
+	 *             If things fail.
+	 */
+	void ping() throws UnknownRunException;
+
+	/**
+	 * @return whether the run generates provenance data
+	 */
+	boolean getGenerateProvenance();
+
+	/**
+	 * @param generateProvenance
+	 *            whether the run generates provenance data
+	 */
+	void setGenerateProvenance(boolean generateProvenance);
 }

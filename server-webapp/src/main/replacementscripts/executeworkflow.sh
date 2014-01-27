@@ -56,7 +56,7 @@ if test x != "x$INTERACTION_HOST"; then
     INTERACTION_PROPS="$INTERACTION_PROPS -Dtaverna.interaction.feed_path=$INTERACTION_FEED"
 fi
 
-MainClass=org.purl.wf4ever.provtaverna.cmdline.ProvCommandLineLauncher
+MainClass=net.sf.taverna.t2.commandline.CommandLineLauncher
 
 echo "pid:$$"
 exec "$javabin" $memlimit $permsize \
@@ -66,6 +66,6 @@ exec "$javabin" $memlimit $permsize \
   -Djava.system.class.loader=net.sf.taverna.raven.prelauncher.BootstrapClassLoader \
   -Draven.launcher.app.main=$MainClass \
   -Draven.launcher.show_splashscreen=false \
-  -Djava.awt.headless=true \
+  -Djava.awt.headless=true -Dtaverna.interaction.ignore_requests=true \
   -jar "$taverna_home/lib/"prelauncher-*.jar \
   "$@"

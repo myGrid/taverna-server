@@ -57,6 +57,8 @@ public interface Worker {
 	 * @param keystorePassword
 	 *            The password to the keystore and truststore. <i>Must not be
 	 *            <tt>null</tt>.</i>
+	 * @param generateProvenance
+	 *            Whether to generate a run bundle containing provenance data.
 	 * @param environment
 	 *            Any environment variables that need to be added to the
 	 *            invokation.
@@ -75,6 +77,7 @@ public interface Worker {
 			@NonNull Map<String, String> inputValues,
 			@Nullable File outputBaclavaFile, @NonNull File contextDirectory,
 			@NonNull char[] keystorePassword,
+			boolean generateProvenance,
 			@NonNull Map<String, String> environment,
 			@NonNull String masterToken, @NonNull List<String> runtimeSettings)
 			throws Exception;

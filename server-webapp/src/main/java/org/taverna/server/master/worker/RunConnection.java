@@ -12,6 +12,7 @@ import static org.taverna.server.master.worker.RunConnection.NAMES_QUERY;
 import static org.taverna.server.master.worker.RunConnection.SCHEMA;
 import static org.taverna.server.master.worker.RunConnection.TABLE;
 import static org.taverna.server.master.worker.RunConnection.TIMEOUT_QUERY;
+import static org.taverna.server.master.worker.RunConnection.UNTERMINATED_QUERY;
 
 import java.io.IOException;
 import java.rmi.MarshalledObject;
@@ -47,6 +48,7 @@ import edu.umd.cs.findbugs.annotations.SuppressWarnings;
 @Queries({
 		@Query(name = "count", language = "SQL", value = COUNT_QUERY, unique = "true", resultClass = Integer.class),
 		@Query(name = "names", language = "SQL", value = NAMES_QUERY, unique = "false", resultClass = String.class),
+		@Query(name = "unterminated", language = "SQL", value = UNTERMINATED_QUERY, unique = "false", resultClass = String.class),
 		@Query(name = "timedout", language = "SQL", value = TIMEOUT_QUERY, unique = "false", resultClass = String.class) })
 @SuppressWarnings("IS2_INCONSISTENT_SYNC")
 public class RunConnection {
@@ -57,6 +59,8 @@ public class RunConnection {
 	static final String NAMES_QUERY = "SELECT ID FROM " + FULL_NAME;
 	static final String TIMEOUT_QUERY = "SELECT ID FROM " + FULL_NAME
 			+ "   WHERE expiry < CURRENT_TIMESTAMP";
+	static final String UNTERMINATED_QUERY = "SELECT ID FROM " + FULL_NAME
+			+ "   WHERE doneTransitionToFinished = 0";
 	static final int NAME_LENGTH = 48; 
 
 	@PrimaryKey
@@ -97,6 +101,9 @@ public class RunConnection {
 	private int doneTransitionToFinished;
 
 	@Persistent(defaultFetchGroup = "true")
+	private int generateProvenance;
+
+	@Persistent(defaultFetchGroup = "true")
 	@Column(length = 128)
 	String owner;
 
@@ -126,6 +133,14 @@ public class RunConnection {
 
 	public void setFinished(boolean finished) {
 		doneTransitionToFinished = (finished ? 1 : 0);
+	}
+
+	public boolean isProvenanceGenerated() {
+		return generateProvenance != 0;
+	}
+
+	public void setProvenanceGenerated(boolean generate) {
+		generateProvenance = (generate ? 1 : 0);
 	}
 
 	/**
@@ -176,6 +191,7 @@ public class RunConnection {
 		rrd.destroyers = new HashSet<String>(list(destroyers));
 		rrd.run = run.get();
 		rrd.doneTransitionToFinished = isFinished();
+		rrd.generateProvenance = isProvenanceGenerated();
 		rrd.secContext = securityContextFactory.create(rrd,
 				new UsernamePrincipal(owner));
 		((SecurityContextDelegate)rrd.secContext).setCredentialsAndTrust(credentials,trust);
@@ -217,6 +233,7 @@ public class RunConnection {
 		else
 			this.name = rrd.name;
 		setFinished(rrd.doneTransitionToFinished);
+		setProvenanceGenerated(rrd.generateProvenance);
 	}
 
 	public String getSecurityToken() {

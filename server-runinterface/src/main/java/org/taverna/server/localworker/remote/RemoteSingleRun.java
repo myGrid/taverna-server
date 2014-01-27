@@ -226,4 +226,25 @@ public interface RemoteSingleRun extends Remote {
 	 */
 	void setInteractionServiceDetails(@NonNull URL interactionFeed,
 			@NonNull URL webdavPath) throws RemoteException;
+
+	/**
+	 * A do-nothing method, used to check the general reachability of the
+	 * workflow run.
+	 * 
+	 * @throws RemoteException
+	 *             If anything goes wrong with the communication.
+	 */
+	void ping() throws RemoteException;
+
+	/**
+	 * Sets whether we should generate provenance information from a run.
+	 * 
+	 * @param generateProvenance
+	 *            Boolean flag, true for do the generation. Must be set before
+	 *            starting the run for this to have an effect.
+	 * @throws RemoteException
+	 *             If anything goes wrong with the communication.
+	 */
+	void setGenerateProvenance(boolean generateProvenance)
+			throws RemoteException;
 }

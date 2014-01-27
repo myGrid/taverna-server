@@ -54,6 +54,7 @@ import org.taverna.server.master.exceptions.BadStateChangeException;
 import org.taverna.server.master.exceptions.FilesystemAccessException;
 import org.taverna.server.master.exceptions.NoListenerException;
 import org.taverna.server.master.exceptions.OverloadedException;
+import org.taverna.server.master.exceptions.UnknownRunException;
 import org.taverna.server.master.interfaces.Directory;
 import org.taverna.server.master.interfaces.DirectoryEntry;
 import org.taverna.server.master.interfaces.File;
@@ -87,15 +88,15 @@ public class RemoteRunDelegate implements TavernaRun {
 	transient RunDBSupport db;
 	transient FactoryBean factory;
 	boolean doneTransitionToFinished;
+	boolean generateProvenance;// FIXME expose
 	String name;
 	private static final String ELLIPSIS = "...";
 
 	public RemoteRunDelegate(Date creationInstant, Workflow workflow,
 			RemoteSingleRun rsr, int defaultLifetime, RunDBSupport db, UUID id,
-			FactoryBean factory) {
-		if (rsr == null) {
+			boolean generateProvenance, FactoryBean factory) {
+		if (rsr == null)
 			throw new IllegalArgumentException("remote run must not be null");
-		}
 		this.creationInstant = creationInstant;
 		this.workflow = workflow;
 		Calendar c = Calendar.getInstance();
@@ -103,6 +104,7 @@ public class RemoteRunDelegate implements TavernaRun {
 		this.expiry = c.getTime();
 		this.run = rsr;
 		this.db = db;
+		this.generateProvenance = generateProvenance;
 		this.factory = factory;
 		this.name = "";
 		try {
@@ -197,9 +199,8 @@ public class RemoteRunDelegate implements TavernaRun {
 	public List<Listener> getListeners() {
 		ArrayList<Listener> listeners = new ArrayList<Listener>();
 		try {
-			for (RemoteListener rl : run.getListeners()) {
+			for (RemoteListener rl : run.getListeners())
 				listeners.add(new ListenerDelegate(rl));
-			}
 		} catch (RemoteException e) {
 			log.warn("failed to get listeners", e);
 		}
@@ -264,10 +265,11 @@ public class RemoteRunDelegate implements TavernaRun {
 				break;
 			case Operating:
 				if (run.getStatus() == RemoteStatus.Initialized) {
+					if (!factory.isAllowingRunsToStart())
+						throw new OverloadedException();
 					secContext.conveySecurity();
 				}
-				if (!factory.isAllowingRunsToStart())
-					throw new OverloadedException();
+				run.setGenerateProvenance(generateProvenance);
 				run.setStatus(RemoteStatus.Operating);
 				factory.getMasterEventFeed()
 						.started(
@@ -467,7 +469,18 @@ public class RemoteRunDelegate implements TavernaRun {
 		out.writeObject(new MarshalledObject<RemoteSingleRun>(run));
 	}
 
-	@SuppressWarnings({ "unchecked" })
+	@Override
+	public boolean getGenerateProvenance() {
+		return generateProvenance;
+	}
+
+	@Override
+	public void setGenerateProvenance(boolean generateProvenance) {
+		this.generateProvenance = generateProvenance;
+		db.flushToDisk(this);
+	}
+
+	@SuppressWarnings("unchecked")
 	private void readObject(ObjectInputStream in) throws IOException,
 			ClassNotFoundException {
 		in.defaultReadObject();
@@ -507,6 +520,15 @@ public class RemoteRunDelegate implements TavernaRun {
 		else
 			this.name = name;
 		db.flushToDisk(this);
+	}
+
+	@Override
+	public void ping() throws UnknownRunException {
+		try {
+			run.ping();
+		} catch (RemoteException e) {
+			throw new UnknownRunException(e);
+		}
 	}
 }
 

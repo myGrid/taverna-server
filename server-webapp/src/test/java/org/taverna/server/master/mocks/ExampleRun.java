@@ -36,6 +36,7 @@ import org.taverna.server.master.exceptions.BadStateChangeException;
 import org.taverna.server.master.exceptions.FilesystemAccessException;
 import org.taverna.server.master.exceptions.InvalidCredentialException;
 import org.taverna.server.master.exceptions.NoListenerException;
+import org.taverna.server.master.exceptions.UnknownRunException;
 import org.taverna.server.master.factories.RunFactory;
 import org.taverna.server.master.interfaces.Directory;
 import org.taverna.server.master.interfaces.Input;
@@ -535,5 +536,22 @@ public class ExampleRun implements TavernaRun, TavernaSecurityContext {
 	@Override
 	public void setName(String name) {
 		this.name = (name.length() > 5 ? name.substring(0, 5) : name);
+	}
+
+	@Override
+	public void ping() throws UnknownRunException {
+		// Do nothing
+	}
+
+	@Override
+	public boolean getGenerateProvenance() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public void setGenerateProvenance(boolean generateProvenance) {
+		// TODO Auto-generated method stub
+		
 	}
 }
