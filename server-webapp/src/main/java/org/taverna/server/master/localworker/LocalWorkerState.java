@@ -434,9 +434,8 @@ public class LocalWorkerState extends JDOSupport<PersistedState> implements
 		if (!isPersistent())
 			return;
 		WorkerModel state = getById(KEY);
-		if (state == null) {
+		if (state == null)
 			state = persist(makeInstance());
-		}
 
 		state.setDefaultLifetime(defaultLifetime);
 		state.setExecuteWorkflowScript(executeWorkflowScript);
@@ -455,7 +454,8 @@ public class LocalWorkerState extends JDOSupport<PersistedState> implements
 		if (permittedWorkflows != null)
 			state.setPermittedWorkflowURIs(asList(permittedWorkflows));
 		state.setRegistryJar(registryJar);
-		state.setGenerateProvenance(generateProvenance);
+		if (generateProvenance != null)
+			state.setGenerateProvenance(generateProvenance);
 
 		loadedState = true;
 	}

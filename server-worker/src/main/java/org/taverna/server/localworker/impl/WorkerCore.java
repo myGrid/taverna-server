@@ -39,6 +39,7 @@ import static org.taverna.server.localworker.impl.WorkerCore.pmap;
 import static org.taverna.server.localworker.remote.RemoteStatus.Finished;
 import static org.taverna.server.localworker.remote.RemoteStatus.Initialized;
 import static org.taverna.server.localworker.remote.RemoteStatus.Operating;
+import static org.taverna.server.localworker.remote.RemoteStatus.Stopped;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -147,6 +148,7 @@ public class WorkerCore extends UnicastRemoteObject implements Worker,
 	private UsageRecordReceiver urreceiver;
 	@Nullable
 	private File workflowFile;
+	private boolean stopped;
 
 	/**
 	 * @param accounting
@@ -641,6 +643,7 @@ public class WorkerCore extends UnicastRemoteObject implements Worker,
 	@Override
 	public void startWorker() throws Exception {
 		signal("CONT");
+		stopped = false;
 	}
 
 	/**
@@ -652,6 +655,7 @@ public class WorkerCore extends UnicastRemoteObject implements Worker,
 	@Override
 	public void stopWorker() throws Exception {
 		signal("STOP");
+		stopped = true;
 	}
 
 	/**
@@ -667,16 +671,18 @@ public class WorkerCore extends UnicastRemoteObject implements Worker,
 			return Finished;
 		try {
 			setExitCode(p.exitValue());
-			finished = true;
-			readyToSendEmail = true;
-			accounting.runCeased();
-			Integer ecBox = exitCode;
-			int ec = ecBox == null ? 0 : ecBox;
-			buildUR(ec == 0 ? Completed : Failed, ec);
-			return Finished;
 		} catch (IllegalThreadStateException e) {
+			if (stopped)
+				return Stopped;
 			return Operating;
 		}
+		finished = true;
+		readyToSendEmail = true;
+		accounting.runCeased();
+		Integer ecBox = exitCode;
+		int ec = ecBox == null ? 0 : ecBox;
+		buildUR(ec == 0 ? Completed : Failed, ec);
+		return Finished;
 	}
 
 	@Override
