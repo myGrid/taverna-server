@@ -5,6 +5,7 @@ import static java.lang.String.format;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.serverError;
 import static javax.ws.rs.core.Response.status;
+import static javax.xml.bind.DatatypeConverter.printBase64Binary;
 import static javax.xml.transform.OutputKeys.OMIT_XML_DECLARATION;
 import static javax.xml.transform.OutputKeys.STANDALONE;
 import static org.apache.commons.logging.LogFactory.getLog;
@@ -15,8 +16,15 @@ import static org.taverna.server.master.scape.ScapeSplicingEngine.Model.One2OneN
 import static org.taverna.server.master.scape.ScapeSplicingEngine.Model.One2OneSchema;
 import static org.taverna.server.master.utils.RestUtils.opt;
 
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.io.Serializable;
 import java.io.StringWriter;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.nio.CharBuffer;
 import java.util.List;
 import java.util.Map.Entry;
 
@@ -25,6 +33,8 @@ import javax.jdo.annotations.Column;
 import javax.jdo.annotations.PersistenceAware;
 import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
+import javax.jdo.annotations.Queries;
+import javax.jdo.annotations.Query;
 import javax.ws.rs.Path;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
@@ -34,6 +44,7 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
+import javax.xml.ws.Holder;
 
 import org.apache.commons.logging.Log;
 import org.springframework.beans.factory.annotation.Required;
@@ -78,18 +89,13 @@ public class ScapeExecutor implements ScapeExecutionService {
 	private Policy policy;
 	private ScapeSplicingEngine splicer;
 	private ScapeJobDAO dao;
-
-	public TavernaServerSupport getSupport() {
-		return support;
-	}
+	private String notifyService;
+	private String notifyUser;
+	private String notifyPass;
 
 	@Required
 	public void setSupport(TavernaServerSupport support) {
 		this.support = support;
-	}
-
-	public RunStore getRunStore() {
-		return runStore;
 	}
 
 	@Required
@@ -97,17 +103,9 @@ public class ScapeExecutor implements ScapeExecutionService {
 		this.runStore = runStore;
 	}
 
-	public Policy getPolicy() {
-		return policy;
-	}
-
 	@Required
 	public void setPolicy(Policy policy) {
 		this.policy = policy;
-	}
-
-	public ScapeSplicingEngine getSplicer() {
-		return splicer;
 	}
 
 	@Required
@@ -115,13 +113,25 @@ public class ScapeExecutor implements ScapeExecutionService {
 		this.splicer = splicer;
 	}
 
-	public ScapeJobDAO getDao() {
-		return dao;
-	}
-
 	@Required
 	public void setDao(ScapeJobDAO dao) {
 		this.dao = dao;
+	}
+
+	public void setNotifyUser(String user) {
+		this.notifyUser = user;
+	}
+
+	public void setNotifyPassword(String pass) {
+		this.notifyPass = pass;
+	}
+
+	public void setNotifyService(String serviceURL) {
+		this.notifyService = serviceURL;
+		if (serviceURL == null) {
+			this.notifyUser = null;
+			this.notifyPass = null;
+		}
 	}
 
 	@NonNull
@@ -265,6 +275,8 @@ public class ScapeExecutor implements ScapeExecutionService {
 			throws NoCreateException, UnknownRunException {
 		String id = support.buildWorkflow(w);
 		dao.setScapeJob(id);
+		if (notifyService != null)
+			dao.setNotify(id, notifyService);
 		final TavernaRun run = run(id);
 		Thread worker = new Thread(new Runnable() {
 			@Override
@@ -319,9 +331,11 @@ public class ScapeExecutor implements ScapeExecutionService {
 			}
 	}
 
+	/*
+	 * FIXME see <annotation-driven> in
+	 * http://docs.spring.io/spring/docs/3.0.x/reference/scheduling.html
+	 */
 	@Scheduled(fixedDelay = 30000)
-	// FIXME see <annotation-driven> in
-	// http://docs.spring.io/spring/docs/3.0.x/reference/scheduling.html
 	public void detectCompletion() {
 		for (String id : dao.listNotifiableJobs()) {
 			TavernaRun r;
@@ -341,9 +355,44 @@ public class ScapeExecutor implements ScapeExecutionService {
 		}
 	}
 
-	private void doNotify(TavernaRun r, String notifyAddress) {
-		// FIXME Auto-generated method stub
+	private String getNotifyPayload(TavernaRun r, Holder<String> contentType) {
+		// FIXME Get the right payload!
+		contentType.value = "text/plain";
+		return "Yo! Everything OK for " + r.getId();
+	}
 
+	private void doNotify(TavernaRun r, String notifyAddress) {
+		if (notifyAddress == null)
+			return;
+		URL u;
+		try {
+			u = new URL(notifyAddress);
+		} catch (MalformedURLException e) {
+			log.warn("bad notification address: " + notifyAddress, e);
+			return;
+		}
+		try {
+			HttpURLConnection conn = (HttpURLConnection) u.openConnection();
+			conn.setDoOutput(true);
+			conn.setRequestMethod("POST");
+			if (notifyUser != null && notifyPass != null) {
+				String token = notifyUser + ":" + notifyPass;
+				token = printBase64Binary(token.getBytes("UTF-8"));
+				conn.setRequestProperty("Authorization", token);
+			}
+			Holder<String> contentType = new Holder<String>();
+			String payload = getNotifyPayload(r, contentType);
+			if (contentType.value != null)
+				conn.setRequestProperty("Content-Type", contentType.value);
+
+			new OutputStreamWriter(conn.getOutputStream()).write(payload);
+			CharBuffer cb = CharBuffer.allocate(4096);
+			new InputStreamReader(conn.getInputStream()).read(cb);
+			conn.getInputStream().close();
+			log.info("notification response: " + cb);
+		} catch (IOException e) {
+			log.warn("failed to do notification to " + notifyAddress, e);
+		}
 	}
 
 	@SuppressWarnings("serial")
@@ -361,7 +410,6 @@ public class ScapeExecutor implements ScapeExecutionService {
 	 * Database access layer that manages which jobs are SCAPE jobs.
 	 * 
 	 * @author Donal Fellows
-	 * 
 	 */
 	@PersistenceAware
 	public static class ScapeJobDAO extends JDOSupport<ScapeJob> {
@@ -369,10 +417,11 @@ public class ScapeExecutor implements ScapeExecutionService {
 			super(ScapeJob.class);
 		}
 
+		@NonNull
+		@SuppressWarnings("unchecked")
 		@WithinSingleTransaction
 		public List<String> listNotifiableJobs() {
-			// FIXME Auto-generated method stub
-			return null;
+			return (List<String>) namedQuery("notifiable").execute();
 		}
 
 		@WithinSingleTransaction
@@ -382,8 +431,8 @@ public class ScapeExecutor implements ScapeExecutionService {
 
 		@WithinSingleTransaction
 		public boolean isScapeJob(@NonNull String id) {
-			// TODO find cheaper way of doing this
-			return (getById(id) != null);
+			Integer count = (Integer) namedQuery("exists").execute(id);
+			return count != null && count.intValue() > 0;
 		}
 
 		@WithinSingleTransaction
@@ -465,8 +514,19 @@ public class ScapeExecutor implements ScapeExecutionService {
  * @author Donal Fellows
  */
 @SuppressWarnings("serial")
-@PersistenceCapable(schema = "SCAPE", table = "JOB")
+@PersistenceCapable(schema = ScapeJob.SCHEMA, table = ScapeJob.TABLE)
+@Queries({
+		@Query(name = "exists", language = "SQL", value = ScapeJob.EXISTS_QUERY, unique = "true", resultClass = Integer.class),
+		@Query(name = "notifiable", language = "SQL", value = ScapeJob.NOTIFY_QUERY, unique = "false", resultClass = String.class), })
 class ScapeJob implements Serializable {
+	static final String SCHEMA = "SCAPE";
+	static final String TABLE = "JOB";
+	private static final String FULL_NAME = SCHEMA + "." + TABLE;
+	static final String EXISTS_QUERY = "SELECT count(*) FROM " + FULL_NAME
+			+ " WHERE id = ?";
+	static final String NOTIFY_QUERY = "SELECT id FROM " + FULL_NAME
+			+ " WHERE notify IS NOT NULL";
+
 	@Persistent(primaryKey = "true")
 	@Column(length = 48)
 	private String id;
