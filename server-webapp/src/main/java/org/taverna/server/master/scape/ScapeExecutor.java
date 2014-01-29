@@ -1,4 +1,4 @@
-package org.taverna.server.master;
+package org.taverna.server.master.scape;
 
 import static at.ac.tuwien.ifs.dp.plato.ExecutablePlanType.T_2_FLOW;
 import static java.lang.String.format;
@@ -36,8 +36,9 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
 import org.apache.commons.logging.Log;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Required;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.taverna.server.master.TavernaServerSupport;
 import org.taverna.server.master.common.Namespaces;
 import org.taverna.server.master.common.Uri;
 import org.taverna.server.master.common.Workflow;
@@ -50,7 +51,6 @@ import org.taverna.server.master.interfaces.Policy;
 import org.taverna.server.master.interfaces.RunStore;
 import org.taverna.server.master.interfaces.TavernaRun;
 import org.taverna.server.master.rest.scape.ScapeExecutionService;
-import org.taverna.server.master.scape.ScapeSplicingEngine;
 import org.taverna.server.master.scape.ScapeSplicingEngine.Model;
 import org.taverna.server.master.utils.InvocationCounter.CallCounted;
 import org.taverna.server.master.utils.JDOSupport;
@@ -65,19 +65,64 @@ import at.ac.tuwien.ifs.dp.plato.QualityLevelDescription;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 
+/**
+ * SCAPE execution service implementation.
+ * 
+ * @author Donal Fellows
+ */
 @Path("/")
 public class ScapeExecutor implements ScapeExecutionService {
 	final Log log = getLog("Taverna.Server.Webapp.SCAPE");
-	@Autowired(required = true)
 	private TavernaServerSupport support;
-	@Autowired(required = true)
 	private RunStore runStore;
-	@Autowired(required = true)
 	private Policy policy;
-	@Autowired(required = true)
 	private ScapeSplicingEngine splicer;
-	@Autowired(required = true)
 	private ScapeJobDAO dao;
+
+	public TavernaServerSupport getSupport() {
+		return support;
+	}
+
+	@Required
+	public void setSupport(TavernaServerSupport support) {
+		this.support = support;
+	}
+
+	public RunStore getRunStore() {
+		return runStore;
+	}
+
+	@Required
+	public void setRunStore(RunStore runStore) {
+		this.runStore = runStore;
+	}
+
+	public Policy getPolicy() {
+		return policy;
+	}
+
+	@Required
+	public void setPolicy(Policy policy) {
+		this.policy = policy;
+	}
+
+	public ScapeSplicingEngine getSplicer() {
+		return splicer;
+	}
+
+	@Required
+	public void setSplicer(ScapeSplicingEngine splicer) {
+		this.splicer = splicer;
+	}
+
+	public ScapeJobDAO getDao() {
+		return dao;
+	}
+
+	@Required
+	public void setDao(ScapeJobDAO dao) {
+		this.dao = dao;
+	}
 
 	@NonNull
 	private Policy policy() {
@@ -225,7 +270,7 @@ public class ScapeExecutor implements ScapeExecutionService {
 			@Override
 			public void run() {
 				try {
-					//FIXME turn on provenance generation
+					run.setGenerateProvenance(true);
 					initObjects(run, objs);
 					if (schematron != null)
 						initSLA(run, schematron);
@@ -274,7 +319,9 @@ public class ScapeExecutor implements ScapeExecutionService {
 			}
 	}
 
-	@Scheduled(fixedDelay = 30000)// FIXME see <annotation-driven> in http://docs.spring.io/spring/docs/3.0.x/reference/scheduling.html
+	@Scheduled(fixedDelay = 30000)
+	// FIXME see <annotation-driven> in
+	// http://docs.spring.io/spring/docs/3.0.x/reference/scheduling.html
 	public void detectCompletion() {
 		for (String id : dao.listNotifiableJobs()) {
 			TavernaRun r;
@@ -296,7 +343,7 @@ public class ScapeExecutor implements ScapeExecutionService {
 
 	private void doNotify(TavernaRun r, String notifyAddress) {
 		// FIXME Auto-generated method stub
-		
+
 	}
 
 	@SuppressWarnings("serial")
@@ -310,6 +357,12 @@ public class ScapeExecutor implements ScapeExecutionService {
 		}
 	}
 
+	/**
+	 * Database access layer that manages which jobs are SCAPE jobs.
+	 * 
+	 * @author Donal Fellows
+	 * 
+	 */
 	@PersistenceAware
 	public static class ScapeJobDAO extends JDOSupport<ScapeJob> {
 		protected ScapeJobDAO() {
@@ -329,6 +382,7 @@ public class ScapeExecutor implements ScapeExecutionService {
 
 		@WithinSingleTransaction
 		public boolean isScapeJob(@NonNull String id) {
+			// TODO find cheaper way of doing this
 			return (getById(id) != null);
 		}
 
@@ -405,6 +459,11 @@ public class ScapeExecutor implements ScapeExecutionService {
 	}
 }
 
+/**
+ * The representation of a SCAPE job in the database.
+ * 
+ * @author Donal Fellows
+ */
 @SuppressWarnings("serial")
 @PersistenceCapable(schema = "SCAPE", table = "JOB")
 class ScapeJob implements Serializable {

@@ -33,6 +33,7 @@ import javax.xml.ws.Holder;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
+import org.springframework.beans.factory.annotation.Required;
 import org.taverna.server.master.common.Workflow;
 import org.w3c.dom.Element;
 import org.xml.sax.InputSource;
@@ -40,6 +41,13 @@ import org.xml.sax.SAXException;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 
+/**
+ * The splicing engine that turns the workflow part of a Preservation Action
+ * Plan into a full, useful Taverna Workflow that we can then enact.
+ * 
+ * @author Donal Fellows
+ * 
+ */
 public class ScapeSplicingEngine extends SplicingEngine {
 	private static final Log log = getLog("Taverna.Server.WorkflowSplicing.Scape");
 	private static final Pattern PORT_INFO_EXTRACT = Pattern
@@ -123,6 +131,7 @@ public class ScapeSplicingEngine extends SplicingEngine {
 		joinerVersion = Integer.toString(version);
 	}
 
+	@Required
 	public void setDummyProcessorName(String name) {
 		dummyProcessorName = name;
 	}

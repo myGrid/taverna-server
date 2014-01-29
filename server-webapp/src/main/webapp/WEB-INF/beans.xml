@@ -23,6 +23,25 @@
 		<lookup-method name="getPolicyDescription" bean="webapp.policyView" />
 	</bean>
 
+	<bean id="scape" class="org.taverna.server.master.scape.ScapeExecutor">
+		<property name="support" ref="webapp.support" />
+		<property name="policy" ref="worker.policy" />
+		<property name="runStore" ref="worker.rundb" />
+		<property name="splicer" ref="scape.splicer" />
+		<property name="dao" ref="scape.dao" />
+	</bean>
+	<bean id="scape.splicer" class="org.taverna.server.master.scape.ScapeSplicingEngine">
+		<property name="dummyProcessorName" value="${scape.dummyProcessor:ignore}" />
+		<property name="linkingDataflowName" value="${scape.linkingDataflow:ObjectTransform}" />
+		<property name="innerProcessorName"
+			value="${scape.innerProcessor:PreservationActionPlan}" />
+		<property name="wrapperPrefix" value="${scape.wrapperPrefix:SCAPE_outer_}" />
+	</bean>
+	<bean id="scape.dao"
+		class="org.taverna.server.master.scape.ScapeExecutor.ScapeJobDAO">
+		<property name="persistenceManagerFactory" ref="pmf" />
+	</bean>
+
 	<bean id="webapp.support" class="org.taverna.server.master.TavernaServerSupport">
 		<property name="policy" ref="worker.policy" />
 		<property name="listenerFactory" ref="localworker.factory" />

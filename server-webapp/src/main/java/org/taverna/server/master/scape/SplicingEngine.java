@@ -36,6 +36,7 @@ import javax.xml.xpath.XPathExpressionException;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
+import org.springframework.beans.factory.annotation.Required;
 import org.springframework.beans.factory.annotation.Value;
 import org.taverna.server.master.common.Workflow;
 import org.taverna.server.master.exceptions.NoCreateException;
@@ -81,10 +82,12 @@ public abstract class SplicingEngine extends XPathSupport {
 		this.wrapperPrefix = wrapperPrefix;
 	}
 
+	@Required
 	public void setInnerProcessorName(String name) {
 		innerProcessorName = name;
 	}
 
+	@Required
 	public void setLinkingDataflowName(String name) {
 		linkingDataflowName = name;
 	}

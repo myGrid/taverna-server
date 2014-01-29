@@ -115,6 +115,34 @@
 		</jaxrs:providers>
 	</jaxrs:server>
 
+	<jaxrs:server id="ScapeExecutionService" address="/scape">
+		<jaxrs:serviceBeans>
+			<ref bean="scape" />
+		</jaxrs:serviceBeans>
+		<jaxrs:providers>
+			<ref bean="ExceptionProvider.AccessDenied" />
+			<ref bean="ExceptionProvider.BadInputPortName" />
+			<ref bean="ExceptionProvider.BadPropertyValue" />
+			<ref bean="ExceptionProvider.BadStateChange" />
+			<ref bean="ExceptionProvider.FilesystemAccess" />
+			<ref bean="ExceptionProvider.GeneralFailure" />
+			<ref bean="ExceptionProvider.IllegalArgument" />
+			<ref bean="ExceptionProvider.ImplementationProblem" />
+			<ref bean="ExceptionProvider.InvalidCredential" />
+			<ref bean="ExceptionProvider.JAXBException" />
+			<ref bean="ExceptionProvider.NegotiationFailed" />
+			<ref bean="ExceptionProvider.NoCreate" />
+			<ref bean="ExceptionProvider.NoCredential" />
+			<ref bean="ExceptionProvider.NoDestroy" />
+			<ref bean="ExceptionProvider.NoDirectoryEntry" />
+			<ref bean="ExceptionProvider.NoListener" />
+			<ref bean="ExceptionProvider.NoUpdate" />
+			<ref bean="ExceptionProvider.NotOwner" />
+			<ref bean="ExceptionProvider.Overloaded" />
+			<ref bean="ExceptionProvider.UnknownRun" />
+		</jaxrs:providers>
+	</jaxrs:server>
+
 	<jaxrs:server id="AdministrationInterface" address="/admin"
 		staticSubresourceResolution="true">
 		<jaxrs:serviceBeans>
