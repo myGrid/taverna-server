@@ -19,7 +19,6 @@ import static org.taverna.server.master.utils.RestUtils.opt;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.io.Serializable;
 import java.io.StringWriter;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -29,12 +28,6 @@ import java.util.List;
 import java.util.Map.Entry;
 
 import javax.annotation.security.RolesAllowed;
-import javax.jdo.annotations.Column;
-import javax.jdo.annotations.PersistenceAware;
-import javax.jdo.annotations.PersistenceCapable;
-import javax.jdo.annotations.Persistent;
-import javax.jdo.annotations.Queries;
-import javax.jdo.annotations.Query;
 import javax.ws.rs.Path;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
@@ -64,7 +57,6 @@ import org.taverna.server.master.interfaces.TavernaRun;
 import org.taverna.server.master.rest.scape.ScapeExecutionService;
 import org.taverna.server.master.scape.ScapeSplicingEngine.Model;
 import org.taverna.server.master.utils.InvocationCounter.CallCounted;
-import org.taverna.server.master.utils.JDOSupport;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
@@ -406,63 +398,6 @@ public class ScapeExecutor implements ScapeExecutionService {
 		}
 	}
 
-	/**
-	 * Database access layer that manages which jobs are SCAPE jobs.
-	 * 
-	 * @author Donal Fellows
-	 */
-	@PersistenceAware
-	public static class ScapeJobDAO extends JDOSupport<ScapeJob> {
-		protected ScapeJobDAO() {
-			super(ScapeJob.class);
-		}
-
-		@NonNull
-		@SuppressWarnings("unchecked")
-		@WithinSingleTransaction
-		public List<String> listNotifiableJobs() {
-			return (List<String>) namedQuery("notifiable").execute();
-		}
-
-		@WithinSingleTransaction
-		public void setScapeJob(@NonNull String id) {
-			this.persist(new ScapeJob(id));
-		}
-
-		@WithinSingleTransaction
-		public boolean isScapeJob(@NonNull String id) {
-			Integer count = (Integer) namedQuery("exists").execute(id);
-			return count != null && count.intValue() > 0;
-		}
-
-		@WithinSingleTransaction
-		public void deleteJob(@NonNull String id) {
-			delete(getById(id));
-		}
-
-		@WithinSingleTransaction
-		@Nullable
-		public String getNotify(@NonNull String id) {
-			ScapeJob job = getById(id);
-			return job == null ? null : job.getNotify();
-		}
-
-		@WithinSingleTransaction
-		public void setNotify(@NonNull String id, @Nullable String notify) {
-			ScapeJob job = getById(id);
-			if (job != null)
-				job.setNotify(notify == null || notify.trim().isEmpty() ? null
-						: notify.trim());
-		}
-
-		@WithinSingleTransaction
-		@Nullable
-		public String updateNotify(@NonNull String id, @Nullable String notify) {
-			setNotify(id, notify);
-			return getNotify(id);
-		}
-	}
-
 	@Override
 	public String getNotification(String id) throws UnknownRunException {
 		if (id == null || id.isEmpty())
@@ -505,57 +440,5 @@ public class ScapeExecutor implements ScapeExecutionService {
 			throw new BadInputException("what?");
 		run(id);
 		return opt("PUT");
-	}
-}
-
-/**
- * The representation of a SCAPE job in the database.
- * 
- * @author Donal Fellows
- */
-@SuppressWarnings("serial")
-@PersistenceCapable(schema = ScapeJob.SCHEMA, table = ScapeJob.TABLE)
-@Queries({
-		@Query(name = "exists", language = "SQL", value = ScapeJob.EXISTS_QUERY, unique = "true", resultClass = Integer.class),
-		@Query(name = "notifiable", language = "SQL", value = ScapeJob.NOTIFY_QUERY, unique = "false", resultClass = String.class), })
-class ScapeJob implements Serializable {
-	static final String SCHEMA = "SCAPE";
-	static final String TABLE = "JOB";
-	private static final String FULL_NAME = SCHEMA + "." + TABLE;
-	static final String EXISTS_QUERY = "SELECT count(*) FROM " + FULL_NAME
-			+ " WHERE id = ?";
-	static final String NOTIFY_QUERY = "SELECT id FROM " + FULL_NAME
-			+ " WHERE notify IS NOT NULL";
-
-	@Persistent(primaryKey = "true")
-	@Column(length = 48)
-	private String id;
-	@Persistent
-	private String notify;
-
-	public ScapeJob() {
-	}
-
-	public ScapeJob(@NonNull String id) {
-		this.id = id;
-	}
-
-	public ScapeJob(@NonNull String id, @NonNull String notify) {
-		this.id = id;
-		this.notify = notify;
-	}
-
-	@NonNull
-	public String getId() {
-		return id;
-	}
-
-	@Nullable
-	public String getNotify() {
-		return notify;
-	}
-
-	public void setNotify(@Nullable String notify) {
-		this.notify = notify;
 	}
 }
