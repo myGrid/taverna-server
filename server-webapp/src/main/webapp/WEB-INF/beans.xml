@@ -37,8 +37,7 @@
 			value="${scape.innerProcessor:PreservationActionPlan}" />
 		<property name="wrapperPrefix" value="${scape.wrapperPrefix:SCAPE_outer_}" />
 	</bean>
-	<bean id="scape.dao"
-		class="org.taverna.server.master.scape.ScapeExecutor.ScapeJobDAO">
+	<bean id="scape.dao" class="org.taverna.server.master.scape.ScapeJobDAO">
 		<property name="persistenceManagerFactory" ref="pmf" />
 	</bean>
 
