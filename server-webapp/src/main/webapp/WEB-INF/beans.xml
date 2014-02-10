@@ -416,6 +416,7 @@
 			fixed-delay="${finish.interval}" />
 		<task:scheduled ref="dispatch.atom" method="deleteExpiredEvents"
 			fixed-delay="${atom.cleaninterval}" />
+		<task:scheduled ref="scape" method="detectCompletion" fixed-delay="30000"/>
 	</task:scheduled-tasks>
 
 	<bean id="notificationFabric"

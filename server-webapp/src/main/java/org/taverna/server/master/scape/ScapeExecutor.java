@@ -9,6 +9,7 @@ import static javax.xml.bind.DatatypeConverter.printBase64Binary;
 import static javax.xml.transform.OutputKeys.OMIT_XML_DECLARATION;
 import static javax.xml.transform.OutputKeys.STANDALONE;
 import static org.apache.commons.logging.LogFactory.getLog;
+import static org.taverna.server.master.common.Roles.ADMIN;
 import static org.taverna.server.master.common.Roles.USER;
 import static org.taverna.server.master.common.Status.Finished;
 import static org.taverna.server.master.common.Status.Operating;
@@ -24,8 +25,10 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.CharBuffer;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Path;
@@ -41,7 +44,7 @@ import javax.xml.ws.Holder;
 
 import org.apache.commons.logging.Log;
 import org.springframework.beans.factory.annotation.Required;
-import org.springframework.scheduling.annotation.Scheduled;
+import org.taverna.server.master.ContentsDescriptorBuilder;
 import org.taverna.server.master.TavernaServerSupport;
 import org.taverna.server.master.common.Namespaces;
 import org.taverna.server.master.common.Uri;
@@ -56,7 +59,10 @@ import org.taverna.server.master.interfaces.RunStore;
 import org.taverna.server.master.interfaces.TavernaRun;
 import org.taverna.server.master.rest.scape.ScapeExecutionService;
 import org.taverna.server.master.scape.ScapeSplicingEngine.Model;
+import org.taverna.server.master.utils.CallTimeLogger.PerfLogged;
 import org.taverna.server.master.utils.InvocationCounter.CallCounted;
+import org.taverna.server.port_description.InputDescription;
+import org.taverna.server.port_description.InputDescription.InputPort;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
@@ -84,6 +90,7 @@ public class ScapeExecutor implements ScapeExecutionService {
 	private String notifyService;
 	private String notifyUser;
 	private String notifyPass;
+	private ContentsDescriptorBuilder cb;
 
 	@Required
 	public void setSupport(TavernaServerSupport support) {
@@ -103,6 +110,11 @@ public class ScapeExecutor implements ScapeExecutionService {
 	@Required
 	public void setSplicer(ScapeSplicingEngine splicer) {
 		this.splicer = splicer;
+	}
+
+	@Required
+	public void setContentsDescriptorBuilder(ContentsDescriptorBuilder cb) {
+		this.cb = cb;
 	}
 
 	@Required
@@ -146,6 +158,7 @@ public class ScapeExecutor implements ScapeExecutionService {
 
 	@Override
 	@CallCounted
+	@PerfLogged
 	@RolesAllowed(USER)
 	@NonNull
 	public Jobs listJobs(@NonNull UriInfo ui) {
@@ -160,6 +173,7 @@ public class ScapeExecutor implements ScapeExecutionService {
 
 	@Override
 	@CallCounted
+	@PerfLogged
 	@RolesAllowed(USER)
 	@NonNull
 	public Response startJob(@Nullable PreservationActionPlan plan,
@@ -167,6 +181,7 @@ public class ScapeExecutor implements ScapeExecutionService {
 		if (plan == null)
 			throw new BadInputException("what?");
 
+		String planId = plan.getCollection().getUid();
 		Objects objs = plan.getObjects();
 		ExecutablePlan ep = plan.getExecutablePlan();
 		QualityLevelDescription qld = plan.getQualityLevelDescription();
@@ -194,7 +209,7 @@ public class ScapeExecutor implements ScapeExecutionService {
 		try {
 			Model model = pickExecutionModel(plan);
 			id = submitAndStart(splicer.constructWorkflow(workflow, model),
-					objectList, qld == null ? null : qld.getAny());
+					planId, objectList, qld == null ? null : qld.getAny(), ui);
 		} catch (NoCreateException e) {
 			throw e;
 		} catch (Exception e) {
@@ -215,6 +230,7 @@ public class ScapeExecutor implements ScapeExecutionService {
 
 	@Override
 	@CallCounted
+	@PerfLogged
 	@RolesAllowed(USER)
 	@NonNull
 	public Job getStatus(@NonNull String id, @NonNull UriInfo ui)
@@ -242,6 +258,7 @@ public class ScapeExecutor implements ScapeExecutionService {
 
 	@Override
 	@CallCounted
+	@PerfLogged
 	@RolesAllowed(USER)
 	@NonNull
 	public Response deleteJob(@NonNull String id) throws UnknownRunException,
@@ -263,17 +280,24 @@ public class ScapeExecutor implements ScapeExecutionService {
 
 	@NonNull
 	private String submitAndStart(@NonNull Workflow w,
-			@NonNull final List<Object> objs, @Nullable final Element schematron)
+			@NonNull final String planId, @NonNull final List<Object> objs,
+			@Nullable final Element schematron, @NonNull UriInfo ui)
 			throws NoCreateException, UnknownRunException {
-		String id = support.buildWorkflow(w);
-		dao.setScapeJob(id);
+		String jobId = support.buildWorkflow(w);
+		dao.setScapeJob(jobId, planId);
 		if (notifyService != null)
-			dao.setNotify(id, notifyService);
-		final TavernaRun run = run(id);
+			dao.setNotify(jobId, notifyService);
+		final TavernaRun run = run(jobId);
+		final InputDescription inDesc = cb.makeInputDescriptor(run, ui);
 		Thread worker = new Thread(new Runnable() {
 			@Override
 			public void run() {
 				try {
+					Set<String> inputs = new HashSet<String>();
+					for (InputPort o : inDesc.input)
+						inputs.add(o.name);
+					if (inputs.contains("planId"))
+						initPlanID(run, planId);
 					run.setGenerateProvenance(true);
 					initObjects(run, objs);
 					if (schematron != null)
@@ -286,7 +310,12 @@ public class ScapeExecutor implements ScapeExecutionService {
 		});
 		worker.setDaemon(true);
 		worker.start();
-		return id;
+		return jobId;
+	}
+
+	protected void initPlanID(@NonNull TavernaRun run, @NonNull String planId)
+			throws BadStateChangeException {
+		run.makeInput("planId").setValue(planId);
 	}
 
 	protected void initObjects(@NonNull TavernaRun run,
@@ -323,11 +352,7 @@ public class ScapeExecutor implements ScapeExecutionService {
 			}
 	}
 
-	/*
-	 * FIXME see <annotation-driven> in
-	 * http://docs.spring.io/spring/docs/3.0.x/reference/scheduling.html
-	 */
-	@Scheduled(fixedDelay = 30000)
+	@PerfLogged
 	public void detectCompletion() {
 		for (String id : dao.listNotifiableJobs()) {
 			TavernaRun r;
@@ -336,24 +361,28 @@ public class ScapeExecutor implements ScapeExecutionService {
 			} catch (UnknownRunException e) {
 				continue;
 			}
-			if (r.getStatus() == Finished) {
-				try {
-					doNotify(r, dao.getNotify(id));
-				} catch (Exception e) {
-					log.warn("failure in notification", e);
-				}
-				dao.setNotify(id, null);
+			if (r.getStatus() != Finished)
+				continue;
+			try {
+				ScapeJob j = dao.getJobRecord(id);
+				if (j != null)
+					doNotify(r, j.getPlanId(), j.getNotify());
+			} catch (Exception e) {
+				log.warn("failure in notification", e);
 			}
+			dao.setNotify(id, null);
 		}
 	}
 
-	private String getNotifyPayload(TavernaRun r, Holder<String> contentType) {
+	private String getNotifyPayload(TavernaRun r, String planId,
+			Holder<String> contentType) {
 		// FIXME Get the right payload!
 		contentType.value = "text/plain";
-		return "Yo! Everything OK for " + r.getId();
+		return String.format("Yo! Everything OK for plan:%s job:%s", planId,
+				r.getId());
 	}
 
-	private void doNotify(TavernaRun r, String notifyAddress) {
+	private void doNotify(TavernaRun r, String planId, String notifyAddress) {
 		if (notifyAddress == null)
 			return;
 		URL u;
@@ -373,7 +402,7 @@ public class ScapeExecutor implements ScapeExecutionService {
 				conn.setRequestProperty("Authorization", token);
 			}
 			Holder<String> contentType = new Holder<String>();
-			String payload = getNotifyPayload(r, contentType);
+			String payload = getNotifyPayload(r, planId, contentType);
 			if (contentType.value != null)
 				conn.setRequestProperty("Content-Type", contentType.value);
 
@@ -398,6 +427,8 @@ public class ScapeExecutor implements ScapeExecutionService {
 		}
 	}
 
+	@RolesAllowed(USER)
+	@PerfLogged
 	@Override
 	public String getNotification(String id) throws UnknownRunException {
 		if (id == null || id.isEmpty())
@@ -409,6 +440,8 @@ public class ScapeExecutor implements ScapeExecutionService {
 		return (addr == null ? "" : addr);
 	}
 
+	@RolesAllowed(ADMIN)
+	@PerfLogged
 	@Override
 	public String setNotification(String id, String newValue)
 			throws UnknownRunException, NoUpdateException {

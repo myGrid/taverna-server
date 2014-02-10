@@ -28,8 +28,8 @@ public class ScapeJobDAO extends JDOSupport<ScapeJob> {
 	}
 
 	@WithinSingleTransaction
-	public void setScapeJob(@NonNull String id) {
-		this.persist(new ScapeJob(id));
+	public void setScapeJob(@NonNull String jobId, @NonNull String planId) {
+		this.persist(new ScapeJob(jobId, planId));
 	}
 
 	@WithinSingleTransaction
@@ -39,20 +39,27 @@ public class ScapeJobDAO extends JDOSupport<ScapeJob> {
 	}
 
 	@WithinSingleTransaction
-	public void deleteJob(@NonNull String id) {
-		delete(getById(id));
+	public void deleteJob(@NonNull String jobId) {
+		delete(getById(jobId));
 	}
 
 	@WithinSingleTransaction
 	@Nullable
-	public String getNotify(@NonNull String id) {
-		ScapeJob job = getById(id);
+	public String getPlanId(@NonNull String jobId) {
+		ScapeJob job = getById(jobId);
+		return job == null ? null : job.getPlanId();
+	}
+
+	@WithinSingleTransaction
+	@Nullable
+	public String getNotify(@NonNull String jobId) {
+		ScapeJob job = getById(jobId);
 		return job == null ? null : job.getNotify();
 	}
 
 	@WithinSingleTransaction
-	public void setNotify(@NonNull String id, @Nullable String notify) {
-		ScapeJob job = getById(id);
+	public void setNotify(@NonNull String jobId, @Nullable String notify) {
+		ScapeJob job = getById(jobId);
 		if (job != null)
 			job.setNotify(notify == null || notify.trim().isEmpty() ? null
 					: notify.trim());
@@ -60,8 +67,17 @@ public class ScapeJobDAO extends JDOSupport<ScapeJob> {
 
 	@WithinSingleTransaction
 	@Nullable
-	public String updateNotify(@NonNull String id, @Nullable String notify) {
-		setNotify(id, notify);
-		return getNotify(id);
+	public String updateNotify(@NonNull String jobId, @Nullable String notify) {
+		setNotify(jobId, notify);
+		return getNotify(jobId);
+	}
+
+	@WithinSingleTransaction
+	@Nullable
+	public ScapeJob getJobRecord(@NonNull String jobId) {
+		ScapeJob job = getById(jobId);
+		if (job != null)
+			job = detach(job);
+		return job;
 	}
 }

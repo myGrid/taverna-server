@@ -35,6 +35,8 @@ class ScapeJob implements Serializable {
 	private String id;
 	@Persistent
 	private String notify;
+	@Persistent
+	private String planId;
 
 	public ScapeJob() {
 	}
@@ -43,13 +45,24 @@ class ScapeJob implements Serializable {
 		this.id = id;
 	}
 
-	public ScapeJob(@NonNull String id, @NonNull String notify) {
+	public ScapeJob(@NonNull String id, @NonNull String planId) {
 		this.id = id;
+		this.planId = planId;
+	}
+
+	public ScapeJob(@NonNull String id, @NonNull String planId, @NonNull String notify) {
+		this.id = id;
+		this.planId = planId;
 		this.notify = notify;
 	}
 
 	@NonNull
-	public String getId() {
+	public String getJobId() {
+		return id;
+	}
+
+	@NonNull
+	public String getPlanId() {
 		return id;
 	}
 
