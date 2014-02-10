@@ -325,6 +325,7 @@ public class ScapeExecutor implements ScapeExecutionService {
 					if (schematron != null)
 						initSLA(run, schematron);
 					setExecuting(run);
+					notifyStart(planId);
 				} catch (Exception e) {
 					log.warn("failed to initialize SCAPE workflow", e);
 				}
@@ -417,6 +418,43 @@ public class ScapeExecutor implements ScapeExecutionService {
 		// FIXME read file contents from run
 		String message = run.getName();
 		return getNotifyMessage(state, message, contentType);
+	}
+
+	// TODO Refactor this so I don't have to repeat the majority of this code
+	private void notifyStart(String planId) {
+		URL u;
+		try {
+			u = fromUri(notifyService).path("/plan-execution-state/{id}")
+					.build(planId).toURL();
+		} catch (MalformedURLException | IllegalArgumentException
+				| UriBuilderException e) {
+			log.error("failed to construct notification url", e);
+			return;
+		}
+		try {
+			Holder<String> contentType = new Holder<String>();
+			String payload = getNotifyMessage(State.InProgress,
+					"Commenced execution", contentType);
+
+			HttpURLConnection conn = (HttpURLConnection) u.openConnection();
+			conn.setDoOutput(true);
+			conn.setRequestMethod("POST");
+			if (notifyUser != null && notifyPass != null) {
+				String token = notifyUser + ":" + notifyPass;
+				token = printBase64Binary(token.getBytes("UTF-8"));
+				conn.setRequestProperty("Authorization", token);
+			}
+			if (contentType.value != null)
+				conn.setRequestProperty("Content-Type", contentType.value);
+
+			new OutputStreamWriter(conn.getOutputStream()).write(payload);
+			CharBuffer cb = CharBuffer.allocate(4096);
+			new InputStreamReader(conn.getInputStream()).read(cb);
+			conn.getInputStream().close();
+			log.info("notification response: " + cb);
+		} catch (IOException | DatatypeConfigurationException | JAXBException e) {
+			log.warn("failed to do notification to " + u, e);
+		}
 	}
 
 	private void doNotify(TavernaRun r, String planId) {
