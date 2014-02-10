@@ -5,10 +5,12 @@ import static java.lang.String.format;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.serverError;
 import static javax.ws.rs.core.Response.status;
+import static javax.ws.rs.core.UriBuilder.fromUri;
 import static javax.xml.bind.DatatypeConverter.printBase64Binary;
 import static javax.xml.transform.OutputKeys.OMIT_XML_DECLARATION;
 import static javax.xml.transform.OutputKeys.STANDALONE;
 import static org.apache.commons.logging.LogFactory.getLog;
+import static org.taverna.server.master.common.Roles.ADMIN;
 import static org.taverna.server.master.common.Roles.USER;
 import static org.taverna.server.master.common.Status.Finished;
 import static org.taverna.server.master.common.Status.Operating;
@@ -24,6 +26,7 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.CharBuffer;
+import java.util.GregorianCalendar;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
@@ -33,7 +36,14 @@ import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Path;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriBuilder;
+import javax.ws.rs.core.UriBuilderException;
 import javax.ws.rs.core.UriInfo;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.datatype.DatatypeConfigurationException;
+import javax.xml.datatype.DatatypeFactory;
+import javax.xml.datatype.XMLGregorianCalendar;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
@@ -46,6 +56,7 @@ import org.springframework.beans.factory.annotation.Required;
 import org.taverna.server.master.ContentsDescriptorBuilder;
 import org.taverna.server.master.TavernaServerSupport;
 import org.taverna.server.master.common.Namespaces;
+import org.taverna.server.master.common.Roles;
 import org.taverna.server.master.common.Uri;
 import org.taverna.server.master.common.Workflow;
 import org.taverna.server.master.exceptions.BadStateChangeException;
@@ -56,6 +67,8 @@ import org.taverna.server.master.exceptions.UnknownRunException;
 import org.taverna.server.master.interfaces.Policy;
 import org.taverna.server.master.interfaces.RunStore;
 import org.taverna.server.master.interfaces.TavernaRun;
+import org.taverna.server.master.rest.scape.ExecutionStateChange;
+import org.taverna.server.master.rest.scape.ExecutionStateChange.State;
 import org.taverna.server.master.rest.scape.ScapeExecutionService;
 import org.taverna.server.master.scape.ScapeSplicingEngine.Model;
 import org.taverna.server.master.utils.CallTimeLogger.PerfLogged;
@@ -80,7 +93,8 @@ import edu.umd.cs.findbugs.annotations.Nullable;
  */
 @Path("/")
 public class ScapeExecutor implements ScapeExecutionService {
-	final Log log = getLog("Taverna.Server.Webapp.SCAPE");
+	final JAXBContext context;
+	final Log log;
 	private TavernaServerSupport support;
 	private RunStore runStore;
 	private Policy policy;
@@ -90,6 +104,11 @@ public class ScapeExecutor implements ScapeExecutionService {
 	private String notifyUser;
 	private String notifyPass;
 	private ContentsDescriptorBuilder cb;
+
+	public ScapeExecutor() throws JAXBException {
+		context = JAXBContext.newInstance(ExecutionStateChange.class);
+		log = getLog("Taverna.Server.Webapp.SCAPE");
+	}
 
 	@Required
 	public void setSupport(TavernaServerSupport support) {
@@ -175,12 +194,15 @@ public class ScapeExecutor implements ScapeExecutionService {
 	@PerfLogged
 	@RolesAllowed(USER)
 	@NonNull
-	public Response startJob(@Nullable PreservationActionPlan plan,
+	public Response startJob(@Nullable JobRequest jobRequest,
 			@NonNull UriInfo ui) throws NoCreateException {
-		if (plan == null)
+		if (jobRequest == null)
+			throw new BadInputException("what?");
+		String planId = jobRequest.planId;
+		PreservationActionPlan plan = jobRequest.preservationActionPlan;
+		if (planId == null || plan == null)
 			throw new BadInputException("what?");
 
-		String planId = plan.getCollection().getUid();
 		Objects objs = plan.getObjects();
 		ExecutablePlan ep = plan.getExecutablePlan();
 		QualityLevelDescription qld = plan.getQualityLevelDescription();
@@ -284,8 +306,9 @@ public class ScapeExecutor implements ScapeExecutionService {
 			throws NoCreateException, UnknownRunException {
 		String jobId = support.buildWorkflow(w);
 		dao.setScapeJob(jobId, planId);
-		if (notifyService != null)
+		if (notifyService != null) {
 			dao.setNotify(jobId, notifyService);
+		}
 		final TavernaRun run = run(jobId);
 		final InputDescription inDesc = cb.makeInputDescriptor(run, ui);
 		Thread worker = new Thread(new Runnable() {
@@ -365,7 +388,7 @@ public class ScapeExecutor implements ScapeExecutionService {
 			try {
 				ScapeJob j = dao.getJobRecord(id);
 				if (j != null)
-					doNotify(r, j.getPlanId(), j.getNotify());
+					doNotify(r, j.getPlanId());
 			} catch (Exception e) {
 				log.warn("failure in notification", e);
 			}
@@ -373,36 +396,51 @@ public class ScapeExecutor implements ScapeExecutionService {
 		}
 	}
 
-	private String getNotifyPayload(TavernaRun r, String planId,
-			Holder<String> contentType) {
-		// TODO current implementation has a bizarre concept of what completion means.
-		contentType.value = "text/plain";
-		//return String.format("Yo! Everything OK for plan:%s job:%s", planId,
-		//		r.getId());
-		return "";
+	private String getNotifyMessage(ExecutionStateChange.State state,
+			String content, Holder<String> contentType)
+			throws DatatypeConfigurationException, JAXBException {
+		ExecutionStateChange message = new ExecutionStateChange();
+		GregorianCalendar c = new GregorianCalendar();
+		message.timestamp = DatatypeFactory.newInstance()
+				.newXMLGregorianCalendar(c);
+		message.state = state;
+		message.contents = content;
+		StringWriter sw = new StringWriter();
+		context.createMarshaller().marshal(message, sw);
+		contentType.value = "application/xml";
+		return sw.toString();
 	}
 
-	private void doNotify(TavernaRun r, String planId, String notifyAddress) {
-		if (notifyAddress == null)
-			return;
+	private String getNotifyPayload(TavernaRun run, String planId,
+			ExecutionStateChange.State state, Holder<String> contentType)
+			throws DatatypeConfigurationException, JAXBException {
+		// FIXME read file contents from run
+		String message = run.getName();
+		return getNotifyMessage(state, message, contentType);
+	}
+
+	private void doNotify(TavernaRun r, String planId) {
 		URL u;
 		try {
-			u = new URL(notifyAddress);
-		} catch (MalformedURLException e) {
-			log.warn("bad notification address: " + notifyAddress, e);
+			u = fromUri(notifyService).path("/plan-execution-state/{id}")
+					.build(planId).toURL();
+		} catch (MalformedURLException | IllegalArgumentException
+				| UriBuilderException e) {
+			log.error("failed to construct notification url", e);
 			return;
 		}
 		try {
 			HttpURLConnection conn = (HttpURLConnection) u.openConnection();
 			conn.setDoOutput(true);
-			conn.setRequestMethod("PUT");
+			conn.setRequestMethod("POST");
 			if (notifyUser != null && notifyPass != null) {
 				String token = notifyUser + ":" + notifyPass;
 				token = printBase64Binary(token.getBytes("UTF-8"));
 				conn.setRequestProperty("Authorization", token);
 			}
 			Holder<String> contentType = new Holder<String>();
-			String payload = getNotifyPayload(r, planId, contentType);
+			String payload = getNotifyPayload(r, planId, State.Success,
+					contentType);
 			if (contentType.value != null)
 				conn.setRequestProperty("Content-Type", contentType.value);
 
@@ -411,8 +449,8 @@ public class ScapeExecutor implements ScapeExecutionService {
 			new InputStreamReader(conn.getInputStream()).read(cb);
 			conn.getInputStream().close();
 			log.info("notification response: " + cb);
-		} catch (IOException e) {
-			log.warn("failed to do notification to " + notifyAddress, e);
+		} catch (IOException | DatatypeConfigurationException | JAXBException e) {
+			log.warn("failed to do notification to " + u, e);
 		}
 	}
 
@@ -440,7 +478,7 @@ public class ScapeExecutor implements ScapeExecutionService {
 		return (addr == null ? "" : addr);
 	}
 
-	@RolesAllowed(USER)
+	@RolesAllowed(ADMIN)
 	@PerfLogged
 	@Override
 	public String setNotification(String id, String newValue)

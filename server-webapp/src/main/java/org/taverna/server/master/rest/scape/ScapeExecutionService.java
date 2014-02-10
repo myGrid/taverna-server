@@ -19,6 +19,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
+import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
@@ -48,7 +49,7 @@ public interface ScapeExecutionService {
 	@Path("/")
 	@Consumes(XML)
 	@RolesAllowed(USER)
-	Response startJob(@NonNull PreservationActionPlan plan,
+	Response startJob(@NonNull JobRequest plan,
 			@Context @NonNull UriInfo ui) throws NoCreateException;
 
 	@OPTIONS
@@ -97,6 +98,8 @@ public interface ScapeExecutionService {
 
 	@XmlRootElement(name = "job")
 	public static class Job {
+		@XmlAttribute
+		public String planId;
 		@XmlElement(required = true)
 		public Status status;
 		@XmlElement
@@ -109,5 +112,13 @@ public interface ScapeExecutionService {
 		public Uri enactedWorkflow;
 		@XmlElement
 		public Uri notificationAddress;
+	}
+
+	@XmlRootElement(name = "JobRequest")
+	public static class JobRequest {
+		@XmlElement(required = true)
+		public PreservationActionPlan preservationActionPlan;
+		@XmlElement(required = true)
+		public String planId;
 	}
 }
