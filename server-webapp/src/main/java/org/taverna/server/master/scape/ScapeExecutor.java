@@ -21,9 +21,12 @@ import static org.taverna.server.master.utils.RestUtils.opt;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.io.Reader;
 import java.io.StringWriter;
+import java.io.Writer;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.nio.CharBuffer;
 import java.util.GregorianCalendar;
@@ -36,32 +39,29 @@ import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Path;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriBuilderException;
 import javax.ws.rs.core.UriInfo;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
-import javax.xml.datatype.XMLGregorianCalendar;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-import javax.xml.ws.Holder;
 
 import org.apache.commons.logging.Log;
 import org.springframework.beans.factory.annotation.Required;
 import org.taverna.server.master.ContentsDescriptorBuilder;
 import org.taverna.server.master.TavernaServerSupport;
 import org.taverna.server.master.common.Namespaces;
-import org.taverna.server.master.common.Roles;
 import org.taverna.server.master.common.Uri;
 import org.taverna.server.master.common.Workflow;
 import org.taverna.server.master.exceptions.BadStateChangeException;
 import org.taverna.server.master.exceptions.NoCreateException;
 import org.taverna.server.master.exceptions.NoDestroyException;
+import org.taverna.server.master.exceptions.NoListenerException;
 import org.taverna.server.master.exceptions.NoUpdateException;
 import org.taverna.server.master.exceptions.UnknownRunException;
 import org.taverna.server.master.interfaces.Policy;
@@ -304,7 +304,8 @@ public class ScapeExecutor implements ScapeExecutionService {
 			@NonNull final String planId, @NonNull final List<Object> objs,
 			@Nullable final Element schematron, @NonNull UriInfo ui)
 			throws NoCreateException, UnknownRunException {
-		String jobId = support.buildWorkflow(w);
+		final URI base = ui.getBaseUri();
+		final String jobId = support.buildWorkflow(w);
 		dao.setScapeJob(jobId, planId);
 		if (notifyService != null) {
 			dao.setNotify(jobId, notifyService);
@@ -325,7 +326,12 @@ public class ScapeExecutor implements ScapeExecutionService {
 					if (schematron != null)
 						initSLA(run, schematron);
 					setExecuting(run);
-					notifyStart(planId);
+					if (notifyService != null)
+						notifyPlanService(
+								planId,
+								State.InProgress,
+								format("Commenced execution using jobID=%s on %s",
+										jobId, base));
 				} catch (Exception e) {
 					log.warn("failed to initialize SCAPE workflow", e);
 				}
@@ -389,7 +395,7 @@ public class ScapeExecutor implements ScapeExecutionService {
 			try {
 				ScapeJob j = dao.getJobRecord(id);
 				if (j != null)
-					doNotify(r, j.getPlanId());
+					notifySuccess(r, j.getPlanId());
 			} catch (Exception e) {
 				log.warn("failure in notification", e);
 			}
@@ -397,99 +403,83 @@ public class ScapeExecutor implements ScapeExecutionService {
 		}
 	}
 
-	private String getNotifyMessage(ExecutionStateChange.State state,
-			String content, Holder<String> contentType)
-			throws DatatypeConfigurationException, JAXBException {
+	private void notifyPlanService(String planId,
+			ExecutionStateChange stateChange) {
+		URL u;
+		try {
+			u = fromUri(notifyService).path("/plan-execution-state/{id}")
+					.build(planId).toURL();
+		} catch (MalformedURLException | IllegalArgumentException
+				| UriBuilderException e) {
+			log.error("failed to construct notification url", e);
+			return;
+		}
+		try {
+			GregorianCalendar c = new GregorianCalendar();
+			stateChange.timestamp = DatatypeFactory.newInstance()
+					.newXMLGregorianCalendar(c);
+			StringWriter sw = new StringWriter();
+			context.createMarshaller().marshal(stateChange, sw);
+			String payload = sw.toString();
+
+			HttpURLConnection conn = (HttpURLConnection) u.openConnection();
+			conn.setDoOutput(true);
+			conn.setRequestMethod("POST");
+			if (notifyUser != null && notifyPass != null) {
+				String token = notifyUser + ":" + notifyPass;
+				token = printBase64Binary(token.getBytes("UTF-8"));
+				conn.setRequestProperty("Authorization", token);
+			}
+			conn.setRequestProperty("Content-Type", "application/xml");
+
+			try (Writer out = new OutputStreamWriter(conn.getOutputStream(),
+					"UTF-8")) {
+				out.write(payload);
+			}
+			CharBuffer cb = CharBuffer.allocate(4096);
+			try (Reader in = new InputStreamReader(conn.getInputStream())) {
+				in.read(cb);
+			}
+			if (conn.getResponseCode() >= 400)
+				log.info("notification response: " + cb);
+		} catch (IOException | DatatypeConfigurationException | JAXBException e) {
+			log.warn("failed to do notification to " + u, e);
+		}
+	}
+
+	private void notifyPlanService(String planId,
+			ExecutionStateChange.State state, String content) {
 		ExecutionStateChange message = new ExecutionStateChange();
-		GregorianCalendar c = new GregorianCalendar();
-		message.timestamp = DatatypeFactory.newInstance()
-				.newXMLGregorianCalendar(c);
 		message.state = state;
 		message.contents = content;
-		StringWriter sw = new StringWriter();
-		context.createMarshaller().marshal(message, sw);
-		contentType.value = "application/xml";
-		return sw.toString();
+		notifyPlanService(planId, message);
 	}
 
-	private String getNotifyPayload(TavernaRun run, String planId,
-			ExecutionStateChange.State state, Holder<String> contentType)
-			throws DatatypeConfigurationException, JAXBException {
-		// FIXME read file contents from run
-		String message = run.getName();
-		return getNotifyMessage(state, message, contentType);
-	}
-
-	// TODO Refactor this so I don't have to repeat the majority of this code
-	private void notifyStart(String planId) {
-		URL u;
+	private void notifySuccess(TavernaRun r, String planId) {
+		String message;
+		State state;
 		try {
-			u = fromUri(notifyService).path("/plan-execution-state/{id}")
-					.build(planId).toURL();
-		} catch (MalformedURLException | IllegalArgumentException
-				| UriBuilderException e) {
-			log.error("failed to construct notification url", e);
-			return;
-		}
-		try {
-			Holder<String> contentType = new Holder<String>();
-			String payload = getNotifyMessage(State.InProgress,
-					"Commenced execution", contentType);
-
-			HttpURLConnection conn = (HttpURLConnection) u.openConnection();
-			conn.setDoOutput(true);
-			conn.setRequestMethod("POST");
-			if (notifyUser != null && notifyPass != null) {
-				String token = notifyUser + ":" + notifyPass;
-				token = printBase64Binary(token.getBytes("UTF-8"));
-				conn.setRequestProperty("Authorization", token);
+			String code = support.getListener(r, "io").getProperty("exitcode");
+			if (code.equals("0")) {
+				message = format("job %s has terminated successfully",
+						r.getId());
+				state = State.Success;
+				// FIXME read file contents from run
+			} else {
+				message = format(
+						"job %s has terminated with catastrophic errors",
+						r.getId());
+				state = State.Fail;
 			}
-			if (contentType.value != null)
-				conn.setRequestProperty("Content-Type", contentType.value);
-
-			new OutputStreamWriter(conn.getOutputStream()).write(payload);
-			CharBuffer cb = CharBuffer.allocate(4096);
-			new InputStreamReader(conn.getInputStream()).read(cb);
-			conn.getInputStream().close();
-			log.info("notification response: " + cb);
-		} catch (IOException | DatatypeConfigurationException | JAXBException e) {
-			log.warn("failed to do notification to " + u, e);
+		} catch (NoListenerException e) {
+			log.error(
+					"no such listener or property when looking for io/exitcode",
+					e);
+			message = format("job %s has no properly defined exit status?",
+					r.getId());
+			state = State.Fail;
 		}
-	}
-
-	private void doNotify(TavernaRun r, String planId) {
-		URL u;
-		try {
-			u = fromUri(notifyService).path("/plan-execution-state/{id}")
-					.build(planId).toURL();
-		} catch (MalformedURLException | IllegalArgumentException
-				| UriBuilderException e) {
-			log.error("failed to construct notification url", e);
-			return;
-		}
-		try {
-			HttpURLConnection conn = (HttpURLConnection) u.openConnection();
-			conn.setDoOutput(true);
-			conn.setRequestMethod("POST");
-			if (notifyUser != null && notifyPass != null) {
-				String token = notifyUser + ":" + notifyPass;
-				token = printBase64Binary(token.getBytes("UTF-8"));
-				conn.setRequestProperty("Authorization", token);
-			}
-			Holder<String> contentType = new Holder<String>();
-			String payload = getNotifyPayload(r, planId, State.Success,
-					contentType);
-			if (contentType.value != null)
-				conn.setRequestProperty("Content-Type", contentType.value);
-
-			new OutputStreamWriter(conn.getOutputStream()).write(payload);
-			CharBuffer cb = CharBuffer.allocate(4096);
-			new InputStreamReader(conn.getInputStream()).read(cb);
-			conn.getInputStream().close();
-			log.info("notification response: " + cb);
-		} catch (IOException | DatatypeConfigurationException | JAXBException e) {
-			log.warn("failed to do notification to " + u, e);
-		}
+		notifyPlanService(planId, state, message);
 	}
 
 	@SuppressWarnings("serial")
