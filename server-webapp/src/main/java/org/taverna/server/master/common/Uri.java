@@ -122,7 +122,8 @@ public class Uri {
 	public static URI secure(@NonNull URI uri) {
 		@NonNull
 		URI newURI = secure(fromUri(uri)).build();
-		log.debug("rewrote " + uri + " to " + newURI);
+		if (log.isDebugEnabled())
+			log.debug("rewrote " + uri + " to " + newURI);
 		return newURI;
 	}
 
@@ -130,7 +131,8 @@ public class Uri {
 	public static URI secure(@NonNull URI base, @NonNull String uri) {
 		@NonNull
 		URI newURI = secure(fromUri(base.resolve(uri))).build();
-		log.debug("rewrote " + uri + " to " + newURI);
+		if (log.isDebugEnabled())
+			log.debug("rewrote " + uri + " to " + newURI);
 		return newURI;
 	}
 

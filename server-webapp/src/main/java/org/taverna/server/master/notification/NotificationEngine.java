@@ -73,8 +73,9 @@ public class NotificationEngine {
 						return;
 					}
 				} catch (Exception ex) {
-					log.debug("failed in pseudo-directed dispatch of " + scheme
-							+ ":" + target, ex);
+					if (log.isDebugEnabled())
+						log.debug("failed in pseudo-directed dispatch of "
+								+ scheme + ":" + target, ex);
 					e2 = ex;
 				}
 			if (e2 != null)

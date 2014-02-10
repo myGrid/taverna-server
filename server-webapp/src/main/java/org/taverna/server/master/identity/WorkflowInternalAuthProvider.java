@@ -5,6 +5,7 @@
  */
 package org.taverna.server.master.identity;
 
+import static java.util.Collections.synchronizedMap;
 import static org.springframework.web.context.request.RequestContextHolder.currentRequestAttributes;
 import static org.taverna.server.master.common.Roles.SELF;
 
@@ -12,6 +13,8 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Set;
 
 import javax.annotation.PostConstruct;
@@ -37,6 +40,7 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import org.taverna.server.master.exceptions.UnknownRunException;
 import org.taverna.server.master.interfaces.LocalIdentityMapper;
 import org.taverna.server.master.interfaces.RunStore;
+import org.taverna.server.master.utils.CallTimeLogger.PerfLogged;
 import org.taverna.server.master.utils.UsernamePrincipal;
 import org.taverna.server.master.worker.RunDatabaseDAO;
 
@@ -55,10 +59,22 @@ public class WorkflowInternalAuthProvider extends
 	private static final boolean logDecisions = true;
 	public static final String PREFIX = "wfrun_";
 	private RunDatabaseDAO dao;
+	private Map<String, String> cache;
 
 	@Required
 	public void setDao(RunDatabaseDAO dao) {
 		this.dao = dao;
+	}
+
+	@Required
+	@SuppressWarnings("serial")
+	public void setCacheBound(final int bound) {
+		cache = synchronizedMap(new LinkedHashMap<String, String>() {
+			@Override
+			protected boolean removeEldestEntry(Map.Entry<String, String> eldest) {
+				return size() > bound;
+			}
+		});
 	}
 
 	public void setAuthorizedAddresses(String[] addresses) {
@@ -184,11 +200,15 @@ public class WorkflowInternalAuthProvider extends
 		if (logDecisions)
 			log.info("request for auth for user " + username);
 		String wfid = username.substring(PREFIX.length());
-		final String securityToken;
+		String securityToken;
 		try {
-			securityToken = dao.getSecurityToken(wfid);
-			if (securityToken == null)
-				throw new UsernameNotFoundException("no such user");
+			securityToken = cache.get(wfid);
+			if (securityToken == null) {
+				securityToken = dao.getSecurityToken(wfid);
+				if (securityToken == null)
+					throw new UsernameNotFoundException("no such user");
+				cache.put(wfid, securityToken);
+			}
 		} catch (NullPointerException npe) {
 			throw new UsernameNotFoundException("no such user");
 		}
@@ -198,6 +218,7 @@ public class WorkflowInternalAuthProvider extends
 	}
 
 	@Override
+	@PerfLogged
 	protected final void additionalAuthenticationChecks(UserDetails userRecord,
 			UsernamePasswordAuthenticationToken token) {
 		try {
@@ -214,6 +235,7 @@ public class WorkflowInternalAuthProvider extends
 
 	@Override
 	@NonNull
+	@PerfLogged
 	protected final UserDetails retrieveUser(String username,
 			UsernamePasswordAuthenticationToken token) {
 		try {
@@ -265,6 +287,7 @@ public class WorkflowInternalAuthProvider extends
 		}
 
 		@Override
+		@PerfLogged
 		public String getUsernameForPrincipal(UsernamePrincipal user) {
 			Authentication auth = SecurityContextHolder.getContext()
 					.getAuthentication();

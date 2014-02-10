@@ -9,6 +9,8 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 
 import javax.jdo.annotations.PersistenceAware;
 
@@ -67,7 +69,8 @@ public class EventDAO extends JDOSupport<Event> implements MessageDispatcher {
 		@SuppressWarnings("unchecked")
 		List<String> ids = (List<String>) namedQuery("eventsForUser").execute(
 				user.getName());
-		log.debug("found " + ids.size() + " events for user " + user);
+		if (log.isDebugEnabled())
+			log.debug("found " + ids.size() + " events for user " + user);
 
 		List<Event> result = new ArrayList<Event>();
 		for (String id : ids) {
@@ -92,8 +95,9 @@ public class EventDAO extends JDOSupport<Event> implements MessageDispatcher {
 		@SuppressWarnings("unchecked")
 		List<String> ids = (List<String>) namedQuery("eventForUserAndId")
 				.execute(user.getName(), id);
-		log.debug("found " + ids.size() + " events for user " + user
-				+ " with id = " + id);
+		if (log.isDebugEnabled())
+			log.debug("found " + ids.size() + " events for user " + user
+					+ " with id = " + id);
 
 		if (ids.size() != 1)
 			throw new IllegalArgumentException("no such id");
@@ -122,7 +126,7 @@ public class EventDAO extends JDOSupport<Event> implements MessageDispatcher {
 		@SuppressWarnings("unchecked")
 		List<String> ids = (List<String>) namedQuery("eventsFromBefore")
 				.execute(death);
-		if (!ids.isEmpty())
+		if (log.isDebugEnabled() && !ids.isEmpty())
 			log.debug("found " + ids.size()
 					+ " events to be squelched (older than " + death + ")");
 
@@ -135,20 +139,48 @@ public class EventDAO extends JDOSupport<Event> implements MessageDispatcher {
 		return true;
 	}
 
+	private BlockingQueue<Event> insertQueue = new ArrayBlockingQueue<Event>(16);
+
 	@Override
-	@WithinSingleTransaction
 	public void dispatch(TavernaRun originator, String messageSubject,
 			String messageContent, String targetParameter) throws Exception {
-		persist(new Event("finish", ubf.getRunUriBuilder(originator).build(),
-				originator.getSecurityContext().getOwner(), messageSubject,
-				messageContent));
+		insertQueue.put(new Event("finish", ubf.getRunUriBuilder(originator)
+				.build(), originator.getSecurityContext().getOwner(),
+				messageSubject, messageContent));
+	}
+
+	public void started(TavernaRun originator, String messageSubject,
+			String messageContent) throws InterruptedException {
+		insertQueue.put(new Event("start", ubf.getRunUriBuilder(originator)
+				.build(), originator.getSecurityContext().getOwner(),
+				messageSubject, messageContent));
+	}
+
+	@Required
+	public void setSelf(final EventDAO dao) {
+		Thread t = new Thread(new Runnable() {
+			@Override
+			public void run() {
+				try {
+					while (true) {
+						ArrayList<Event> e = new ArrayList<Event>();
+						e.add(insertQueue.take());
+						insertQueue.drainTo(e);
+						dao.storeEvents(e);
+						Thread.sleep(5000);
+					}
+				} catch (InterruptedException e) {
+				}
+			}
+		});
+		t.setDaemon(true);
+		t.start();
 	}
 
 	@WithinSingleTransaction
-	public void started(TavernaRun originator, String messageSubject,
-			String messageContent) {
-		persist(new Event("start", ubf.getRunUriBuilder(originator).build(),
-				originator.getSecurityContext().getOwner(), messageSubject,
-				messageContent));
+	protected void storeEvents(List<Event> events) {
+		for (Event e : events)
+			persist(e);
+		log.info("stored " + events.size() + " notification events");
 	}
 }

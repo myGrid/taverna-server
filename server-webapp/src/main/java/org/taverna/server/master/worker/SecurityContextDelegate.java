@@ -555,7 +555,7 @@ public abstract class SecurityContextDelegate implements TavernaSecurityContext 
 					getPrincipalName(c.getIssuerX500Principal()),
 					factory.x500Utils.getSerial(c));
 			ks.setCertificateEntry(alias, c);
-			if (factory.logSecurityDetails)
+			if (log.isDebugEnabled() && factory.logSecurityDetails)
 				log.debug("added cert with alias \"" + alias + "\" of type "
 						+ c.getClass().getCanonicalName());
 		}
@@ -576,7 +576,7 @@ public abstract class SecurityContextDelegate implements TavernaSecurityContext 
 			try {
 				ks.store(stream, password);
 				stream.close();
-				if (factory.logSecurityDetails)
+				if (log.isDebugEnabled() && factory.logSecurityDetails)
 					log.debug("serialized UBER/BC truststore (size: "
 							+ ks.size() + ") with password \""
 							+ new String(password) + "\"");
@@ -637,7 +637,7 @@ public abstract class SecurityContextDelegate implements TavernaSecurityContext 
 			if (ks == null)
 				throw new IllegalStateException("keystore already written");
 			ks.setKeyEntry(alias, key, password, trustChain);
-			if (factory.logSecurityDetails)
+			if (log.isDebugEnabled() && factory.logSecurityDetails)
 				log.debug("added key with alias \"" + alias + "\" of type "
 						+ key.getClass().getCanonicalName());
 		}
@@ -658,7 +658,7 @@ public abstract class SecurityContextDelegate implements TavernaSecurityContext 
 			try {
 				ks.store(stream, password);
 				stream.close();
-				if (factory.logSecurityDetails)
+				if (log.isDebugEnabled() && factory.logSecurityDetails)
 					log.debug("serialized UBER/BC keystore (size: " + ks.size()
 							+ ") with password \"" + new String(password)
 							+ "\"");
