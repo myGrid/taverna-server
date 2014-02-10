@@ -9,7 +9,6 @@ import static javax.xml.bind.DatatypeConverter.printBase64Binary;
 import static javax.xml.transform.OutputKeys.OMIT_XML_DECLARATION;
 import static javax.xml.transform.OutputKeys.STANDALONE;
 import static org.apache.commons.logging.LogFactory.getLog;
-import static org.taverna.server.master.common.Roles.ADMIN;
 import static org.taverna.server.master.common.Roles.USER;
 import static org.taverna.server.master.common.Status.Finished;
 import static org.taverna.server.master.common.Status.Operating;
@@ -376,10 +375,11 @@ public class ScapeExecutor implements ScapeExecutionService {
 
 	private String getNotifyPayload(TavernaRun r, String planId,
 			Holder<String> contentType) {
-		// FIXME Get the right payload!
+		// TODO current implementation has a bizarre concept of what completion means.
 		contentType.value = "text/plain";
-		return String.format("Yo! Everything OK for plan:%s job:%s", planId,
-				r.getId());
+		//return String.format("Yo! Everything OK for plan:%s job:%s", planId,
+		//		r.getId());
+		return "";
 	}
 
 	private void doNotify(TavernaRun r, String planId, String notifyAddress) {
@@ -395,7 +395,7 @@ public class ScapeExecutor implements ScapeExecutionService {
 		try {
 			HttpURLConnection conn = (HttpURLConnection) u.openConnection();
 			conn.setDoOutput(true);
-			conn.setRequestMethod("POST");
+			conn.setRequestMethod("PUT");
 			if (notifyUser != null && notifyPass != null) {
 				String token = notifyUser + ":" + notifyPass;
 				token = printBase64Binary(token.getBytes("UTF-8"));
@@ -440,7 +440,7 @@ public class ScapeExecutor implements ScapeExecutionService {
 		return (addr == null ? "" : addr);
 	}
 
-	@RolesAllowed(ADMIN)
+	@RolesAllowed(USER)
 	@PerfLogged
 	@Override
 	public String setNotification(String id, String newValue)
