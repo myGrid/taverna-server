@@ -29,6 +29,7 @@
 		<property name="runStore" ref="worker.rundb" />
 		<property name="splicer" ref="scape.splicer" />
 		<property name="dao" ref="scape.dao" />
+		<property name="contentsDescriptorBuilder" ref="contentsDescriptorBuilder" />
 	</bean>
 	<bean id="scape.splicer" class="org.taverna.server.master.scape.ScapeSplicingEngine">
 		<property name="dummyProcessorName" value="${scape.dummyProcessor:ignore}" />
@@ -416,7 +417,8 @@
 			fixed-delay="${finish.interval}" />
 		<task:scheduled ref="dispatch.atom" method="deleteExpiredEvents"
 			fixed-delay="${atom.cleaninterval}" />
-		<task:scheduled ref="scape" method="detectCompletion" fixed-delay="30000"/>
+		<task:scheduled ref="scape" method="detectCompletion"
+			fixed-delay="{scape.completionInterval:30000}" />
 	</task:scheduled-tasks>
 
 	<bean id="notificationFabric"
