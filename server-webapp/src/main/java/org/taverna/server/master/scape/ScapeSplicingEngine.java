@@ -75,7 +75,8 @@ public class ScapeSplicingEngine extends SplicingEngine {
 	 */
 	public static final String DUMMY_PROCESSOR_NAME = "ignore";
 	private static final String SPLICER_URL = "http://ns.taverna.org.uk/taverna-server/splicing";
-	private static final String SUBJECT_PROPERTY = SPLICER_URL + "#OutputPortSubject";
+	private static final String SUBJECT_PROPERTY = SPLICER_URL
+			+ "#OutputPortSubject";
 	private static final String TYPE_PROPERTY = SPLICER_URL + "#OutputPortType";
 	private final String baseSubject;
 
@@ -237,16 +238,23 @@ public class ScapeSplicingEngine extends SplicingEngine {
 
 	private boolean getSubjectTypeFromAnnotation(String turtle,
 			Holder<String> subject, Holder<String> type) {
-		com.hp.hpl.jena.rdf.model.Model annotationModel = createDefaultModel();
-		annotationModel.read(new StringReader(turtle), baseSubject, "TURTLE");
-		Resource base = annotationModel.createResource(baseSubject);
-		subject.value = getSemanticModelProperty(annotationModel, base,
-				SUBJECT_PROPERTY);
-		type.value = getSemanticModelProperty(annotationModel, base,
-				TYPE_PROPERTY);
-		if (subject.value != null && !subject.value.trim().isEmpty()
-				&& type.value != null && !type.value.trim().isEmpty())
-			return true;
+		try {
+			com.hp.hpl.jena.rdf.model.Model annotationModel = createDefaultModel();
+			annotationModel.read(new StringReader(turtle), baseSubject,
+					"TURTLE");
+			Resource base = annotationModel.createResource(baseSubject);
+			subject.value = getSemanticModelProperty(annotationModel, base,
+					SUBJECT_PROPERTY);
+			type.value = getSemanticModelProperty(annotationModel, base,
+					TYPE_PROPERTY);
+			if (subject.value != null && !subject.value.trim().isEmpty()
+					&& type.value != null && !type.value.trim().isEmpty())
+				return true;
+		} catch (RuntimeException e) {
+			log.error(
+					"failed to construct and extract info from semantic model",
+					e);
+		}
 		subject.value = null;
 		type.value = null;
 		return false;
