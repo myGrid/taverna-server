@@ -62,6 +62,7 @@ public class ScapeSplicingEngine extends SplicingEngine {
 	private static final Log log = getLog("Taverna.Server.WorkflowSplicing.Scape");
 	private static final Pattern PORT_INFO_EXTRACT = Pattern
 			.compile("^measure_([a-zA-Z0-9]+)_([a-zA-Z0-9]+)$");
+	private static final Pattern NAME_EXTRACT = Pattern.compile("[a-zA-Z0-9]+$");
 
 	/** The name of the processor to splice. Must be a dataflow processor! */
 	public static final String SPLICE_PROCESSOR_NAME = "PreservationActionPlan";
@@ -268,22 +269,27 @@ public class ScapeSplicingEngine extends SplicingEngine {
 				subjectProperty, (RDFNode) null).toList()) {
 			RDFNode node = s.getObject();
 			if (node.isLiteral())
-				return node.asLiteral().getLexicalForm();
+				return strip(node.asLiteral().getLexicalForm());
 			else if (node.isResource()) {
 				Resource resource = node.asResource();
 				if (resource instanceof OntResource) {
 					String label = ((OntResource) resource).getLabel(null);
 					if (label != null)
-						return label;
+						return strip(label);
 				}
 				String localName = resource.getLocalName();
 				if ((localName != null) && !localName.isEmpty())
-					return localName;
+					return strip(localName);
 				else
-					return resource.toString();
+					return strip(resource.toString());
 			}
 		}
 		return null;
+	}
+
+	private static String strip(String name) {
+		Matcher m = NAME_EXTRACT.matcher(name.trim());
+		return m.find() ? m.group() : null;
 	}
 
 	@NonNull
