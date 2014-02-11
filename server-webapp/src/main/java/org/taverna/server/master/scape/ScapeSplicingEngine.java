@@ -1,5 +1,6 @@
 package org.taverna.server.master.scape;
 
+import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static java.lang.String.format;
 import static org.apache.commons.logging.LogFactory.getLog;
 import static org.taverna.server.master.scape.DOMUtils.attrs;
@@ -16,6 +17,7 @@ import static org.taverna.server.master.scape.XPaths.REQUIRE_NESTED;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.StringReader;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
@@ -25,11 +27,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.ws.Holder;
+import javax.xml.xpath.XPathExpressionException;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
@@ -38,6 +42,12 @@ import org.taverna.server.master.common.Workflow;
 import org.w3c.dom.Element;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
+
+import com.hp.hpl.jena.ontology.OntResource;
+import com.hp.hpl.jena.rdf.model.Property;
+import com.hp.hpl.jena.rdf.model.RDFNode;
+import com.hp.hpl.jena.rdf.model.Resource;
+import com.hp.hpl.jena.rdf.model.Statement;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 
@@ -64,6 +74,10 @@ public class ScapeSplicingEngine extends SplicingEngine {
 	 * The name of a processor to remove from the outermost workflow.
 	 */
 	public static final String DUMMY_PROCESSOR_NAME = "ignore";
+	private static final String SPLICER_URL = "http://ns.taverna.org.uk/taverna-server/splicing";
+	private static final String SUBJECT_PROPERTY = SPLICER_URL + "#OutputPortSubject";
+	private static final String TYPE_PROPERTY = SPLICER_URL + "#OutputPortType";
+	private final String baseSubject;
 
 	public static enum Model {
 		One2OneNoSchema("1to1"), One2OneSchema("1to1_schema");
@@ -90,6 +104,7 @@ public class ScapeSplicingEngine extends SplicingEngine {
 
 	public ScapeSplicingEngine() throws ParserConfigurationException {
 		super(log);
+		baseSubject = "urn:" + UUID.randomUUID();
 	}
 
 	public void setComponentRepositoryAddress(String address)
@@ -201,12 +216,66 @@ public class ScapeSplicingEngine extends SplicingEngine {
 
 	protected boolean getSubjectType(String name, Element port,
 			Holder<String> subject, Holder<String> type) {
+		try {
+			String turtle = text(
+					port,
+					".//annotationBean[@class=\"%s\"][mimeType=\"text/rdf+n3\"]/content",
+					"net.sf.taverna.t2.annotation.annotationbeans.SemanticAnnotation");
+			if (turtle != null && !turtle.trim().isEmpty())
+				if (getSubjectTypeFromAnnotation(turtle, subject, type))
+					return true;
+		} catch (XPathExpressionException e) {
+			// Ignore; fall back to names
+		}
 		Matcher m = PORT_INFO_EXTRACT.matcher(name);
 		if (!m.matches())
 			return false;
 		subject.value = m.group(1);
 		type.value = m.group(2);
 		return true;
+	}
+
+	private boolean getSubjectTypeFromAnnotation(String turtle,
+			Holder<String> subject, Holder<String> type) {
+		com.hp.hpl.jena.rdf.model.Model annotationModel = createDefaultModel();
+		annotationModel.read(new StringReader(turtle), baseSubject, "TURTLE");
+		Resource base = annotationModel.createResource(baseSubject);
+		subject.value = getSemanticModelProperty(annotationModel, base,
+				SUBJECT_PROPERTY);
+		type.value = getSemanticModelProperty(annotationModel, base,
+				TYPE_PROPERTY);
+		if (subject.value != null && !subject.value.trim().isEmpty()
+				&& type.value != null && !type.value.trim().isEmpty())
+			return true;
+		subject.value = null;
+		type.value = null;
+		return false;
+	}
+
+	private String getSemanticModelProperty(
+			com.hp.hpl.jena.rdf.model.Model annotationModel, Resource base,
+			String propertyURI) {
+		Property subjectProperty = annotationModel.getProperty(propertyURI);
+		for (Statement s : annotationModel.listStatements(base,
+				subjectProperty, (RDFNode) null).toList()) {
+			RDFNode node = s.getObject();
+			if (node.isLiteral())
+				return node.asLiteral().getLexicalForm();
+			else if (node.isResource()) {
+				Resource resource = node.asResource();
+				if (resource instanceof OntResource) {
+					String label = ((OntResource) resource).getLabel(null);
+					if (label != null)
+						return label;
+				}
+				String localName = resource.getLocalName();
+				if ((localName != null) && !localName.isEmpty())
+					return localName;
+				else
+					return resource.toString();
+			}
+		}
+		return null;
 	}
 
 	@NonNull
