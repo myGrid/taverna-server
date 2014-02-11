@@ -10,7 +10,6 @@ import static javax.xml.bind.DatatypeConverter.printBase64Binary;
 import static javax.xml.transform.OutputKeys.OMIT_XML_DECLARATION;
 import static javax.xml.transform.OutputKeys.STANDALONE;
 import static org.apache.commons.logging.LogFactory.getLog;
-import static org.taverna.server.master.common.Roles.ADMIN;
 import static org.taverna.server.master.common.Roles.USER;
 import static org.taverna.server.master.common.Status.Finished;
 import static org.taverna.server.master.common.Status.Operating;
@@ -28,9 +27,9 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
-import java.nio.CharBuffer;
 import java.util.GregorianCalendar;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -39,6 +38,7 @@ import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Path;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriBuilderException;
 import javax.ws.rs.core.UriInfo;
 import javax.xml.bind.JAXBContext;
@@ -51,6 +51,7 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.springframework.beans.factory.annotation.Required;
 import org.taverna.server.master.ContentsDescriptorBuilder;
@@ -59,11 +60,15 @@ import org.taverna.server.master.common.Namespaces;
 import org.taverna.server.master.common.Uri;
 import org.taverna.server.master.common.Workflow;
 import org.taverna.server.master.exceptions.BadStateChangeException;
+import org.taverna.server.master.exceptions.FilesystemAccessException;
 import org.taverna.server.master.exceptions.NoCreateException;
 import org.taverna.server.master.exceptions.NoDestroyException;
+import org.taverna.server.master.exceptions.NoDirectoryEntryException;
 import org.taverna.server.master.exceptions.NoListenerException;
 import org.taverna.server.master.exceptions.NoUpdateException;
 import org.taverna.server.master.exceptions.UnknownRunException;
+import org.taverna.server.master.interfaces.Directory;
+import org.taverna.server.master.interfaces.File;
 import org.taverna.server.master.interfaces.Policy;
 import org.taverna.server.master.interfaces.RunStore;
 import org.taverna.server.master.interfaces.TavernaRun;
@@ -72,6 +77,7 @@ import org.taverna.server.master.rest.scape.ExecutionStateChange.State;
 import org.taverna.server.master.rest.scape.ScapeExecutionService;
 import org.taverna.server.master.scape.ScapeSplicingEngine.Model;
 import org.taverna.server.master.utils.CallTimeLogger.PerfLogged;
+import org.taverna.server.master.utils.FilenameUtils;
 import org.taverna.server.master.utils.InvocationCounter.CallCounted;
 import org.taverna.server.port_description.InputDescription;
 import org.taverna.server.port_description.InputDescription.InputPort;
@@ -103,7 +109,9 @@ public class ScapeExecutor implements ScapeExecutionService {
 	private String notifyService;
 	private String notifyUser;
 	private String notifyPass;
+	private FilenameUtils fileUtils;
 	private ContentsDescriptorBuilder cb;
+	private URI serviceUri;
 
 	public ScapeExecutor() throws JAXBException {
 		context = JAXBContext.newInstance(ExecutionStateChange.class);
@@ -133,6 +141,11 @@ public class ScapeExecutor implements ScapeExecutionService {
 	@Required
 	public void setContentsDescriptorBuilder(ContentsDescriptorBuilder cb) {
 		this.cb = cb;
+	}
+
+	@Required
+	public void setFileUtils(FilenameUtils fileUtils) {
+		this.fileUtils = fileUtils;
 	}
 
 	@Required
@@ -196,6 +209,8 @@ public class ScapeExecutor implements ScapeExecutionService {
 	@NonNull
 	public Response startJob(@Nullable JobRequest jobRequest,
 			@NonNull UriInfo ui) throws NoCreateException {
+		if (this.serviceUri == null)
+			this.serviceUri = ui.getBaseUri();
 		if (jobRequest == null)
 			throw new BadInputException("what?");
 		String planId = jobRequest.planId;
@@ -267,7 +282,6 @@ public class ScapeExecutor implements ScapeExecutionService {
 		job.serverJob = new Uri(ui.getBaseUriBuilder(), "rest/runs/{id}", id);
 		job.enactedWorkflow = new Uri(ui.getBaseUriBuilder(),
 				"rest/runs/{id}/workflow", id);
-		// TODO Consider doing output by a special URL
 		if (job.status == Finished) {
 			job.output = new Uri(ui.getBaseUriBuilder(),
 					"rest/runs/{id}/wd/out", id);
@@ -329,9 +343,10 @@ public class ScapeExecutor implements ScapeExecutionService {
 					if (notifyService != null)
 						notifyPlanService(
 								planId,
-								State.InProgress,
-								format("Commenced execution using jobID=%s on %s",
-										jobId, base));
+								new ExecutionStateChange(
+										State.InProgress,
+										format("Commenced execution using jobID=%s on %s",
+												jobId, base)));
 				} catch (Exception e) {
 					log.warn("failed to initialize SCAPE workflow", e);
 				}
@@ -342,20 +357,20 @@ public class ScapeExecutor implements ScapeExecutionService {
 		return jobId;
 	}
 
-	protected void initPlanID(@NonNull TavernaRun run, @NonNull String planId)
+	private void initPlanID(@NonNull TavernaRun run, @NonNull String planId)
 			throws BadStateChangeException {
 		run.makeInput("planId").setValue(planId);
 	}
 
-	protected void initObjects(@NonNull TavernaRun run,
-			@NonNull List<Object> objs) throws BadStateChangeException {
+	private void initObjects(@NonNull TavernaRun run, @NonNull List<Object> objs)
+			throws BadStateChangeException {
 		StringBuffer sb = new StringBuffer();
 		for (Object object : objs)
 			sb.append(object.getUid()).append('\n');
 		run.makeInput("objects").setValue(sb.toString());
 	}
 
-	protected void initSLA(@NonNull TavernaRun run, @NonNull Element schematron)
+	private void initSLA(@NonNull TavernaRun run, @NonNull Element schematron)
 			throws BadStateChangeException, TransformerException {
 		run.makeInput("sla").setValue(serializeXml(schematron));
 	}
@@ -370,7 +385,7 @@ public class ScapeExecutor implements ScapeExecutionService {
 		return sw.toString();
 	}
 
-	protected void setExecuting(@NonNull TavernaRun run)
+	private void setExecuting(@NonNull TavernaRun run)
 			throws BadStateChangeException {
 		while (run.setStatus(Operating) != null)
 			try {
@@ -415,12 +430,7 @@ public class ScapeExecutor implements ScapeExecutionService {
 			return;
 		}
 		try {
-			GregorianCalendar c = new GregorianCalendar();
-			stateChange.timestamp = DatatypeFactory.newInstance()
-					.newXMLGregorianCalendar(c);
-			StringWriter sw = new StringWriter();
-			context.createMarshaller().marshal(stateChange, sw);
-			String payload = sw.toString();
+			String payload = serializeStateChange(stateChange);
 
 			HttpURLConnection conn = (HttpURLConnection) u.openConnection();
 			conn.setDoOutput(true);
@@ -436,50 +446,78 @@ public class ScapeExecutor implements ScapeExecutionService {
 					"UTF-8")) {
 				out.write(payload);
 			}
-			CharBuffer cb = CharBuffer.allocate(4096);
+			String response = "";
 			try (Reader in = new InputStreamReader(conn.getInputStream())) {
-				in.read(cb);
+				response = IOUtils.toString(in);
 			}
-			if (conn.getResponseCode() >= 400)
-				log.info("notification response: " + cb);
+			if (conn.getResponseCode() >= 400 && log.isInfoEnabled())
+				log.info(String.format("notification response: %s\n%s",
+						conn.getResponseMessage(), response));
 		} catch (IOException | DatatypeConfigurationException | JAXBException e) {
 			log.warn("failed to do notification to " + u, e);
 		}
 	}
 
-	private void notifyPlanService(String planId,
-			ExecutionStateChange.State state, String content) {
-		ExecutionStateChange message = new ExecutionStateChange();
-		message.state = state;
-		message.contents = content;
-		notifyPlanService(planId, message);
+	/**
+	 * Convert a state change description to its serialized XML form. Adds in
+	 * the timestamp.
+	 * 
+	 * @param stateChange
+	 *            The requested state change.
+	 * @return The XML document as a string.
+	 */
+	private String serializeStateChange(ExecutionStateChange stateChange)
+			throws DatatypeConfigurationException, JAXBException {
+		GregorianCalendar c = new GregorianCalendar();
+		stateChange.timestamp = DatatypeFactory.newInstance()
+				.newXMLGregorianCalendar(c);
+		StringWriter sw = new StringWriter();
+		context.createMarshaller().marshal(stateChange, sw);
+		return sw.toString();
+	}
+
+	private void addFileInfo(TavernaRun r, ExecutionStateChange change) {
+		if (serviceUri == null)
+			return;
+		UriBuilder ub = UriBuilder.fromUri(serviceUri).path(
+				"rest/runs/{id}/wd/{name}");
+		try {
+			Directory out = fileUtils.getDirectory(r, "out");
+			change.output = ub.build(r.getId(), out.getFullName()).toString();
+		} catch (FilesystemAccessException | NoDirectoryEntryException e) {
+			// Do nothing in this case
+		}
+		Iterator<File> prov = support.getProv(r).iterator();
+		if (prov.hasNext())
+			change.provenance = ub.build(r.getId(), prov.next().getFullName())
+					.toString();
 	}
 
 	private void notifySuccess(TavernaRun r, String planId) {
-		String message;
-		State state;
+		ExecutionStateChange change = new ExecutionStateChange();
 		try {
 			String code = support.getListener(r, "io").getProperty("exitcode");
 			if (code.equals("0")) {
-				message = format("job %s has terminated successfully",
+				change.contents = format("job %s has terminated successfully",
 						r.getId());
-				state = State.Success;
-				// FIXME read file contents from run
+				change.state = State.Success;
+				addFileInfo(r, change);
 			} else {
-				message = format(
+				change.contents = format(
 						"job %s has terminated with catastrophic errors",
 						r.getId());
-				state = State.Fail;
+				change.state = State.Fail;
+				addFileInfo(r, change);
 			}
 		} catch (NoListenerException e) {
 			log.error(
 					"no such listener or property when looking for io/exitcode",
 					e);
-			message = format("job %s has no properly defined exit status?",
-					r.getId());
-			state = State.Fail;
+			change.contents = format(
+					"job %s has no properly defined exit status?", r.getId());
+			change.state = State.Fail;
 		}
-		notifyPlanService(planId, state, message);
+		notifyPlanService(planId, change);
 	}
 
 	@SuppressWarnings("serial")
@@ -502,11 +540,10 @@ public class ScapeExecutor implements ScapeExecutionService {
 		run(id);
 		if (!dao.isScapeJob(id))
 			throw new UnknownRunException();
-		String addr = dao.getNotify(id);
-		return (addr == null ? "" : addr);
+		return Integer.toString(dao.getNotify(id));
 	}
 
-	@RolesAllowed(ADMIN)
+	@RolesAllowed(USER)
 	@PerfLogged
 	@Override
 	public String setNotification(String id, String newValue)
@@ -516,8 +553,7 @@ public class ScapeExecutor implements ScapeExecutionService {
 		run(id);
 		if (!dao.isScapeJob(id))
 			throw new UnknownRunException();
-		String addr = dao.updateNotify(id, newValue);
-		return (addr == null ? "" : addr);
+		return Integer.toString(dao.updateNotify(id, newValue));
 	}
 
 	@Override

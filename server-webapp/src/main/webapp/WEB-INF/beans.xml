@@ -29,6 +29,7 @@
 		<property name="runStore" ref="worker.rundb" />
 		<property name="splicer" ref="scape.splicer" />
 		<property name="dao" ref="scape.dao" />
+		<property name="fileUtils" ref="fileUtils" />
 		<property name="contentsDescriptorBuilder" ref="contentsDescriptorBuilder" />
 	</bean>
 	<bean id="scape.splicer" class="org.taverna.server.master.scape.ScapeSplicingEngine">

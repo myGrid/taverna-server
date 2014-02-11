@@ -9,7 +9,6 @@ import javax.jdo.annotations.Queries;
 import javax.jdo.annotations.Query;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 
 /**
  * The representation of a SCAPE job in the database.
@@ -28,13 +27,13 @@ class ScapeJob implements Serializable {
 	static final String EXISTS_QUERY = "SELECT count(*) FROM " + FULL_NAME
 			+ " WHERE id = ?";
 	static final String NOTIFY_QUERY = "SELECT id FROM " + FULL_NAME
-			+ " WHERE notify IS NOT NULL";
+			+ " WHERE notify = 1";
 
 	@Persistent(primaryKey = "true")
 	@Column(length = 48)
 	private String id;
 	@Persistent
-	private String notify;
+	private int notify;
 	@Persistent
 	private String planId;
 
@@ -48,12 +47,7 @@ class ScapeJob implements Serializable {
 	public ScapeJob(@NonNull String id, @NonNull String planId) {
 		this.id = id;
 		this.planId = planId;
-	}
-
-	public ScapeJob(@NonNull String id, @NonNull String planId, @NonNull String notify) {
-		this.id = id;
-		this.planId = planId;
-		this.notify = notify;
+		this.notify = 1;
 	}
 
 	@NonNull
@@ -66,12 +60,11 @@ class ScapeJob implements Serializable {
 		return id;
 	}
 
-	@Nullable
-	public String getNotify() {
+	public int getNotify() {
 		return notify;
 	}
 
-	public void setNotify(@Nullable String notify) {
+	public void setNotify(int notify) {
 		this.notify = notify;
 	}
 }

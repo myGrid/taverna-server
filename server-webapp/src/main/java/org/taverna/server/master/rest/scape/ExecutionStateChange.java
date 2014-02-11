@@ -7,12 +7,24 @@ import javax.xml.datatype.XMLGregorianCalendar;
 
 @XmlRootElement(name = "execution-state", namespace = "")
 public class ExecutionStateChange {
-	@XmlAttribute
+	@XmlAttribute(required = true)
 	public XMLGregorianCalendar timestamp;
-	@XmlAttribute
+	@XmlAttribute(required = true)
 	public State state;
+	@XmlAttribute(name = "output-location")
+	public String output;
+	@XmlAttribute(name = "provenance-bundle-location")
+	public String provenance;
 	@XmlValue
 	public String contents;
+
+	public ExecutionStateChange() {
+	}
+
+	public ExecutionStateChange(State state, String contents) {
+		this.state = state;
+		this.contents = contents;
+	}
 
 	public static enum State {
 		InProgress("EXECUTION_IN_PROGRESS"), Success("EXECUTION_SUCCESS"), Fail(
