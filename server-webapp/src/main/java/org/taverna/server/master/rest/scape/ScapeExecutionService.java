@@ -98,27 +98,27 @@ public interface ScapeExecutionService {
 
 	@XmlRootElement(name = "job")
 	public static class Job {
-		@XmlAttribute
+		@XmlAttribute(name = "plan-id")
 		public String planId;
 		@XmlElement(required = true)
 		public Status status;
-		@XmlElement
+		@XmlElement(name = "server-job")
 		public Uri serverJob;
 		@XmlElement
 		public Uri output;
 		@XmlElement
 		public Uri provenance;
-		@XmlElement
+		@XmlElement(name = "enacted-workflow")
 		public Uri enactedWorkflow;
-		@XmlElement
+		@XmlElement(name = "notification-address")
 		public Uri notificationAddress;
 	}
 
-	@XmlRootElement(name = "JobRequest")
+	@XmlRootElement(name = "job-request")
 	public static class JobRequest {
-		@XmlElement(required = true)
+		@XmlElement(required = true, namespace="http://ifs.tuwien.ac.at/dp/plato")
 		public PreservationActionPlan preservationActionPlan;
-		@XmlElement(required = true)
+		@XmlElement(required = true, name = "plan-id")
 		public String planId;
 	}
 }

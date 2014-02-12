@@ -9,6 +9,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
+import java.io.PrintStream;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.Arrays;
@@ -21,9 +22,9 @@ import javax.xml.transform.stream.StreamResult;
 import org.junit.Before;
 import org.junit.Test;
 import org.taverna.server.master.admin.Admin;
+import org.taverna.server.master.common.Capability;
 import org.taverna.server.master.common.Credential.KeyPair;
 import org.taverna.server.master.common.Credential.Password;
-import org.taverna.server.master.common.Capability;
 import org.taverna.server.master.common.DirEntryReference;
 import org.taverna.server.master.common.InputDescription;
 import org.taverna.server.master.common.Permission;
@@ -87,12 +88,12 @@ public class JaxbSanityTest {
 		assertEquals("", schema());
 	}
 
-	private boolean printSchema = false;
+	private PrintStream printSchema = null;
 
 	private void testJAXB(Class<?>... classes) throws Exception {
 		JAXBContext.newInstance(classes).generateSchema(sink);
-		if (printSchema)
-			System.out.println(schema());
+		if (printSchema != null)
+			printSchema.println(schema());
 		assertTrue(schema().length() > 0);
 	}
 
@@ -353,8 +354,22 @@ public class JaxbSanityTest {
 	}
 
 	@Test
-	public void textJAXBforScape() throws Exception {
+	public void testJAXBforScape() throws Exception {
 		testJAXB(PreservationActionPlan.class, ScapeExecutionService.Job.class,
-				ScapeExecutionService.Jobs.class);
+				ScapeExecutionService.Jobs.class,
+				ScapeExecutionService.JobRequest.class);
 	}
+
+	@Test
+	public void printJAXBforScapeJobRequest() throws Exception {
+		try {
+			printSchema = System.out;
+			testJAXB(ScapeExecutionService.Job.class,
+					ScapeExecutionService.Jobs.class,
+					ScapeExecutionService.JobRequest.class);
+		} finally {
+			printSchema = null;
+		}
+	}
+
 }

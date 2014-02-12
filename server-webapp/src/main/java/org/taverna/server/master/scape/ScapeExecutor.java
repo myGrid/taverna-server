@@ -318,6 +318,7 @@ public class ScapeExecutor implements ScapeExecutionService {
 			@NonNull final String planId, @NonNull final List<Object> objs,
 			@Nullable final Element schematron, @NonNull UriInfo ui)
 			throws NoCreateException, UnknownRunException {
+		/* Warning: do not move UriInfo across threads */
 		final URI base = ui.getBaseUri();
 		final String jobId = support.buildWorkflow(w);
 		dao.setScapeJob(jobId, planId);
@@ -330,31 +331,41 @@ public class ScapeExecutor implements ScapeExecutionService {
 			@Override
 			public void run() {
 				try {
-					Set<String> inputs = new HashSet<String>();
-					for (InputPort o : inDesc.input)
-						inputs.add(o.name);
-					if (inputs.contains("planId"))
-						initPlanID(run, planId);
-					run.setGenerateProvenance(true);
-					initObjects(run, objs);
-					if (schematron != null)
-						initSLA(run, schematron);
-					setExecuting(run);
-					if (notifyService != null)
-						notifyPlanService(
-								planId,
-								new ExecutionStateChange(
-										State.InProgress,
-										format("Commenced execution using jobID=%s on %s",
-												jobId, base)));
+					executeWorkflow(planId, objs, schematron, base, jobId, run,
+							inDesc);
 				} catch (Exception e) {
 					log.warn("failed to initialize SCAPE workflow", e);
 				}
 			}
 		});
 		worker.setDaemon(true);
+		worker.setName("Taverna Server: SCAPE job initialization: " + jobId);
 		worker.start();
 		return jobId;
+	}
+
+	private void executeWorkflow(@NonNull String planId,
+			@NonNull List<Object> objs, @Nullable Element schematron,
+			@NonNull URI base, @NonNull String jobId, @NonNull TavernaRun run,
+			@NonNull InputDescription inDesc) throws BadStateChangeException,
+			TransformerException {
+		Set<String> inputs = new HashSet<String>();
+		for (InputPort o : inDesc.input)
+			inputs.add(o.name);
+		if (inputs.contains("planId"))
+			initPlanID(run, planId);
+		run.setGenerateProvenance(true);
+		initObjects(run, objs);
+		if (schematron != null)
+			initSLA(run, schematron);
+		// FIXME initialize job security token (RODA)
+		setExecuting(run);
+		if (notifyService != null) {
+			String msg = format("Commenced execution using jobID=%s on %s",
+					jobId, base);
+			notifyPlanService(planId, new ExecutionStateChange(
+					State.InProgress, msg));
+		}
 	}
 
 	private void initPlanID(@NonNull TavernaRun run, @NonNull String planId)
