@@ -37,7 +37,6 @@ import javax.xml.xpath.XPathExpressionException;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.springframework.beans.factory.annotation.Required;
-import org.springframework.beans.factory.annotation.Value;
 import org.taverna.server.master.common.Workflow;
 import org.taverna.server.master.exceptions.NoCreateException;
 import org.w3c.dom.Attr;
@@ -66,8 +65,7 @@ public abstract class SplicingEngine extends XPathSupport {
 	private final Map<String, String> wrapperContents = new HashMap<String, String>();
 	private final DocumentBuilderFactory docBuilderFactory;
 
-	@Value("${scape.wrapperPrefix}")
-	private String wrapperPrefix;
+	protected String wrapperPrefix;
 	protected String innerProcessorName;
 	protected String linkingDataflowName;
 
@@ -78,6 +76,7 @@ public abstract class SplicingEngine extends XPathSupport {
 		docBuilderFactory.setNamespaceAware(true);
 	}
 
+	@Required
 	public void setWrapperPrefix(String wrapperPrefix) {
 		this.wrapperPrefix = wrapperPrefix;
 	}
@@ -119,17 +118,23 @@ public abstract class SplicingEngine extends XPathSupport {
 	}
 
 	@NonNull
-	protected synchronized Element getWrapperInstance(@NonNull String modelName)
-			throws IOException, ParserConfigurationException, SAXException {
-		if (!wrapperContents.containsKey(modelName)) {
-			String name = wrapperPrefix + modelName + ".t2flow";
-			URL resource = getClass().getResource(name);
-			if (resource == null)
-				throw new FileNotFoundException("no such resource: " + name);
-			wrapperContents.put(modelName, IOUtils.toString(resource));
-		}
+	protected final synchronized Element getWrapperInstance(
+			@NonNull String modelName) throws IOException,
+			ParserConfigurationException, SAXException {
+		if (!wrapperContents.containsKey(modelName))
+			wrapperContents.put(modelName, loadWrapperInstance(wrapperPrefix
+					+ modelName + ".t2flow"));
 		return parse(new InputSource(new StringReader(
 				wrapperContents.get(modelName))));
+	}
+
+	@NonNull
+	protected String loadWrapperInstance(@NonNull String fileName)
+			throws IOException {
+		URL resource = getClass().getResource(fileName);
+		if (resource == null)
+			throw new FileNotFoundException("no such resource: " + fileName);
+		return IOUtils.toString(resource);
 	}
 
 	/**

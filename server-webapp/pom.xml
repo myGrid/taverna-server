@@ -673,6 +673,7 @@
 			<incomplete>false</incomplete>
 			<configs>
 				<config>src/main/webapp/WEB-INF/beans.xml</config>
+				<config>src/main/webapp/WEB-INF/scape.xml</config>
 				<config>src/main/webapp/WEB-INF/providers.xml</config>
 				<config>src/main/webapp/WEB-INF/secure.xml</config>
 				<config>src/main/webapp/WEB-INF/webappBeans.xml</config>
@@ -686,6 +687,7 @@
 			<incomplete>false</incomplete>
 			<configs>
 				<config>src/main/webapp/WEB-INF/beans.xml</config>
+				<config>src/main/webapp/WEB-INF/scape.xml</config>
 				<config>src/main/webapp/WEB-INF/insecure.xml</config>
 				<config>src/main/webapp/WEB-INF/providers.xml</config>
 				<config>src/main/webapp/WEB-INF/webappBeans.xml</config>
@@ -699,6 +701,7 @@
 			<incomplete>false</incomplete>
 			<configs>
 				<config>src/main/webapp/WEB-INF/beans.xml</config>
+				<config>src/main/webapp/WEB-INF/scape.xml</config>
 				<config>src/main/webapp/WEB-INF/providers.xml</config>
 				<config>src/main/webapp/WEB-INF/webappBeans.xml</config>
 				<config>src/main/webapp/WEB-INF/partsecure.xml</config>

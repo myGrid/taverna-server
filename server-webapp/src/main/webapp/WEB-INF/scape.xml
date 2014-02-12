@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright (C) 2014 The University of Manchester See the file "LICENSE" 
+	for license terms. -->
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:task="http://www.springframework.org/schema/task" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	default-lazy-init="false"
+	xsi:schemaLocation="http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task-3.0.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+	<bean id="scape.properties"
+		class="org.springframework.context.support.PropertySourcesPlaceholderConfigurer">
+		<property name="ignoreUnresolvablePlaceholders" value="true" />
+		<property name="localOverride" value="true" />
+		<property name="order" value="0" />
+		<property name="location" value="/scape.properties" />
+	</bean>
+
+	<bean id="scape" class="org.taverna.server.master.scape.ScapeExecutor">
+		<property name="support" ref="webapp.support" />
+		<property name="policy" ref="worker.policy" />
+		<property name="runStore" ref="worker.rundb" />
+		<property name="splicer" ref="scape.splicer" />
+		<property name="dao" ref="scape.dao" />
+		<property name="fileUtils" ref="fileUtils" />
+		<property name="contentsDescriptorBuilder" ref="contentsDescriptorBuilder" />
+		<property name="notifyService" value="${scape.planManagementService}" />
+		<property name="notifyUser" value="${scape.planManagementUser}" />
+		<property name="notifyPassword" value="${scape.planManagementPassword}" />
+	</bean>
+
+	<bean id="scape.splicer" class="org.taverna.server.master.scape.ScapeSplicingEngine">
+		<property name="dummyProcessorName" value="${scape.dummyProcessor}" />
+		<property name="linkingDataflowName" value="${scape.linkingDataflow}" />
+		<property name="innerProcessorName" value="${scape.innerProcessor}" />
+		<property name="wrapperPrefix" value="${scape.wrapperPrefix}" />
+		<property name="wrapperDirectory" value="${scape.wrapperDirectory}" />
+		<property name="componentRepositoryAddress" value="${scape.componentRepository}" />
+		<property name="utilityComponentFamily" value="${scape.utilityComponentFamily}" />
+		<property name="builderComponentName" value="${scape.builderComponent}" />
+		<property name="builderComponentVersion" value="${scape.builderComponentVersion}" />
+		<property name="joinerComponentName" value="${scape.joinerComponent}" />
+		<property name="joinerComponentVersion" value="${scape.joinerComponentVersion}" />
+	</bean>
+
+	<bean id="scape.dao" class="org.taverna.server.master.scape.ScapeJobDAO">
+		<property name="persistenceManagerFactory" ref="pmf" />
+	</bean>
+
+	<task:scheduled-tasks>
+		<task:scheduled ref="scape" method="detectCompletion"
+			fixed-delay="${scape.completionInterval}" />
+	</task:scheduled-tasks>
+</beans>

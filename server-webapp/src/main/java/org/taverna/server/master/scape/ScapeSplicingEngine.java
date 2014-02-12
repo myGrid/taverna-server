@@ -15,6 +15,7 @@ import static org.taverna.server.master.scape.XPaths.OUTPUT_PORT_LIST;
 import static org.taverna.server.master.scape.XPaths.PORT_DEPTH;
 import static org.taverna.server.master.scape.XPaths.REQUIRE_NESTED;
 
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.StringReader;
@@ -35,6 +36,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.ws.Holder;
 import javax.xml.xpath.XPathExpressionException;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.springframework.beans.factory.annotation.Required;
@@ -104,6 +106,7 @@ public class ScapeSplicingEngine extends SplicingEngine {
 	private String joinerName = "MeasuresDocCombiner";
 	private String joinerVersion = "1";
 	private String dummyProcessorName;
+	private String wrapperDirectory;
 
 	public ScapeSplicingEngine() throws ParserConfigurationException {
 		super(log);
@@ -152,6 +155,13 @@ public class ScapeSplicingEngine extends SplicingEngine {
 	@Required
 	public void setDummyProcessorName(String name) {
 		dummyProcessorName = name;
+	}
+
+	public void setWrapperDirectory(String directory) {
+		if (directory == null || directory.isEmpty()
+				|| !new File(directory).isDirectory())
+			wrapperDirectory = null;
+		wrapperDirectory = directory;
 	}
 
 	@NonNull
@@ -405,6 +415,18 @@ public class ScapeSplicingEngine extends SplicingEngine {
 					"annotations");
 			datalink(topMaster, null, in, linkingDataflowName, in);
 		}
+	}
+
+	@NonNull
+	@Override
+	protected String loadWrapperInstance(@NonNull String name)
+			throws IOException {
+		if (wrapperDirectory != null) {
+			File f = new File(wrapperDirectory, name);
+			if (f.exists() && f.isFile())
+				return FileUtils.readFileToString(f);
+		}
+		return super.loadWrapperInstance(name);
 	}
 
 	public static void main(String... args) throws Exception {
