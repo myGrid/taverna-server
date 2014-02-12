@@ -22,6 +22,7 @@
 		<property name="splicer" ref="scape.splicer" />
 		<property name="dao" ref="scape.dao" />
 		<property name="fileUtils" ref="fileUtils" />
+		<property name="certificateChainFetcher" ref="certificateChainFetcher" />
 		<property name="contentsDescriptorBuilder" ref="contentsDescriptorBuilder" />
 		<property name="notifyService" value="${scape.planManagementService}" />
 		<property name="notifyUser" value="${scape.planManagementUser}" />

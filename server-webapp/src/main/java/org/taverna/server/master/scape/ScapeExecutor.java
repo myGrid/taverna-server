@@ -27,6 +27,7 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
+import java.security.GeneralSecurityException;
 import java.util.GregorianCalendar;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -56,11 +57,14 @@ import org.apache.commons.logging.Log;
 import org.springframework.beans.factory.annotation.Required;
 import org.taverna.server.master.ContentsDescriptorBuilder;
 import org.taverna.server.master.TavernaServerSupport;
+import org.taverna.server.master.common.Credential;
 import org.taverna.server.master.common.Namespaces;
+import org.taverna.server.master.common.Trust;
 import org.taverna.server.master.common.Uri;
 import org.taverna.server.master.common.Workflow;
 import org.taverna.server.master.exceptions.BadStateChangeException;
 import org.taverna.server.master.exceptions.FilesystemAccessException;
+import org.taverna.server.master.exceptions.InvalidCredentialException;
 import org.taverna.server.master.exceptions.NoCreateException;
 import org.taverna.server.master.exceptions.NoDestroyException;
 import org.taverna.server.master.exceptions.NoDirectoryEntryException;
@@ -72,11 +76,13 @@ import org.taverna.server.master.interfaces.File;
 import org.taverna.server.master.interfaces.Policy;
 import org.taverna.server.master.interfaces.RunStore;
 import org.taverna.server.master.interfaces.TavernaRun;
+import org.taverna.server.master.interfaces.TavernaSecurityContext;
 import org.taverna.server.master.rest.scape.ExecutionStateChange;
 import org.taverna.server.master.rest.scape.ExecutionStateChange.State;
 import org.taverna.server.master.rest.scape.ScapeExecutionService;
 import org.taverna.server.master.scape.ScapeSplicingEngine.Model;
 import org.taverna.server.master.utils.CallTimeLogger.PerfLogged;
+import org.taverna.server.master.utils.CertificateChainFetcher;
 import org.taverna.server.master.utils.FilenameUtils;
 import org.taverna.server.master.utils.InvocationCounter.CallCounted;
 import org.taverna.server.port_description.InputDescription;
@@ -348,7 +354,8 @@ public class ScapeExecutor implements ScapeExecutionService {
 			@NonNull List<Object> objs, @Nullable Element schematron,
 			@NonNull URI base, @NonNull String jobId, @NonNull TavernaRun run,
 			@NonNull InputDescription inDesc) throws BadStateChangeException,
-			TransformerException {
+			TransformerException, InvalidCredentialException, IOException,
+			GeneralSecurityException {
 		Set<String> inputs = new HashSet<String>();
 		for (InputPort o : inDesc.input)
 			inputs.add(o.name);
@@ -358,7 +365,7 @@ public class ScapeExecutor implements ScapeExecutionService {
 		initObjects(run, objs);
 		if (schematron != null)
 			initSLA(run, schematron);
-		// FIXME initialize job security token (RODA)
+		initSecurity(run);
 		setExecuting(run);
 		if (notifyService != null) {
 			String msg = format("Commenced execution using jobID=%s on %s",
@@ -384,6 +391,32 @@ public class ScapeExecutor implements ScapeExecutionService {
 	private void initSLA(@NonNull TavernaRun run, @NonNull Element schematron)
 			throws BadStateChangeException, TransformerException {
 		run.makeInput("sla").setValue(serializeXml(schematron));
+	}
+
+	private CertificateChainFetcher ccf;
+
+	@Required
+	public void setCertificateChainFetcher(CertificateChainFetcher ccf) {
+		this.ccf = ccf;
+	}
+
+	private void initSecurity(@NonNull TavernaRun run)
+			throws InvalidCredentialException, IOException,
+			GeneralSecurityException {
+		TavernaSecurityContext ctxt = run.getSecurityContext();
+
+		Credential.Password pw = new Credential.Password();
+		pw.id = "urn:scape:repository-credential";
+		pw.username = notifyUser;
+		pw.password = notifyPass;
+		pw.serviceURI = URI.create(notifyService);
+		ctxt.validateCredential(pw);
+		ctxt.addCredential(pw);
+
+		Trust t = new Trust();
+		t.loadedCertificates = ccf.getTrustsForURI(pw.serviceURI);
+		if (t.loadedCertificates != null)
+			ctxt.addTrusted(t);
 	}
 
 	@NonNull
