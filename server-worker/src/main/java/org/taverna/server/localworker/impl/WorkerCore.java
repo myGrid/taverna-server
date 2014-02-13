@@ -210,11 +210,14 @@ public class WorkerCore extends UnicastRemoteObject implements Worker,
 			@NonNull final Map<String, File> inputFiles,
 			@NonNull final Map<String, String> inputValues,
 			@Nullable final File outputBaclava,
-			@NonNull final File securityDir, @Nullable final char[] password,
+			@Nullable final File securityDir, @Nullable final char[] password,
 			final boolean generateProvenance,
 			@NonNull final Map<String, String> environment,
 			@NonNull final String token, @NonNull final List<String> runtime)
 			throws IOException {
+		if (securityDir == null)
+			throw new IllegalStateException(
+					"already deleted security directory");
 		try {
 			new TimingOutTask() {
 				@Override

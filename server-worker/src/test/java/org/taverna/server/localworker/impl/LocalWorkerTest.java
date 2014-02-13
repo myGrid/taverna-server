@@ -164,8 +164,6 @@ public class LocalWorkerTest {
 			}
 		}, randomUUID(), new HashMap<String, String>(),
 				new ArrayList<String>(), factory);
-		// Must be non-null
-		lw.securityDirectory = new File(System.getProperty("java.io.tmpdir"));
 		events = new ArrayList<String>();
 		returnThisStatus = RemoteStatus.Operating;
 	}

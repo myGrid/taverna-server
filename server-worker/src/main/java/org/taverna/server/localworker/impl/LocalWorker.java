@@ -282,8 +282,7 @@ public class LocalWorker extends UnicastRemoteObject implements RemoteSingleRun 
 		removeFromShutdownHooks();
 		// Is this it?
 		deleteWorkingDirectory();
-		if (DO_MKDIR)
-			deleteSecurityManagerDirectory();
+		deleteSecurityManagerDirectory();
 		core.deleteLocalResources();
 	}
 
@@ -739,10 +738,6 @@ public class LocalWorker extends UnicastRemoteObject implements RemoteSingleRun 
 		if (pw == null)
 			throw new IllegalStateException("null keystore password");
 		keystorePassword = null;
-		File securityDir = securityDirectory;
-		if (securityDir == null)
-			throw new IllegalStateException(
-					"already deleted security directory");
 		/*
 		 * Do not clear the keystorePassword array here; its ownership is
 		 * *transferred* to the worker core which doesn't copy it but *does*

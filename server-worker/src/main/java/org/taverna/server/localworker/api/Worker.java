@@ -52,8 +52,8 @@ public interface Worker {
 	 *            or <tt>null</tt> to have it written into the <tt>out</tt>
 	 *            subdirectory.
 	 * @param contextDirectory
-	 *            The directory containing the keystore and truststore. <i>Must
-	 *            not be <tt>null</tt>.</i>
+	 *            The directory containing the keystore and truststore. <i>Should
+	 *            not be <tt>null</tt></i> (except possibly during testing).
 	 * @param keystorePassword
 	 *            The password to the keystore and truststore. <i>Must not be
 	 *            <tt>null</tt>.</i>
@@ -75,7 +75,7 @@ public interface Worker {
 			@NonNull File workingDir, @Nullable File inputBaclavaFile,
 			@NonNull Map<String, File> inputRealFiles,
 			@NonNull Map<String, String> inputValues,
-			@Nullable File outputBaclavaFile, @NonNull File contextDirectory,
+			@Nullable File outputBaclavaFile, @Nullable File contextDirectory,
 			@NonNull char[] keystorePassword,
 			boolean generateProvenance,
 			@NonNull Map<String, String> environment,
