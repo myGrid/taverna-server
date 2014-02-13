@@ -282,7 +282,8 @@ public class LocalWorker extends UnicastRemoteObject implements RemoteSingleRun 
 		removeFromShutdownHooks();
 		// Is this it?
 		deleteWorkingDirectory();
-		deleteSecurityManagerDirectory();
+		if (DO_MKDIR)
+			deleteSecurityManagerDirectory();
 		core.deleteLocalResources();
 	}
 
