@@ -9,6 +9,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.taverna.server.master.api.ManagementModel;
 import org.taverna.server.master.common.RunReference;
+import org.taverna.server.master.common.Workflow;
 import org.taverna.server.master.exceptions.BadPropertyValueException;
 import org.taverna.server.master.exceptions.NoListenerException;
 import org.taverna.server.master.exceptions.NoUpdateException;
@@ -19,6 +20,7 @@ import org.taverna.server.master.mocks.ExampleRun;
 import org.taverna.server.master.mocks.MockPolicy;
 import org.taverna.server.master.mocks.SimpleListenerFactory;
 import org.taverna.server.master.mocks.SimpleNonpersistentRunStore;
+import org.w3c.dom.Element;
 
 import edu.umd.cs.findbugs.annotations.SuppressWarnings;
 
@@ -31,6 +33,7 @@ public class TavernaServerImplTest {
 	private ExampleRun.Builder runFactory;
 	private SimpleListenerFactory lFactory;
 	private TavernaServerSupport support;
+	private Workflow workflow;
 
 	private String lrunname;
 	private String lrunconf;
@@ -184,6 +187,8 @@ public class TavernaServerImplTest {
 						return makeListener(run, configuration);
 					}
 				}));
+		workflow = new Workflow();
+		workflow.content = new Element[0];
 	}
 
 	@Test
@@ -219,7 +224,7 @@ public class TavernaServerImplTest {
 
 	@Test
 	public void makeAndKillARun() throws NoUpdateException, UnknownRunException {
-		RunReference rr = server.submitWorkflow(null);
+		RunReference rr = server.submitWorkflow(workflow);
 		assertNotNull(rr);
 		assertNotNull(rr.name);
 		server.destroyRun(rr.name);
@@ -227,7 +232,7 @@ public class TavernaServerImplTest {
 
 	@Test
 	public void makeListenKillRun() throws Exception {
-		RunReference run = server.submitWorkflow(null);
+		RunReference run = server.submitWorkflow(workflow);
 		try {
 			lrunname = lrunconf = null;
 			assertEquals(asList("foo"), asList(server.getServerListeners()));
