@@ -219,6 +219,9 @@
 		<security:intercept-url pattern="/rest/**"
 			requires-channel="${requiredChannel}"
 			access="hasAnyRole('ROLE_tavernauser','ROLE_tavernaworkflow')" />
+		<security:intercept-url pattern="/scape/**"
+			requires-channel="${requiredChannel}"
+			access="hasRole('ROLE_tavernauser')" />
 		<security:intercept-url pattern="/feed"
 			requires-channel="${requiredChannel}"
 			access="hasRole('ROLE_tavernauser')" />
