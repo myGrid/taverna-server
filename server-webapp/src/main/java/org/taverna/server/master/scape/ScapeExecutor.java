@@ -28,6 +28,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.security.GeneralSecurityException;
+import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -118,6 +119,7 @@ public class ScapeExecutor implements ScapeExecutionService {
 	private FilenameUtils fileUtils;
 	private ContentsDescriptorBuilder cb;
 	private URI serviceUri;
+	private long timeout;
 
 	public ScapeExecutor() throws JAXBException {
 		context = JAXBContext.newInstance(ExecutionStateChange.class);
@@ -173,6 +175,10 @@ public class ScapeExecutor implements ScapeExecutionService {
 			this.notifyUser = null;
 			this.notifyPass = null;
 		}
+	}
+
+	public void setTimeoutHours(long timeoutHours) {
+		timeout = timeoutHours * 1000 * 60 * 60;
 	}
 
 	@NonNull
@@ -362,6 +368,9 @@ public class ScapeExecutor implements ScapeExecutionService {
 		if (inputs.contains("planId"))
 			initPlanID(run, planId);
 		run.setGenerateProvenance(true);
+		Date deadline = new Date();
+		deadline.setTime(deadline.getTime() + timeout);
+		run.setExpiry(deadline);
 		initObjects(run, objs);
 		if (schematron != null)
 			initSLA(run, schematron);

@@ -27,6 +27,7 @@
 		<property name="notifyService" value="${scape.planManagementService}" />
 		<property name="notifyUser" value="${scape.planManagementUser}" />
 		<property name="notifyPassword" value="${scape.planManagementPassword}" />
+		<property name="timeoutHours" value="${scape.timeoutHours}"></property>
 	</bean>
 
 	<bean id="scape.splicer" class="org.taverna.server.master.scape.ScapeSplicingEngine">
