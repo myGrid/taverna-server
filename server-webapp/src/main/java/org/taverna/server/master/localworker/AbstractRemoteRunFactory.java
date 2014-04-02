@@ -58,7 +58,7 @@ import org.taverna.server.master.worker.FactoryBean;
 import org.taverna.server.master.worker.RemoteRunDelegate;
 import org.taverna.server.master.worker.RunFactoryConfiguration;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 
 /**
  * Bridge to remote runs via RMI.
@@ -328,7 +328,7 @@ public abstract class AbstractRemoteRunFactory extends RunFactoryConfiguration
 	}
 
 	@Override
-	public TavernaRun create(@NonNull UsernamePrincipal creator, Workflow workflow)
+	public TavernaRun create(@Nonnull UsernamePrincipal creator, Workflow workflow)
 			throws NoCreateException {
 		try {
 			Date now = new Date();
@@ -338,9 +338,9 @@ public abstract class AbstractRemoteRunFactory extends RunFactoryConfiguration
 					state.getDefaultLifetime(), runDB, id,
 					state.getGenerateProvenance(), this);
 			run.setSecurityContext(securityFactory.create(run, creator));
-			@NonNull
+			@Nonnull
 			URL feedUrl = interactionFeedSupport.getFeedURI(run).toURL();
-			@NonNull
+			@Nonnull
 			URL webdavUrl = baseurifactory.getRunUriBuilder(run)
 					.path(DIR + "/interactions").build().toURL();
 			rsr.setInteractionServiceDetails(feedUrl, webdavUrl);
@@ -367,7 +367,7 @@ public abstract class AbstractRemoteRunFactory extends RunFactoryConfiguration
 	 * @throws Exception
 	 *             Just about anything can go wrong...
 	 */
-	protected abstract RemoteSingleRun getRealRun(@NonNull UsernamePrincipal creator,
+	protected abstract RemoteSingleRun getRealRun(@Nonnull UsernamePrincipal creator,
 			Workflow workflow, UUID id) throws Exception;
 
 	/**
@@ -379,7 +379,7 @@ public abstract class AbstractRemoteRunFactory extends RunFactoryConfiguration
 	 * @throws JAXBException
 	 *             If serialization fails.
 	 */
-	@NonNull
+	@Nonnull
 	protected String serializeWorkflow(Workflow workflow) throws JAXBException {
 		return workflow.marshal();
 	}
