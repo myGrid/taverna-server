@@ -27,6 +27,7 @@ import com.phloc.schematron.pure.SchematronResourcePure;
  * @deprecated Do not use directly
  */
 @Deprecated
+@SuppressWarnings({ "rawtypes", "unchecked" })
 class BeanshellSupport {
 	@Deprecated
 	static class RealizeDOs {
