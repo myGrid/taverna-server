@@ -113,6 +113,7 @@ public class ScapeSplicingEngine extends SplicingEngine {
 		baseSubject = "urn:" + UUID.randomUUID();
 	}
 
+	/** Where components are stored. Probably myExperiment. */
 	public void setComponentRepositoryAddress(String address)
 			throws MalformedURLException {
 		// Check if sane URI and URL!
@@ -120,12 +121,14 @@ public class ScapeSplicingEngine extends SplicingEngine {
 		repository = address;
 	}
 
+	/** The name of the component family for utility components. */
 	public void setUtilityComponentFamily(String name) {
 		if (name.isEmpty())
 			throw new IllegalArgumentException("family name must be non-empty");
 		utilityFamily = name;
 	}
 
+	/** The name of the component used to build atomic assessment documents. */
 	public void setBuilderComponentName(String name) {
 		if (name.isEmpty())
 			throw new IllegalArgumentException(
@@ -133,12 +136,14 @@ public class ScapeSplicingEngine extends SplicingEngine {
 		builderName = name;
 	}
 
+	/** The version of the component used to build atomic assessment documents. */
 	public void setBuilderComponentVersion(int version) {
 		if (version < 1)
 			throw new IllegalArgumentException("version must be positive");
 		builderVersion = Integer.toString(version);
 	}
 
+	/** The name of the component used to join assessment documents. */
 	public void setJoinerComponentName(String name) {
 		if (name.isEmpty())
 			throw new IllegalArgumentException(
@@ -146,17 +151,20 @@ public class ScapeSplicingEngine extends SplicingEngine {
 		joinerName = name;
 	}
 
+	/** The version of the component used to join assessment documents. */
 	public void setJoinerComponentVersion(int version) {
 		if (version < 1)
 			throw new IllegalArgumentException("version must be positive");
 		joinerVersion = Integer.toString(version);
 	}
 
+	/** The name of the processor to be deleted. */
 	@Required
 	public void setDummyProcessorName(String name) {
 		dummyProcessorName = name;
 	}
 
+	/** The name of the directory holding wrapping workflows. */
 	public void setWrapperDirectory(String directory) {
 		if (directory == null || directory.isEmpty()
 				|| !new File(directory).isDirectory())

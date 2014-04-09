@@ -76,16 +76,28 @@ public abstract class SplicingEngine extends XPathSupport {
 		docBuilderFactory.setNamespaceAware(true);
 	}
 
+	/**
+	 * The prefix for workflow file names used when working out what to load
+	 * wrappers from. The suffix is always <tt>.t2flow</tt>.
+	 */
 	@Required
 	public void setWrapperPrefix(String wrapperPrefix) {
 		this.wrapperPrefix = wrapperPrefix;
 	}
 
+	/**
+	 * The name of the processor that will have the injected workflow spliced
+	 * into it.
+	 */
 	@Required
 	public void setInnerProcessorName(String name) {
 		innerProcessorName = name;
 	}
 
+	/**
+	 * The name of the dataflow (sub-workflow) that contains the inner
+	 * processor.
+	 */
 	@Required
 	public void setLinkingDataflowName(String name) {
 		linkingDataflowName = name;

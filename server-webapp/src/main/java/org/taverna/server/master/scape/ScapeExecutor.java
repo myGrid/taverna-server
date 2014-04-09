@@ -120,55 +120,70 @@ public class ScapeExecutor implements ScapeExecutionService {
 	private ContentsDescriptorBuilder cb;
 	private URI serviceUri;
 	private long timeout;
+	private String repository;
+	private CertificateChainFetcher ccf;
 
 	public ScapeExecutor() throws JAXBException {
 		context = JAXBContext.newInstance(ExecutionStateChange.class);
 		log = getLog("Taverna.Server.Webapp.SCAPE");
 	}
 
+	/** Support utilities for working with workflow runs. */
 	@Required
 	public void setSupport(TavernaServerSupport support) {
 		this.support = support;
 	}
 
+	/** The run storage engine. (A database behind the scenes.) */
 	@Required
 	public void setRunStore(RunStore runStore) {
 		this.runStore = runStore;
 	}
 
+	/** The policy manager. */
 	@Required
 	public void setPolicy(Policy policy) {
 		this.policy = policy;
 	}
 
+	/** The workflow splicer. */
 	@Required
 	public void setSplicer(ScapeSplicingEngine splicer) {
 		this.splicer = splicer;
 	}
 
+	/** Engine for describing the inputs and outputs of a workflow. */
 	@Required
 	public void setContentsDescriptorBuilder(ContentsDescriptorBuilder cb) {
 		this.cb = cb;
 	}
 
+	/** Utilities for accessing a workflow run's filesystem. */
 	@Required
 	public void setFileUtils(FilenameUtils fileUtils) {
 		this.fileUtils = fileUtils;
 	}
 
+	/** The connection to the database. */
 	@Required
 	public void setDao(ScapeJobDAO dao) {
 		this.dao = dao;
 	}
 
+	/** Credentials for the PMS. */
 	public void setNotifyUser(String user) {
 		this.notifyUser = user;
 	}
 
+	/** Credentials for the PMS. */
 	public void setNotifyPassword(String pass) {
 		this.notifyPass = pass;
 	}
 
+	/**
+	 * The plan management service that wants to know about execution state
+	 * changes.
+	 */
 	public void setNotifyService(String serviceURL) {
 		this.notifyService = serviceURL;
 		if (serviceURL == null) {
@@ -177,8 +192,21 @@ public class ScapeExecutor implements ScapeExecutionService {
 		}
 	}
 
+	/** The place that holds digital objects. */
+	@Required
+	public void setRepository(String repositoryURL) {
+		this.repository = repositoryURL;
+	}
+
+	/** How long an execution is given to run. */
 	public void setTimeoutHours(long timeoutHours) {
 		timeout = timeoutHours * 1000 * 60 * 60;
+	}
+
+	/** Used to establish trust chains for services. */
+	@Required
+	public void setCertificateChainFetcher(CertificateChainFetcher ccf) {
+		this.ccf = ccf;
 	}
 
 	@NonNull
@@ -390,9 +418,6 @@ public class ScapeExecutor implements ScapeExecutionService {
 		run.makeInput("planId").setValue(planId);
 	}
 
-	// FIXME Hardcoded!
-	public String repository = "http://localhost:3000/";
-
 	private void initRepositories(@NonNull TavernaRun run)
 			throws BadStateChangeException {
 		run.makeInput("SourceRepository").setValue(repository);
@@ -410,13 +435,6 @@ public class ScapeExecutor implements ScapeExecutionService {
 	private void initSLA(@NonNull TavernaRun run, @NonNull Element schematron)
 			throws BadStateChangeException, TransformerException {
 		run.makeInput("sla").setValue(serializeXml(schematron));
-	}
-
-	private CertificateChainFetcher ccf;
-
-	@Required
-	public void setCertificateChainFetcher(CertificateChainFetcher ccf) {
-		this.ccf = ccf;
 	}
 
 	private void initSecurity(@NonNull TavernaRun run)
