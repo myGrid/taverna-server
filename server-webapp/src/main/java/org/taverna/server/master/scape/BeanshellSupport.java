@@ -113,25 +113,32 @@ class BeanshellSupport {
 	static class WriteDOsToRepository {
 		String errors;
 		String written;
+		String repository;
 		List<String> isSatisfied;
 		List<String> outputFiles;
+		List<String> digitalObjects;
 
 		public void shell() throws Exception {
-			StringBuilder errorsBuffer = new StringBuilder(
-					"<h1>Errors:</h1><ul>");
-			StringBuilder writtenBuffer = new StringBuilder("<h1>Written:</h1>");
+			StringBuilder errorsBuffer = new StringBuilder("<h1>Errors:</h1><ul>");
+			StringBuilder writtenBuffer = new StringBuilder("<h1>Written:</h1><ul>");
 			Iterator sat = isSatisfied.iterator();
 			Iterator out = outputFiles.iterator();
+			Iterator dos = digitalObjects.iterator();
 			int nout = 0, nerr = 0;
 			while (sat.hasNext() && out.hasNext()) {
+				Object src = dos.next();
+				Object dst = out.next();
 				if (sat.next().equals("true")) {
 					// FIXME
-					writtenBuffer.append("<li>wrote ").append(out.next())
-							.append(" back to repo</li>");
+					writtenBuffer.append("<li>wrote ").append(dst)
+							.append(" from ").append(src)
+							.append(" back to repo ").append(repository)
+							.append("</li>");
 					nout++;
 				} else {
-					errorsBuffer.append("<li>failed to write ")
-							.append(out.next()).append("</li>");
+					errorsBuffer.append("<li>did not write ").append(dst)
+							.append(" from ").append(src)
+							.append(" back; failed quality check</li>");
 					nerr++;
 				}
 			}

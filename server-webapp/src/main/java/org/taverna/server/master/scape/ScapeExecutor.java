@@ -371,6 +371,7 @@ public class ScapeExecutor implements ScapeExecutionService {
 		Date deadline = new Date();
 		deadline.setTime(deadline.getTime() + timeout);
 		run.setExpiry(deadline);
+		initRepositories(run);
 		initObjects(run, objs);
 		if (schematron != null)
 			initSLA(run, schematron);
@@ -387,6 +388,15 @@ public class ScapeExecutor implements ScapeExecutionService {
 	private void initPlanID(@NonNull TavernaRun run, @NonNull String planId)
 			throws BadStateChangeException {
 		run.makeInput("planId").setValue(planId);
+	}
+
+	// FIXME Hardcoded!
+	public String repository = "http://localhost:3000/";
+
+	private void initRepositories(@NonNull TavernaRun run)
+			throws BadStateChangeException {
+		run.makeInput("SourceRepository").setValue(repository);
+		run.makeInput("DestinationRepository").setValue(repository);
 	}
 
 	private void initObjects(@NonNull TavernaRun run, @NonNull List<Object> objs)
