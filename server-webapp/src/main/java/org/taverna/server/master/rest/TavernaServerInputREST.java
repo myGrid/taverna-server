@@ -13,6 +13,7 @@ import static org.taverna.server.master.rest.TavernaServerInputREST.PathNames.BA
 import static org.taverna.server.master.rest.TavernaServerInputREST.PathNames.EXPECTED;
 import static org.taverna.server.master.rest.TavernaServerInputREST.PathNames.ONE_INPUT;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -282,7 +283,7 @@ public interface TavernaServerInputREST {
 			for (PathSegment s : segments.subList(0, segments.size() - 2))
 				ub.segment(s.getPath());
 			ub.fragment(name);
-			descriptorRef = new Uri(ub);
+			descriptorRef = new Uri(ub).ref;
 		}
 
 		/** The name of the port. */
@@ -290,7 +291,7 @@ public interface TavernaServerInputREST {
 		public String name;
 		/** Where the port is described. Ignored in user input. */
 		@XmlAttribute(required = false)
-		public Uri descriptorRef;
+		public URI descriptorRef;
 		/** The character to use to split the input into a list. */
 		@XmlAttribute(name = "listDelimiter", required = false)
 		public String delimiter;
