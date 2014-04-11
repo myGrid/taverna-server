@@ -41,6 +41,13 @@ public interface Input {
 	public String getValue();
 
 	/**
+	 * @return The delimiter for the input port, or <tt>null</tt> if the value
+	 *         is not to be split.
+	 */
+	@Nullable
+	public String getDelimiter();
+
+	/**
 	 * Sets the file to use for this input. This overrides the use of the
 	 * previous file and any set value.
 	 * 
@@ -68,4 +75,17 @@ public interface Input {
 	 *             Initialized} state.
 	 */
 	public void setValue(@NonNull String value) throws BadStateChangeException;
+
+	/**
+	 * Sets (or clears) the delimiter for the input port.
+	 * 
+	 * @param delimiter
+	 *            The delimiter character, or <tt>null</tt> if the value is not
+	 *            to be split.
+	 * @throws BadStateChangeException
+	 *             If the run isn't in the {@link Status#Initialized
+	 *             Initialized} state.
+	 */
+	public void setDelimiter(@Nullable String delimiter)
+			throws BadStateChangeException;
 }

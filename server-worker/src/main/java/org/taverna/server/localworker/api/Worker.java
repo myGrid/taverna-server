@@ -47,6 +47,9 @@ public interface Worker {
 	 *            A mapping of input names to values to supply to them. Note
 	 *            that we assume that nothing mapped here will be mapped in
 	 *            <b>inputFiles</b>.
+	 * @param inputDelimiters
+	 *            A mapping of input names to characters used to split them into
+	 *            lists.
 	 * @param outputBaclavaFile
 	 *            What baclava file to write the output from the workflow into,
 	 *            or <tt>null</tt> to have it written into the <tt>out</tt>
@@ -75,6 +78,7 @@ public interface Worker {
 			@NonNull File workingDir, @Nullable File inputBaclavaFile,
 			@NonNull Map<String, File> inputRealFiles,
 			@NonNull Map<String, String> inputValues,
+			@NonNull Map<String, String> inputDelimiters,
 			@Nullable File outputBaclavaFile, @Nullable File contextDirectory,
 			@NonNull char[] keystorePassword,
 			boolean generateProvenance,

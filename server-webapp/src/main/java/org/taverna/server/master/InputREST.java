@@ -110,11 +110,11 @@ class InputREST implements TavernaServerInputREST, InputBean {
 	@Override
 	@CallCounted
 	@PerfLogged
-	public InDesc getInput(String name) throws BadInputPortNameException {
+	public InDesc getInput(String name, UriInfo ui) throws BadInputPortNameException {
 		Input i = support.getInput(run(), name);
 		if (i == null)
 			throw new BadInputPortNameException("unknown input port name");
-		return new InDesc(i);
+		return new InDesc(i, ui);
 	}
 
 	@Override
@@ -131,18 +131,22 @@ class InputREST implements TavernaServerInputREST, InputBean {
 	@Override
 	@CallCounted
 	@PerfLogged
-	public InDesc setInput(String name, InDesc inputDescriptor)
+	public InDesc setInput(String name, InDesc inputDescriptor, UriInfo ui)
 			throws NoUpdateException, BadStateChangeException,
 			FilesystemAccessException, BadInputPortNameException,
 			BadPropertyValueException {
+		inputDescriptor.descriptorRef = null;
 		AbstractContents ac = inputDescriptor.assignment;
 		if (name == null || name.isEmpty())
 			throw new BadInputPortNameException("bad input name");
 		if (ac == null)
 			throw new BadPropertyValueException("no content!");
-
+		if (inputDescriptor.delimiter != null
+				&& inputDescriptor.delimiter.isEmpty())
+			inputDescriptor.delimiter = null;
 		if (ac instanceof InDesc.Reference)
-			return setRemoteInput(name, (InDesc.Reference) ac);
+			return setRemoteInput(name, (InDesc.Reference) ac,
+					inputDescriptor.delimiter, ui);
 
 		String value = ac.contents;
 		if (value == null)
@@ -158,11 +162,13 @@ class InputREST implements TavernaServerInputREST, InputBean {
 			i.setFile(value);
 		else
 			i.setValue(value);
-		return new InDesc(i);
+		i.setDelimiter(inputDescriptor.delimiter);
+		return new InDesc(i, ui);
 	}
 
 	@NonNull
-	private InDesc setRemoteInput(@NonNull String name, @NonNull Reference ref)
+	private InDesc setRemoteInput(@NonNull String name, @NonNull Reference ref,
+			String delimiter, @NonNull UriInfo ui)
 			throws BadStateChangeException, BadPropertyValueException,
 			FilesystemAccessException {
 		URITemplate tmpl = new URITemplate(ui.getBaseUri()
@@ -185,7 +191,8 @@ class InputREST implements TavernaServerInputREST, InputBean {
 			if (i == null)
 				i = run().makeInput(name);
 			i.setFile(to.getFullName());
-			return new InDesc(i);
+			i.setDelimiter(delimiter);
+			return new InDesc(i, ui);
 		} catch (UnknownRunException e) {
 			throw new BadStateChangeException("may not copy from that run", e);
 		} catch (NoDirectoryEntryException e) {
