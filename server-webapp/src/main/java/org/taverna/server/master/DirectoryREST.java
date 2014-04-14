@@ -27,6 +27,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.annotation.Nonnull;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
@@ -51,11 +52,9 @@ import org.taverna.server.master.rest.FileSegment;
 import org.taverna.server.master.rest.MakeOrUpdateDirEntry;
 import org.taverna.server.master.rest.MakeOrUpdateDirEntry.MakeDirectory;
 import org.taverna.server.master.rest.TavernaServerDirectoryREST;
-import org.taverna.server.master.utils.FilenameUtils;
 import org.taverna.server.master.utils.CallTimeLogger.PerfLogged;
+import org.taverna.server.master.utils.FilenameUtils;
 import org.taverna.server.master.utils.InvocationCounter.CallCounted;
-
-import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
  * RESTful access to the filesystem.
@@ -176,7 +175,7 @@ class DirectoryREST implements TavernaServerDirectoryREST, DirectoryBean {
 		else if (!(de instanceof File))
 			throw new FilesystemAccessException("not a directory or file!");
 		File f = (File) de;
-		List<Variant> variants = new ArrayList<Variant>(INITIAL_FILE_VARIANTS);
+		List<Variant> variants = new ArrayList<>(INITIAL_FILE_VARIANTS);
 		String contentType = support.getEstimatedContentType(f);
 		if (!contentType.equals(APPLICATION_OCTET_STREAM)) {
 			String[] ct = contentType.split("/");
@@ -206,7 +205,7 @@ class DirectoryREST implements TavernaServerDirectoryREST, DirectoryBean {
 	public Response getDirectoryOrFileContents(List<PathSegment> path,
 			UriInfo ui, HttpHeaders headers) throws FilesystemAccessException,
 			NoDirectoryEntryException, NegotiationFailedException {
-		@NonNull
+		@Nonnull
 		DirectoryEntry de = fileUtils.getDirEntry(run, path);
 
 		// How did the user want the result?
@@ -291,7 +290,7 @@ class DirectoryREST implements TavernaServerDirectoryREST, DirectoryBean {
 			throw new FilesystemAccessException(
 					"Cannot create a file that is not in a directory.");
 
-		List<PathSegment> dirPath = new ArrayList<PathSegment>(filePath);
+		List<PathSegment> dirPath = new ArrayList<>(filePath);
 		String name = dirPath.remove(dirPath.size() - 1).getPath();
 		DirectoryEntry de = fileUtils.getDirEntry(run, dirPath);
 		if (!(de instanceof Directory)) {
@@ -327,7 +326,7 @@ class DirectoryREST implements TavernaServerDirectoryREST, DirectoryBean {
 	public Response setFileContents(List<PathSegment> filePath,
 			InputStream contents, UriInfo ui) throws NoDirectoryEntryException,
 			NoUpdateException, FilesystemAccessException {
-		Holder<Boolean> isNew = new Holder<Boolean>(true);
+		Holder<Boolean> isNew = new Holder<>(true);
 		support.copyStreamToFile(contents, getFileForWrite(filePath, isNew));
 
 		if (isNew.value)
@@ -354,7 +353,7 @@ class DirectoryREST implements TavernaServerDirectoryREST, DirectoryBean {
 			return status(422).entity("URI list must have value URL in it")
 					.build();
 		}
-		Holder<Boolean> isNew = new Holder<Boolean>(true);
+		Holder<Boolean> isNew = new Holder<>(true);
 		File f = getFileForWrite(filePath, isNew);
 
 		try {

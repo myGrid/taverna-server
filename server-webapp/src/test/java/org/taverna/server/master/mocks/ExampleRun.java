@@ -23,6 +23,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import javax.annotation.Nonnull;
 import javax.ws.rs.core.HttpHeaders;
 import javax.xml.ws.handler.MessageContext;
 
@@ -46,40 +47,36 @@ import org.taverna.server.master.interfaces.TavernaRun;
 import org.taverna.server.master.interfaces.TavernaSecurityContext;
 import org.taverna.server.master.utils.UsernamePrincipal;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.SuppressWarnings;
-
-@SuppressWarnings
-@java.lang.SuppressWarnings("serial")
+@SuppressWarnings("serial")
 public class ExampleRun implements TavernaRun, TavernaSecurityContext {
-	@NonNull
+	@Nonnull
 	String id;
-	@NonNull
+	@Nonnull
 	List<Listener> listeners;
-	@NonNull
+	@Nonnull
 	Workflow workflow;
-	@NonNull
+	@Nonnull
 	Status status;
-	@NonNull
+	@Nonnull
 	Date expiry;
-	@NonNull
+	@Nonnull
 	UsernamePrincipal owner;
 	String inputBaclava;
 	String outputBaclava;
 	java.io.File realRoot;
 	List<Input> inputs;
-	@NonNull
+	@Nonnull
 	String name = "";
 
-	public ExampleRun(@NonNull UsernamePrincipal creator,
-			@NonNull Workflow workflow, @NonNull Date expiry) {
+	public ExampleRun(@Nonnull UsernamePrincipal creator,
+			@Nonnull Workflow workflow, @Nonnull Date expiry) {
 		this.id = randomUUID().toString();
-		this.listeners = new ArrayList<Listener>();
+		this.listeners = new ArrayList<>();
 		this.status = Initialized;
 		this.owner = creator;
 		this.workflow = workflow;
 		this.expiry = expiry;
-		this.inputs = new ArrayList<Input>();
+		this.inputs = new ArrayList<>();
 		listeners.add(new DefaultListener());
 	}
 
@@ -150,7 +147,7 @@ public class ExampleRun implements TavernaRun, TavernaSecurityContext {
 
 		@Override
 		public TavernaRun create(UsernamePrincipal creator, Workflow workflow) {
-			@NonNull
+			@Nonnull
 			Calendar c = GregorianCalendar.getInstance();
 			c.add(MINUTE, lifetime);
 			return new ExampleRun(creator, workflow, c.getTime());
@@ -213,13 +210,13 @@ public class ExampleRun implements TavernaRun, TavernaSecurityContext {
 	}
 
 	class ExampleInput implements Input {
-		@NonNull
+		@Nonnull
 		public String name;
 		public String file;
 		public String value;
 		public String delim;
 
-		public ExampleInput(@NonNull String name) {
+		public ExampleInput(@Nonnull String name) {
 			this.name = name;
 		}
 
@@ -491,11 +488,11 @@ public class ExampleRun implements TavernaRun, TavernaSecurityContext {
 		};
 	}
 
-	@NonNull
+	@Nonnull
 	private Set<String> destroyers = new HashSet<String>();
-	@NonNull
+	@Nonnull
 	private Set<String> updaters = new HashSet<String>();
-	@NonNull
+	@Nonnull
 	private Set<String> readers = new HashSet<String>();
 
 	@Override

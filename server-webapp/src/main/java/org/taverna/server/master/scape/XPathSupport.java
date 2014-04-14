@@ -17,6 +17,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.xml.namespace.NamespaceContext;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -39,9 +41,6 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
-
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 
 class XPathSupport {
 	XPathSupport(Log log, String... map) {
@@ -107,7 +106,7 @@ class XPathSupport {
 		return result;
 	}
 
-	@NonNull
+	@Nonnull
 	public Element get(Element context, String expression, Object... args)
 			throws XPathExpressionException {
 		Element e = (Element) xp(expression, args).evaluate(context, NODE);
@@ -123,7 +122,7 @@ class XPathSupport {
 		return (Element) xp(expression, args).evaluate(context, NODE);
 	}
 
-	@NonNull
+	@Nonnull
 	public String text(Element context, String expression, Object... args)
 			throws XPathExpressionException {
 		return (String) xp(expression, args).evaluate(context, STRING);

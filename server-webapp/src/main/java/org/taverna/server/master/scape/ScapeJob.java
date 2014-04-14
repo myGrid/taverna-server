@@ -2,13 +2,12 @@ package org.taverna.server.master.scape;
 
 import java.io.Serializable;
 
+import javax.annotation.Nonnull;
 import javax.jdo.annotations.Column;
 import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.Queries;
 import javax.jdo.annotations.Query;
-
-import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
  * The representation of a SCAPE job in the database.
@@ -40,22 +39,22 @@ class ScapeJob implements Serializable {
 	public ScapeJob() {
 	}
 
-	public ScapeJob(@NonNull String id) {
+	public ScapeJob(@Nonnull String id) {
 		this.id = id;
 	}
 
-	public ScapeJob(@NonNull String id, @NonNull String planId) {
+	public ScapeJob(@Nonnull String id, @Nonnull String planId) {
 		this.id = id;
 		this.planId = planId;
 		this.notify = 1;
 	}
 
-	@NonNull
+	@Nonnull
 	public String getJobId() {
 		return id;
 	}
 
-	@NonNull
+	@Nonnull
 	public String getPlanId() {
 		return id;
 	}

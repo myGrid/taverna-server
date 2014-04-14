@@ -10,6 +10,7 @@ import static org.taverna.server.master.utils.RestUtils.opt;
 
 import java.util.Date;
 
+import javax.annotation.Nonnull;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
@@ -34,12 +35,10 @@ import org.taverna.server.master.interfaces.TavernaRun;
 import org.taverna.server.master.rest.TavernaServerInputREST;
 import org.taverna.server.master.rest.TavernaServerInputREST.InDesc.AbstractContents;
 import org.taverna.server.master.rest.TavernaServerInputREST.InDesc.Reference;
-import org.taverna.server.master.utils.FilenameUtils;
 import org.taverna.server.master.utils.CallTimeLogger.PerfLogged;
+import org.taverna.server.master.utils.FilenameUtils;
 import org.taverna.server.master.utils.InvocationCounter.CallCounted;
 import org.taverna.server.port_description.InputDescription;
-
-import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
  * RESTful interface to the input descriptor of a single workflow run.
@@ -77,7 +76,7 @@ class InputREST implements TavernaServerInputREST, InputBean {
 		return this;
 	}
 
-	@NonNull
+	@Nonnull
 	private TavernaRun run() {
 		TavernaRun r = run;
 		if (r == null)
@@ -166,14 +165,14 @@ class InputREST implements TavernaServerInputREST, InputBean {
 		return new InDesc(i, ui);
 	}
 
-	@NonNull
-	private InDesc setRemoteInput(@NonNull String name, @NonNull Reference ref,
-			String delimiter, @NonNull UriInfo ui)
+	@Nonnull
+	private InDesc setRemoteInput(@Nonnull String name, @Nonnull Reference ref,
+			String delimiter, @Nonnull UriInfo ui)
 			throws BadStateChangeException, BadPropertyValueException,
 			FilesystemAccessException {
 		URITemplate tmpl = new URITemplate(ui.getBaseUri()
 				+ "/runs/{runName}/wd/{path:.+}");
-		MultivaluedMap<String, String> mvm = new MetadataMap<String, String>();
+		MultivaluedMap<String, String> mvm = new MetadataMap<>();
 		if (!tmpl.match(ref.contents, mvm)) {
 			throw new BadPropertyValueException(
 					"URI in reference does not refer to local disk resource");
@@ -231,7 +230,7 @@ class InputREST implements TavernaServerInputREST, InputBean {
  * @author Donal Fellows
  */
 class SyntheticDirectoryEntry implements DirectoryEntry {
-	@NonNull
+	@Nonnull
 	public static DirEntryReference make(String path) {
 		return DirEntryReference.newInstance(new SyntheticDirectoryEntry(path));
 	}

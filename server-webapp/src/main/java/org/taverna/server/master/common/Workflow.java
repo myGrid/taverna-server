@@ -25,6 +25,7 @@ import java.io.StringWriter;
 import java.util.zip.DeflaterOutputStream;
 import java.util.zip.InflaterInputStream;
 
+import javax.annotation.Nonnull;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
@@ -37,8 +38,6 @@ import javax.xml.bind.annotation.XmlType;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-
-import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
  * Encapsulation of a T2flow document.
@@ -77,7 +76,7 @@ public class Workflow implements Serializable,Externalizable {
 		return (Workflow) unmarshaller.unmarshal(sr);
 	}
 
-	public @NonNull String marshal() throws JAXBException {
+	public @Nonnull String marshal() throws JAXBException {
 		StringWriter sw = new StringWriter();
 		marshaller.marshal(this, sw);
 		return sw.toString();
@@ -90,11 +89,10 @@ public class Workflow implements Serializable,Externalizable {
 			int len = in.readInt();
 			byte[] bytes = new byte[len];
 			in.readFully(bytes);
-			Reader r = new InputStreamReader(new InflaterInputStream(
-					new ByteArrayInputStream(bytes)), ENCODING);
-			Workflow w = (Workflow) unmarshaller.unmarshal(r);
-			r.close();
-			this.content = w.content;
+			try (Reader r = new InputStreamReader(new InflaterInputStream(
+					new ByteArrayInputStream(bytes)), ENCODING)) {
+				this.content = ((Workflow) unmarshaller.unmarshal(r)).content;
+			}
 			return;
 		} catch (JAXBException e) {
 			throw new IOException("failed to unmarshal", e);
@@ -107,10 +105,10 @@ public class Workflow implements Serializable,Externalizable {
 	public void writeExternal(ObjectOutput out) throws IOException {
 		try {
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
-			OutputStreamWriter w = new OutputStreamWriter(
-					new DeflaterOutputStream(baos), ENCODING);
-			marshaller.marshal(this, w);
-			w.close();
+			try (OutputStreamWriter w = new OutputStreamWriter(
+					new DeflaterOutputStream(baos), ENCODING)) {
+				marshaller.marshal(this, w);
+			}
 			byte[] bytes = baos.toByteArray();
 			out.writeInt(bytes.length);
 			out.write(bytes);

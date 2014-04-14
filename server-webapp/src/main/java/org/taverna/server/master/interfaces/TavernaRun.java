@@ -9,15 +9,15 @@ import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
 
-import org.taverna.server.master.common.Workflow;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
 import org.taverna.server.master.common.Status;
+import org.taverna.server.master.common.Workflow;
 import org.taverna.server.master.exceptions.BadStateChangeException;
 import org.taverna.server.master.exceptions.FilesystemAccessException;
 import org.taverna.server.master.exceptions.NoDestroyException;
 import org.taverna.server.master.exceptions.UnknownRunException;
-
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 
 /**
  * The interface to a taverna workflow run, or "run" for short.
@@ -28,26 +28,26 @@ public interface TavernaRun extends Serializable {
 	/**
 	 * @return The identifier of the run.
 	 */
-	@NonNull
+	@Nonnull
 	String getId();
 
 	/**
 	 * @return What was this run was create to execute.
 	 */
-	@NonNull
+	@Nonnull
 	Workflow getWorkflow();
 
 	/**
 	 * @return The name of the run.
 	 */
-	@NonNull
+	@Nonnull
 	String getName();
 
 	/**
 	 * @param name
 	 *            The new name of the run. May be truncated.
 	 */
-	void setName(@NonNull String name);
+	void setName(@Nonnull String name);
 
 	/**
 	 * @return The name of the Baclava file to use for all inputs, or
@@ -70,13 +70,13 @@ public interface TavernaRun extends Serializable {
 	 *             If the workflow is not in the {@link Status#Initialized
 	 *             Initialized} state.
 	 */
-	void setInputBaclavaFile(@NonNull String filename)
+	void setInputBaclavaFile(@Nonnull String filename)
 			throws FilesystemAccessException, BadStateChangeException;
 
 	/**
 	 * @return The list of input assignments.
 	 */
-	@NonNull
+	@Nonnull
 	List<Input> getInputs();
 
 	/**
@@ -89,8 +89,8 @@ public interface TavernaRun extends Serializable {
 	 *             If the workflow is not in the {@link Status#Initialized
 	 *             Initialized} state.
 	 */
-	@NonNull
-	Input makeInput(@NonNull String name) throws BadStateChangeException;
+	@Nonnull
+	Input makeInput(@Nonnull String name) throws BadStateChangeException;
 
 	/**
 	 * @return The file (relative to the working directory) to write the outputs
@@ -125,7 +125,7 @@ public interface TavernaRun extends Serializable {
 	 * @return When this run will expire, becoming eligible for automated
 	 *         deletion.
 	 */
-	@NonNull
+	@Nonnull
 	Date getExpiry();
 
 	/**
@@ -134,12 +134,12 @@ public interface TavernaRun extends Serializable {
 	 * @param d
 	 *            Expiry time. Deletion will happen some time after that.
 	 */
-	void setExpiry(@NonNull Date d);
+	void setExpiry(@Nonnull Date d);
 
 	/**
 	 * @return The current status of the run.
 	 */
-	@NonNull
+	@Nonnull
 	Status getStatus();
 
 	/**
@@ -154,19 +154,19 @@ public interface TavernaRun extends Serializable {
 	 *             If the change to the given state is impossible.
 	 */
 	@Nullable
-	String setStatus(@NonNull Status s) throws BadStateChangeException;
+	String setStatus(@Nonnull Status s) throws BadStateChangeException;
 
 	/**
 	 * @return Handle to the main working directory of the run.
 	 * @throws FilesystemAccessException
 	 */
-	@NonNull
+	@Nonnull
 	Directory getWorkingDirectory() throws FilesystemAccessException;
 
 	/**
 	 * @return The list of listener instances attached to the run.
 	 */
-	@NonNull
+	@Nonnull
 	List<Listener> getListeners();
 
 	/**
@@ -175,12 +175,12 @@ public interface TavernaRun extends Serializable {
 	 * @param listener
 	 *            The listener to add.
 	 */
-	void addListener(@NonNull Listener listener);
+	void addListener(@Nonnull Listener listener);
 
 	/**
 	 * @return The security context structure for this run.
 	 */
-	@NonNull
+	@Nonnull
 	TavernaSecurityContext getSecurityContext();
 
 	/**

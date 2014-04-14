@@ -7,11 +7,11 @@ package org.taverna.server.master.factories;
 
 import java.util.List;
 
+import javax.annotation.Nonnull;
+
 import org.taverna.server.master.exceptions.NoListenerException;
 import org.taverna.server.master.interfaces.Listener;
 import org.taverna.server.master.interfaces.TavernaRun;
-
-import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
  * How to make event listeners of various types that are attached to a workflow
@@ -35,9 +35,9 @@ public interface ListenerFactory {
 	 *             If the <b>listenerType</b> is unrecognized or the
 	 *             <b>configuration</b> is bad in some way.
 	 */
-	@NonNull
-	public Listener makeListener(@NonNull TavernaRun run,
-			@NonNull String listenerType, @NonNull String configuration)
+	@Nonnull
+	public Listener makeListener(@Nonnull TavernaRun run,
+			@Nonnull String listenerType, @Nonnull String configuration)
 			throws NoListenerException;
 
 	/**
@@ -46,6 +46,6 @@ public interface ListenerFactory {
 	 * 
 	 * @return A list of supported listener types.
 	 */
-	@NonNull
+	@Nonnull
 	public List<String> getSupportedListenerTypes();
 }

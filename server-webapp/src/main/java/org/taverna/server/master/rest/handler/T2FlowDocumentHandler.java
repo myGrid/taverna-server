@@ -11,6 +11,7 @@ import java.io.OutputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 
+import javax.annotation.Nonnull;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
@@ -30,8 +31,6 @@ import org.taverna.server.master.common.Workflow;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xml.sax.SAXException;
-
-import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
  * Handler that allows a .t2flow document to be read from and written to a REST
@@ -66,7 +65,7 @@ public class T2FlowDocumentHandler implements MessageBodyReader<Workflow>,
 	}
 
 	@Override
-	@NonNull
+	@Nonnull
 	public Workflow readFrom(Class<Workflow> type, Type genericType,
 			Annotation[] annotations, MediaType mediaType,
 			MultivaluedMap<String, String> httpHeaders, InputStream entityStream)

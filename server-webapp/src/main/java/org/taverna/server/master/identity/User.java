@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import javax.annotation.Nonnull;
 import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.Query;
@@ -22,8 +23,6 @@ import javax.xml.bind.annotation.XmlType;
 
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-
-import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
  * The representation of a user in the database.
@@ -66,7 +65,7 @@ public class User implements UserDetails {
 
 	@Override
 	public Collection<GrantedAuthority> getAuthorities() {
-		List<GrantedAuthority> auths = new ArrayList<GrantedAuthority>();
+		List<GrantedAuthority> auths = new ArrayList<>();
 		auths.add(new LiteralGrantedAuthority(USER));
 		if (admin)
 			auths.add(new LiteralGrantedAuthority(ADMIN));
@@ -137,20 +136,20 @@ public class User implements UserDetails {
 
 @SuppressWarnings("serial")
 class LiteralGrantedAuthority implements GrantedAuthority {
-	@NonNull
+	@Nonnull
 	private String auth;
 
-	LiteralGrantedAuthority(@NonNull String auth) {
+	LiteralGrantedAuthority(@Nonnull String auth) {
 		this.auth = auth;
 	}
 
-	@NonNull
+	@Nonnull
 	@Override
 	public String getAuthority() {
 		return auth;
 	}
 
-	@NonNull
+	@Nonnull
 	@Override
 	public String toString() {
 		return "AUTHORITY(" + auth + ")";

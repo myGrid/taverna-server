@@ -13,6 +13,7 @@ import java.lang.reflect.Method;
 import java.net.URI;
 import java.util.Map;
 
+import javax.annotation.Nonnull;
 import javax.annotation.PreDestroy;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriBuilderException;
@@ -24,9 +25,6 @@ import javax.xml.bind.annotation.XmlType;
 import org.apache.commons.logging.Log;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.web.PortMapper;
-
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.SuppressWarnings;
 
 /**
  * A class that makes it simpler to work with an element with a {@link URI} in
@@ -56,7 +54,7 @@ public class Uri {
 	 * @param ref
 	 *            Where to point to.
 	 */
-	public Uri(@NonNull URI ref) {
+	public Uri(@Nonnull URI ref) {
 		this.ref = secure(ref);
 	}
 
@@ -68,7 +66,7 @@ public class Uri {
 	 * @param strings
 	 *            The parameters to the factory.
 	 */
-	public Uri(@NonNull UriBuilder ub, @NonNull String... strings) {
+	public Uri(@Nonnull UriBuilder ub, String... strings) {
 		ref = secure(ub).build((Object[]) strings);
 	}
 
@@ -82,7 +80,7 @@ public class Uri {
 	 * @param strings
 	 *            The parameters to the factory.
 	 */
-	public Uri(@NonNull UriInfo ui, @NonNull String path, String... strings) {
+	public Uri(@Nonnull UriInfo ui, @Nonnull String path, String... strings) {
 		this(ui, true, path, strings);
 	}
 
@@ -98,9 +96,9 @@ public class Uri {
 	 * @param strings
 	 *            The parameters to the factory.
 	 */
-	public Uri(@NonNull UriInfo ui, boolean secure, @NonNull String path,
+	public Uri(@Nonnull UriInfo ui, boolean secure, @Nonnull String path,
 			String... strings) {
-		@NonNull
+		@Nonnull
 		UriBuilder ub = ui.getAbsolutePathBuilder();
 		if (secure) {
 			ub = secure(ub);
@@ -108,28 +106,28 @@ public class Uri {
 		ref = ub.path(path).build((Object[]) strings);
 	}
 
-	@NonNull
-	public static UriBuilder secure(@NonNull UriBuilder ub) {
+	@Nonnull
+	public static UriBuilder secure(@Nonnull UriBuilder ub) {
 		return Rewriter.getInstance().getSecuredUriBuilder(ub);
 	}
 
-	@NonNull
-	public static UriBuilder secure(@NonNull UriInfo ui) {
+	@Nonnull
+	public static UriBuilder secure(@Nonnull UriInfo ui) {
 		return secure(ui.getAbsolutePathBuilder());
 	}
 
-	@NonNull
-	public static URI secure(@NonNull URI uri) {
-		@NonNull
+	@Nonnull
+	public static URI secure(@Nonnull URI uri) {
+		@Nonnull
 		URI newURI = secure(fromUri(uri)).build();
 		if (log.isDebugEnabled())
 			log.debug("rewrote " + uri + " to " + newURI);
 		return newURI;
 	}
 
-	@NonNull
-	public static URI secure(@NonNull URI base, @NonNull String uri) {
-		@NonNull
+	@Nonnull
+	public static URI secure(@Nonnull URI base, @Nonnull String uri) {
+		@Nonnull
 		URI newURI = secure(fromUri(base.resolve(uri))).build();
 		if (log.isDebugEnabled())
 			log.debug("rewrote " + uri + " to " + newURI);
@@ -191,33 +189,31 @@ public class Uri {
 				this.rewriteTarget = "://" + rewriteTarget;
 		}
 
-		private Integer lookupHttpsPort(@NonNull URI uri) {
+		private Integer lookupHttpsPort(@Nonnull URI uri) {
 			if (portMapper != null)
 				return portMapper.lookupHttpsPort(uri.getPort());
 			return null;
 		}
 
-		@SuppressWarnings
 		public Rewriter() {
 			instance = this;
 		}
 
 		@PreDestroy
-		@SuppressWarnings
 		public void done() {
 			instance = null;
 			Uri.log = null;
 		}
 
-		@NonNull
-		URI rewrite(@NonNull String url) {
+		@Nonnull
+		URI rewrite(@Nonnull String url) {
 			if (rewriteTarget != null)
 				url = url.replaceFirst(rewriteRE, rewriteTarget);
 			return URI.create(url);
 		}
 
-		@NonNull
-		public UriBuilder getSecuredUriBuilder(@NonNull UriBuilder uribuilder) {
+		@Nonnull
+		public UriBuilder getSecuredUriBuilder(@Nonnull UriBuilder uribuilder) {
 			if (suppress)
 				return uribuilder.clone();
 			UriBuilder ub = new RewritingUriBuilder(uribuilder);

@@ -7,10 +7,10 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import javax.annotation.Nonnull;
+
 import org.taverna.server.master.exceptions.FilesystemAccessException;
 import org.taverna.server.master.interfaces.File;
-
-import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
  * Simple concatenation of files.
@@ -18,10 +18,10 @@ import edu.umd.cs.findbugs.annotations.NonNull;
  * @author Donal Fellows
  */
 public class FileConcatenation implements Iterable<File> {
-	@NonNull
-	private final List<File> files = new ArrayList<File>();
+	@Nonnull
+	private List<File> files = new ArrayList<>();
 
-	public void add(@NonNull File f) {
+	public void add(@Nonnull File f) {
 		files.add(f);
 	}
 
@@ -54,23 +54,21 @@ public class FileConcatenation implements Iterable<File> {
 	 * @throws UnsupportedEncodingException
 	 *             If the encoding doesn't exist.
 	 */
-	@NonNull
+	@Nonnull
 	public String get(String encoding) throws UnsupportedEncodingException {
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		for (File f : files)
 			try {
 				if (f != null)
 					baos.write(f.getContents(0, -1));
-			} catch (FilesystemAccessException e) {
-				continue;
-			} catch (IOException e) {
+			} catch (FilesystemAccessException | IOException e) {
 				continue;
 			}
 		return baos.toString(encoding);
 	}
 
 	@Override
-	@NonNull
+	@Nonnull
 	public Iterator<File> iterator() {
 		return files.iterator();
 	}

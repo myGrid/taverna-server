@@ -5,10 +5,10 @@
  */
 package org.taverna.server.master.interfaces;
 
+import javax.annotation.Nonnull;
+
 import org.taverna.server.master.exceptions.BadPropertyValueException;
 import org.taverna.server.master.exceptions.NoListenerException;
-
-import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
  * An event listener that can be attached to a {@link TavernaRun}.
@@ -19,25 +19,25 @@ public interface Listener {
 	/**
 	 * @return The name of the listener.
 	 */
-	@NonNull
+	@Nonnull
 	public String getName();
 
 	/**
 	 * @return The type of the listener.
 	 */
-	@NonNull
+	@Nonnull
 	public String getType();
 
 	/**
 	 * @return The configuration document for the listener.
 	 */
-	@NonNull
+	@Nonnull
 	public String getConfiguration();
 
 	/**
 	 * @return The supported properties of the listener.
 	 */
-	@NonNull
+	@Nonnull
 	public String[] listProperties();
 
 	/**
@@ -50,8 +50,8 @@ public interface Listener {
 	 * @throws NoListenerException
 	 *             If no property with that name exists.
 	 */
-	@NonNull
-	public String getProperty(@NonNull String propName)
+	@Nonnull
+	public String getProperty(@Nonnull String propName)
 			throws NoListenerException;
 
 	/**
@@ -67,6 +67,6 @@ public interface Listener {
 	 * @throws BadPropertyValueException
 	 *             If the value of the property is bad (e.g., wrong syntax).
 	 */
-	public void setProperty(@NonNull String propName, @NonNull String value)
+	public void setProperty(@Nonnull String propName, @Nonnull String value)
 			throws NoListenerException, BadPropertyValueException;
 }

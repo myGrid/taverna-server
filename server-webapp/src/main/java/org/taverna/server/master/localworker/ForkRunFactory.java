@@ -24,6 +24,7 @@ import java.rmi.RemoteException;
 import java.util.Calendar;
 import java.util.UUID;
 
+import javax.annotation.Nonnull;
 import javax.annotation.PostConstruct;
 import javax.xml.bind.JAXBException;
 
@@ -36,8 +37,6 @@ import org.taverna.server.master.common.Workflow;
 import org.taverna.server.master.exceptions.NoCreateException;
 import org.taverna.server.master.factories.ConfigurableRunFactory;
 import org.taverna.server.master.utils.UsernamePrincipal;
-
-import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
  * A simple factory for workflow runs that forks runs from a subprocess.
@@ -200,9 +199,7 @@ public class ForkRunFactory extends AbstractRemoteRunFactory implements
 		try {
 			// Validate registry connection first
 			getTheRegistry().list();
-		} catch (ConnectException ce) {
-			log.warn("connection problems with registry", ce);
-		} catch (ConnectIOException e) {
+		} catch (ConnectException | ConnectIOException e) {
 			log.warn("connection problems with registry", e);
 		}
 		RemoteRunFactory rrf = (RemoteRunFactory) getTheRegistry().lookup(name);
@@ -349,9 +346,9 @@ public class ForkRunFactory extends AbstractRemoteRunFactory implements
 	 * @throws RemoteException
 	 *             If anything fails (communications error, etc.)
 	 */
-	private RemoteSingleRun getRealRun(@NonNull UsernamePrincipal creator,
-			@NonNull String wf, UUID id) throws RemoteException {
-		@NonNull String globaluser = "Unknown Person";
+	private RemoteSingleRun getRealRun(@Nonnull UsernamePrincipal creator,
+			@Nonnull String wf, UUID id) throws RemoteException {
+		@Nonnull String globaluser = "Unknown Person";
 		if (creator != null)
 			globaluser = creator.getName();
 		RemoteSingleRun rsr = getFactory().make(wf, globaluser,
@@ -361,16 +358,14 @@ public class ForkRunFactory extends AbstractRemoteRunFactory implements
 	}
 
 	@Override
-	protected RemoteSingleRun getRealRun(@NonNull UsernamePrincipal creator,
+	protected RemoteSingleRun getRealRun(@Nonnull UsernamePrincipal creator,
 			Workflow workflow, UUID id) throws Exception {
-		@NonNull String wf = serializeWorkflow(workflow);
+		@Nonnull String wf = serializeWorkflow(workflow);
 		for (int i = 0; i < 3; i++) {
 			initFactory();
 			try {
 				return getRealRun(creator, wf, id);
-			} catch (ConnectException e) {
-				// factory was lost; try to recreate
-			} catch (ConnectIOException e) {
+			} catch (ConnectException | ConnectIOException e) {
 				// factory was lost; try to recreate
 			}
 			killFactory();

@@ -8,11 +8,10 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Properties;
 
+import javax.annotation.Nonnull;
 import javax.annotation.PostConstruct;
 
 import org.taverna.server.master.common.Capability;
-
-import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
  * Utility for listing the capabilities supported by this Taverna Server
@@ -26,17 +25,16 @@ public class CapabilityLister {
 
 	@PostConstruct
 	void loadCapabilities() throws IOException {
-		InputStream is = getClass().getResourceAsStream(
-				CAPABILITY_RESOURCE_FILE);
-		if (is != null) {
-			properties.load(is);
-			is.close();
+		try (InputStream is = getClass().getResourceAsStream(
+				CAPABILITY_RESOURCE_FILE)) {
+			if (is != null)
+				properties.load(is);
 		}
 	}
 
-	@NonNull
+	@Nonnull
 	public List<Capability> getCapabilities() {
-		List<Capability> caps = new ArrayList<Capability>();
+		List<Capability> caps = new ArrayList<>();
 		for (Entry<Object, Object> entry : properties.entrySet()) {
 			Capability c = new Capability();
 			c.capability = URI.create(entry.getKey().toString());

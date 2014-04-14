@@ -36,6 +36,8 @@ import java.util.UUID;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import javax.annotation.Nonnull;
+
 import org.apache.commons.logging.Log;
 import org.taverna.server.localworker.remote.IllegalStateTransitionException;
 import org.taverna.server.localworker.remote.ImplementationException;
@@ -65,14 +67,11 @@ import org.taverna.server.master.interfaces.TavernaRun;
 import org.taverna.server.master.interfaces.TavernaSecurityContext;
 import org.taverna.server.master.utils.UsernamePrincipal;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
-
 /**
  * Bridging shim between the WebApp world and the RMI world.
  * 
  * @author Donal Fellows
  */
-@edu.umd.cs.findbugs.annotations.SuppressWarnings("SE_NO_SERIALVERSIONID")
 @SuppressWarnings("serial")
 public class RemoteRunDelegate implements TavernaRun {
 	private transient Log log = getLog("Taverna.Server.Worker");
@@ -132,7 +131,7 @@ public class RemoteRunDelegate implements TavernaRun {
 	 * @throws RemoteException
 	 *             If anything goes wrong.
 	 */
-	@NonNull
+	@Nonnull
 	public List<String> getListenerTypes() throws RemoteException {
 		return run.getListenerTypes();
 	}
@@ -153,7 +152,7 @@ public class RemoteRunDelegate implements TavernaRun {
 	}
 
 	@Override
-	@NonNull
+	@Nonnull
 	public String getId() {
 		String id = this.id;
 		return (id != null ? id : (this.id = randomUUID().toString()));
@@ -170,7 +169,7 @@ public class RemoteRunDelegate implements TavernaRun {
 	 * @throws NoListenerException
 	 *             If anything goes wrong.
 	 */
-	public Listener makeListener(@NonNull String type, @NonNull String config)
+	public Listener makeListener(@Nonnull String type, @Nonnull String config)
 			throws NoListenerException {
 		try {
 			return new ListenerDelegate(run.makeListener(type, config));
@@ -183,9 +182,7 @@ public class RemoteRunDelegate implements TavernaRun {
 	public void destroy() {
 		try {
 			run.destroy();
-		} catch (RemoteException e) {
-			log.warn("failed to destroy run", e);
-		} catch (ImplementationException e) {
+		} catch (RemoteException | ImplementationException e) {
 			log.warn("failed to destroy run", e);
 		}
 	}
@@ -197,7 +194,7 @@ public class RemoteRunDelegate implements TavernaRun {
 
 	@Override
 	public List<Listener> getListeners() {
-		ArrayList<Listener> listeners = new ArrayList<Listener>();
+		List<Listener> listeners = new ArrayList<>();
 		try {
 			for (RemoteListener rl : run.getListeners())
 				listeners.add(new ListenerDelegate(rl));
@@ -290,9 +287,7 @@ public class RemoteRunDelegate implements TavernaRun {
 			throw new BadStateChangeException(e.getMessage());
 		} catch (RemoteException e) {
 			throw new BadStateChangeException(e.getMessage(), e.getCause());
-		} catch (GeneralSecurityException e) {
-			throw new BadStateChangeException(e.getMessage(), e);
-		} catch (IOException e) {
+		} catch (GeneralSecurityException | IOException e) {
 			throw new BadStateChangeException(e.getMessage(), e);
 		} catch (ImplementationException e) {
 			if (e.getCause() != null)
@@ -331,7 +326,7 @@ public class RemoteRunDelegate implements TavernaRun {
 
 	@Override
 	public List<Input> getInputs() {
-		ArrayList<Input> inputs = new ArrayList<Input>();
+		ArrayList<Input> inputs = new ArrayList<>();
 		try {
 			for (RemoteInput ri : run.getInputs())
 				if (ri != null)
@@ -415,15 +410,15 @@ public class RemoteRunDelegate implements TavernaRun {
 	 * @param readers
 	 *            the readers to set
 	 */
-	public void setReaders(@NonNull Set<String> readers) {
-		this.readers = new HashSet<String>(readers);
+	public void setReaders(@Nonnull Set<String> readers) {
+		this.readers = new HashSet<>(readers);
 		db.flushToDisk(this);
 	}
 
 	/**
 	 * @return the readers
 	 */
-	@NonNull
+	@Nonnull
 	public Set<String> getReaders() {
 		return readers == null ? new HashSet<String>()
 				: unmodifiableSet(readers);
@@ -433,15 +428,15 @@ public class RemoteRunDelegate implements TavernaRun {
 	 * @param writers
 	 *            the writers to set
 	 */
-	public void setWriters(@NonNull Set<String> writers) {
-		this.writers = new HashSet<String>(writers);
+	public void setWriters(@Nonnull Set<String> writers) {
+		this.writers = new HashSet<>(writers);
 		db.flushToDisk(this);
 	}
 
 	/**
 	 * @return the writers
 	 */
-	@NonNull
+	@Nonnull
 	public Set<String> getWriters() {
 		return writers == null ? new HashSet<String>()
 				: unmodifiableSet(writers);
@@ -451,15 +446,15 @@ public class RemoteRunDelegate implements TavernaRun {
 	 * @param destroyers
 	 *            the destroyers to set
 	 */
-	public void setDestroyers(@NonNull Set<String> destroyers) {
-		this.destroyers = new HashSet<String>(destroyers);
+	public void setDestroyers(@Nonnull Set<String> destroyers) {
+		this.destroyers = new HashSet<>(destroyers);
 		db.flushToDisk(this);
 	}
 
 	/**
 	 * @return the destroyers
 	 */
-	@NonNull
+	@Nonnull
 	public Set<String> getDestroyers() {
 		return destroyers == null ? new HashSet<String>()
 				: unmodifiableSet(destroyers);
@@ -469,7 +464,7 @@ public class RemoteRunDelegate implements TavernaRun {
 		out.defaultWriteObject();
 		out.writeUTF(secContext.getOwner().getName());
 		out.writeObject(secContext.getFactory());
-		out.writeObject(new MarshalledObject<RemoteSingleRun>(run));
+		out.writeObject(new MarshalledObject<>(run));
 	}
 
 	@Override
@@ -495,9 +490,7 @@ public class RemoteRunDelegate implements TavernaRun {
 		try {
 			secContext = factory.create(this,
 					new UsernamePrincipal(creatorName));
-		} catch (RuntimeException e) {
-			throw e;
-		} catch (IOException e) {
+		} catch (RuntimeException | IOException e) {
 			throw e;
 		} catch (Exception e) {
 			throw new SecurityContextReconstructionException(e);
@@ -506,18 +499,18 @@ public class RemoteRunDelegate implements TavernaRun {
 	}
 
 	public void setSecurityContext(
-			@NonNull TavernaSecurityContext tavernaSecurityContext) {
+			@Nonnull TavernaSecurityContext tavernaSecurityContext) {
 		secContext = tavernaSecurityContext;
 	}
 
-	@NonNull
+	@Nonnull
 	@Override
 	public String getName() {
 		return name;
 	}
 
 	@Override
-	public void setName(@NonNull String name) {
+	public void setName(@Nonnull String name) {
 		if (name.length() > RunConnection.NAME_LENGTH)
 			this.name = name.substring(0, RunConnection.NAME_LENGTH);
 		else
@@ -537,14 +530,14 @@ public class RemoteRunDelegate implements TavernaRun {
 
 abstract class DEDelegate implements DirectoryEntry {
 	Log log = getLog("Taverna.Server.Worker");
-	@NonNull
+	@Nonnull
 	private RemoteDirectoryEntry entry;
 	private String name;
 	private String full;
 	private Date cacheModTime;
 	private long cacheQueryTime = 0L;
 
-	DEDelegate(@NonNull RemoteDirectoryEntry entry) {
+	DEDelegate(@Nonnull RemoteDirectoryEntry entry) {
 		this.entry = entry;
 	}
 
@@ -562,7 +555,7 @@ abstract class DEDelegate implements DirectoryEntry {
 	public String getFullName() {
 		if (full != null)
 			return full;
-		@NonNull
+		@Nonnull
 		String n = getName();
 		RemoteDirectoryEntry re = entry;
 		try {
@@ -607,7 +600,7 @@ abstract class DEDelegate implements DirectoryEntry {
 	}
 
 	@Override
-	public int compareTo(@NonNull DirectoryEntry de) {
+	public int compareTo(@Nonnull DirectoryEntry de) {
 		return getFullName().compareTo(de.getFullName());
 	}
 
@@ -624,10 +617,10 @@ abstract class DEDelegate implements DirectoryEntry {
 }
 
 class DirectoryDelegate extends DEDelegate implements Directory {
-	@NonNull
+	@Nonnull
 	RemoteDirectory rd;
 
-	DirectoryDelegate(@NonNull RemoteDirectory dir) {
+	DirectoryDelegate(@Nonnull RemoteDirectory dir) {
 		super(dir);
 		rd = dir;
 	}
@@ -635,7 +628,7 @@ class DirectoryDelegate extends DEDelegate implements Directory {
 	@Override
 	public Collection<DirectoryEntry> getContents()
 			throws FilesystemAccessException {
-		ArrayList<DirectoryEntry> result = new ArrayList<DirectoryEntry>();
+		ArrayList<DirectoryEntry> result = new ArrayList<>();
 		try {
 			for (RemoteDirectoryEntry rde : rd.getContents()) {
 				if (rde == null)
@@ -655,8 +648,7 @@ class DirectoryDelegate extends DEDelegate implements Directory {
 	@Override
 	public Collection<DirectoryEntry> getContentsByDate()
 			throws FilesystemAccessException {
-		ArrayList<DirectoryEntry> result = new ArrayList<DirectoryEntry>(
-				getContents());
+		ArrayList<DirectoryEntry> result = new ArrayList<>(getContents());
 		sort(result, new DateComparator());
 		return result;
 	}
@@ -762,10 +754,10 @@ class DirectoryDelegate extends DEDelegate implements Directory {
 }
 
 class FileDelegate extends DEDelegate implements File {
-	@NonNull
+	@Nonnull
 	RemoteFile rf;
 
-	FileDelegate(@NonNull RemoteFile f) {
+	FileDelegate(@Nonnull RemoteFile f) {
 		super(f);
 		this.rf = f;
 	}
@@ -791,7 +783,7 @@ class FileDelegate extends DEDelegate implements File {
 	}
 
 	@Override
-	public void setContents(@NonNull byte[] data)
+	public void setContents(@Nonnull byte[] data)
 			throws FilesystemAccessException {
 		try {
 			rf.setContents(data);
@@ -802,7 +794,7 @@ class FileDelegate extends DEDelegate implements File {
 	}
 
 	@Override
-	public void appendContents(@NonNull byte[] data)
+	public void appendContents(@Nonnull byte[] data)
 			throws FilesystemAccessException {
 		try {
 			rf.appendContents(data);
@@ -833,15 +825,15 @@ class FileDelegate extends DEDelegate implements File {
 
 class ListenerDelegate implements Listener {
 	private Log log = getLog("Taverna.Server.Worker");
-	@NonNull
+	@Nonnull
 	private RemoteListener r;
 	String conf;
 
-	ListenerDelegate(@NonNull RemoteListener l) {
+	ListenerDelegate(@Nonnull RemoteListener l) {
 		r = l;
 	}
 
-	@NonNull
+	@Nonnull
 	RemoteListener getRemote() {
 		return r;
 	}
@@ -917,10 +909,10 @@ class ListenerDelegate implements Listener {
 }
 
 class RunInput implements Input {
-	@NonNull
+	@Nonnull
 	private final RemoteInput i;
 
-	RunInput(@NonNull RemoteInput remote) {
+	RunInput(@Nonnull RemoteInput remote) {
 		this.i = remote;
 	}
 
@@ -952,7 +944,7 @@ class RunInput implements Input {
 	}
 
 	@Override
-	public void setFile(@NonNull String file) throws FilesystemAccessException,
+	public void setFile(@Nonnull String file) throws FilesystemAccessException,
 			BadStateChangeException {
 		checkBadFilename(file);
 		try {
@@ -963,7 +955,7 @@ class RunInput implements Input {
 	}
 
 	@Override
-	public void setValue(@NonNull String value) throws BadStateChangeException {
+	public void setValue(@Nonnull String value) throws BadStateChangeException {
 		try {
 			i.setValue(value);
 		} catch (RemoteException e) {

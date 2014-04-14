@@ -9,14 +9,14 @@ import java.io.File;
 import java.util.List;
 import java.util.Map;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
 import org.taverna.server.localworker.impl.LocalWorker;
 import org.taverna.server.localworker.remote.ImplementationException;
 import org.taverna.server.localworker.remote.RemoteListener;
 import org.taverna.server.localworker.remote.RemoteStatus;
 import org.taverna.server.localworker.server.UsageRecordReceiver;
-
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 
 /**
  * The interface between the connectivity layer and the thunk to the
@@ -73,17 +73,17 @@ public interface Worker {
 	 * @throws Exception
 	 *             If any of quite a large number of things goes wrong.
 	 */
-	boolean initWorker(@NonNull LocalWorker local,
-			@NonNull String executeWorkflowCommand, @NonNull String workflow,
-			@NonNull File workingDir, @Nullable File inputBaclavaFile,
-			@NonNull Map<String, File> inputRealFiles,
-			@NonNull Map<String, String> inputValues,
-			@NonNull Map<String, String> inputDelimiters,
+	boolean initWorker(@Nonnull LocalWorker local,
+			@Nonnull String executeWorkflowCommand, @Nonnull String workflow,
+			@Nonnull File workingDir, @Nullable File inputBaclavaFile,
+			@Nonnull Map<String, File> inputRealFiles,
+			@Nonnull Map<String, String> inputValues,
+			@Nonnull Map<String, String> inputDelimiters,
 			@Nullable File outputBaclavaFile, @Nullable File contextDirectory,
-			@NonNull char[] keystorePassword,
+			@Nonnull char[] keystorePassword,
 			boolean generateProvenance,
-			@NonNull Map<String, String> environment,
-			@NonNull String masterToken, @NonNull List<String> runtimeSettings)
+			@Nonnull Map<String, String> environment,
+			@Nonnull String masterToken, @Nonnull List<String> runtimeSettings)
 			throws Exception;
 
 	/**
@@ -130,7 +130,7 @@ public interface Worker {
 	 *            The destination where any final usage records are to be
 	 *            written in order to log them back to the server.
 	 */
-	void setURReceiver(@NonNull UsageRecordReceiver receiver);
+	void setURReceiver(@Nonnull UsageRecordReceiver receiver);
 
 	/**
 	 * Arrange for the deletion of any resources created during worker process

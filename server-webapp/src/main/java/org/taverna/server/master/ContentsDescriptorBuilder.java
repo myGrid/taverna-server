@@ -19,7 +19,10 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import javax.xml.xpath.XPath;
@@ -49,9 +52,6 @@ import org.taverna.server.port_description.OutputDescription;
 import org.taverna.server.port_description.OutputDescription.OutputPort;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
-
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 
 /**
  * A class that is used to build descriptions of the contents of a workflow
@@ -86,14 +86,14 @@ public class ContentsDescriptorBuilder {
 		portDepth = xp.compile("./t2:depth/text()");
 	}
 
-	@NonNull
+	@Nonnull
 	private Element dataflow(Element root) throws XPathExpressionException {
 		return (Element) dataflow.evaluate(root, NODE);
 	}
 
 	private List<Element> inputPorts(Element dataflow)
 			throws XPathExpressionException {
-		List<Element> result = new ArrayList<Element>();
+		List<Element> result = new ArrayList<>();
 		if (dataflow == null)
 			return result;
 		NodeList nl = (NodeList) inputPorts.evaluate(dataflow, NODESET);
@@ -105,7 +105,7 @@ public class ContentsDescriptorBuilder {
 
 	private List<Element> outputPorts(Element dataflow)
 			throws XPathExpressionException {
-		List<Element> result = new ArrayList<Element>();
+		List<Element> result = new ArrayList<>();
 		if (dataflow == null)
 			return result;
 		NodeList nl = (NodeList) outputPorts.evaluate(dataflow, NODESET);
@@ -135,9 +135,9 @@ public class ContentsDescriptorBuilder {
 
 	// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-	@NonNull
-	private Element fillInFromWorkflow(@NonNull TavernaRun run,
-			@NonNull UriBuilder ub, @NonNull AbstractPortDescription portDesc)
+	@Nonnull
+	private Element fillInFromWorkflow(@Nonnull TavernaRun run,
+			@Nonnull UriBuilder ub, @Nonnull AbstractPortDescription portDesc)
 			throws XPathExpressionException {
 		Element elem = run.getWorkflow().getWorkflowRoot();
 		portDesc.fillInBaseData(elem.getAttribute("id"), run.getId(),
@@ -163,18 +163,15 @@ public class ContentsDescriptorBuilder {
 	 * @throws FilesystemAccessException
 	 * @throws XPathExpressionException
 	 */
-	private void constructPorts(@NonNull TavernaRun run,
-			@NonNull Element dataflow, @NonNull UriBuilder ub,
-			@NonNull OutputDescription descriptor)
+	private void constructPorts(@Nonnull TavernaRun run,
+			@Nonnull Element dataflow, @Nonnull UriBuilder ub,
+			@Nonnull OutputDescription descriptor)
 			throws FilesystemAccessException, NoDirectoryEntryException,
 			XPathExpressionException {
 		Collection<DirectoryEntry> outs = null;
 		try {
 			outs = fileUtils.getDirectory(run, "out").getContents();
-		} catch (FilesystemAccessException e) {
-			log.warn("unexpected failure in construction of output descriptor",
-					e);
-		} catch (NoDirectoryEntryException e) {
+		} catch (FilesystemAccessException | NoDirectoryEntryException e) {
 			log.warn("unexpected failure in construction of output descriptor",
 					e);
 		}
@@ -265,8 +262,7 @@ public class ContentsDescriptorBuilder {
 			throws FilesystemAccessException {
 		ListValue v = new ListValue();
 		v.length = 0;
-		HashSet<DirectoryEntry> contents = new HashSet<DirectoryEntry>(
-				dir.getContents());
+		Set<DirectoryEntry> contents = new HashSet<>(dir.getContents());
 		Iterator<DirectoryEntry> it = contents.iterator();
 		while (it.hasNext())
 			if (!it.next().getName().matches("^[0-9]+([.].*)?$"))
@@ -338,7 +334,7 @@ public class ContentsDescriptorBuilder {
 	 * @throws NoDirectoryEntryException
 	 *             If something goes wrong reading the directories.
 	 */
-	public OutputDescription makeOutputDescriptor(@NonNull TavernaRun run,
+	public OutputDescription makeOutputDescriptor(@Nonnull TavernaRun run,
 			@Nullable UriInfo ui) throws FilesystemAccessException,
 			NoDirectoryEntryException {
 		OutputDescription descriptor = new OutputDescription();
@@ -354,8 +350,8 @@ public class ContentsDescriptorBuilder {
 		return descriptor;
 	}
 
-	@NonNull
-	private UriBuilder getRunUriBuilder(@NonNull TavernaRun run,
+	@Nonnull
+	private UriBuilder getRunUriBuilder(@Nonnull TavernaRun run,
 			@Nullable UriInfo ui) {
 		if (ui == null)
 			return secure(uriBuilderFactory.getRunUriBuilder(run));
@@ -373,12 +369,12 @@ public class ContentsDescriptorBuilder {
 	 *            The mechanism for building URIs.
 	 * @return The description of the <i>expected</i> inputs of the run.
 	 */
-	@NonNull
-	public InputDescription makeInputDescriptor(@NonNull TavernaRun run,
+	@Nonnull
+	public InputDescription makeInputDescriptor(@Nonnull TavernaRun run,
 			@Nullable UriInfo ui) {
 		InputDescription desc = new InputDescription();
 		try {
-			@NonNull
+			@Nonnull
 			UriBuilder ub = getRunUriBuilder(run, ui);
 			Element dataflow = fillInFromWorkflow(run, ub, desc);
 			ub = ub.path("input/{name}");

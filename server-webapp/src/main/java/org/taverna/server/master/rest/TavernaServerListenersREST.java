@@ -15,6 +15,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.annotation.Nonnull;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -42,9 +43,6 @@ import org.taverna.server.master.exceptions.NoListenerException;
 import org.taverna.server.master.exceptions.NoUpdateException;
 import org.taverna.server.master.interfaces.Listener;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
-
 /**
  * This represents <i>all</i> the event listeners attached to a workflow run.
  * 
@@ -66,8 +64,8 @@ public interface TavernaServerListenersREST {
 	@Path("/")
 	@Produces({ XML, JSON })
 	@Description("Get the listeners installed in the workflow run.")
-	@NonNull
-	Listeners getDescription(@NonNull @Context UriInfo ui);
+	@Nonnull
+	Listeners getDescription(@Nonnull @Context UriInfo ui);
 
 	/**
 	 * Add a new event listener to the named workflow run.
@@ -88,9 +86,9 @@ public interface TavernaServerListenersREST {
 	@Path("/")
 	@Consumes({ XML, JSON })
 	@Description("Add a new event listener to the named workflow run.")
-	@NonNull
-	Response addListener(@NonNull ListenerDefinition typeAndConfiguration,
-			@NonNull @Context UriInfo ui) throws NoUpdateException,
+	@Nonnull
+	Response addListener(@Nonnull ListenerDefinition typeAndConfiguration,
+			@Nonnull @Context UriInfo ui) throws NoUpdateException,
 			NoListenerException;
 
 	/** Get an outline of the operations supported. */
@@ -110,9 +108,9 @@ public interface TavernaServerListenersREST {
 	 */
 	@Path("{name}")
 	@Description("Resolve a particular listener from its name.")
-	@NonNull
+	@Nonnull
 	TavernaServerListenerREST getListener(
-			@NonNull @PathParam("name") String name) throws NoListenerException;
+			@Nonnull @PathParam("name") String name) throws NoListenerException;
 
 	/**
 	 * This represents a single event listener attached to a workflow run.
@@ -136,8 +134,8 @@ public interface TavernaServerListenersREST {
 		@Path("/")
 		@Produces({ XML, JSON })
 		@Description("Get the description of this listener.")
-		@NonNull
-		ListenerDescription getDescription(@NonNull @Context UriInfo ui);
+		@Nonnull
+		ListenerDescription getDescription(@Nonnull @Context UriInfo ui);
 
 		/** Get an outline of the operations supported. */
 		@OPTIONS
@@ -156,7 +154,7 @@ public interface TavernaServerListenersREST {
 		@Produces(TEXT)
 		@Description("Get the configuration for the given event listener that "
 				+ "is attached to a workflow run.")
-		@NonNull
+		@Nonnull
 		String getConfiguration();
 
 		/** Get an outline of the operations supported. */
@@ -179,8 +177,8 @@ public interface TavernaServerListenersREST {
 		@Produces({ XML, JSON })
 		@Description("Get the list of properties supported by a given event "
 				+ "listener attached to a workflow run.")
-		@NonNull
-		Properties getProperties(@NonNull @Context UriInfo ui);
+		@Nonnull
+		Properties getProperties(@Nonnull @Context UriInfo ui);
 
 		/** Get an outline of the operations supported. */
 		@OPTIONS
@@ -199,9 +197,9 @@ public interface TavernaServerListenersREST {
 		 */
 		@Path("properties/{propertyName}")
 		@Description("Get an object representing a particular property.")
-		@NonNull
+		@Nonnull
 		Property getProperty(
-				@NonNull @PathParam("propertyName") String propertyName)
+				@Nonnull @PathParam("propertyName") String propertyName)
 				throws NoListenerException;
 	}
 
@@ -225,7 +223,7 @@ public interface TavernaServerListenersREST {
 		@Produces(TEXT)
 		@Description("Get the value of the particular property of an event "
 				+ "listener attached to a workflow run.")
-		@Nullable
+		@Nonnull
 		String getValue();
 
 		/**
@@ -247,8 +245,8 @@ public interface TavernaServerListenersREST {
 		@Produces(TEXT)
 		@Description("Set the value of the particular property of an event "
 				+ "listener attached to a workflow run.")
-		@NonNull
-		String setValue(@NonNull String value) throws NoUpdateException,
+		@Nonnull
+		String setValue(@Nonnull String value) throws NoUpdateException,
 				NoListenerException;
 
 		/** Get an outline of the operations supported. */
@@ -304,15 +302,14 @@ public interface TavernaServerListenersREST {
 		 * @param ub
 		 *            The factory for URIs. Must have already been secured.
 		 */
-		public ListenerDescription(@NonNull Listener listener,
-				@NonNull UriBuilder ub) {
+		public ListenerDescription(@Nonnull Listener listener,
+				@Nonnull UriBuilder ub) {
 			super(true);
 			name = listener.getName();
 			type = listener.getType();
 			configuration = new Uri(ub.clone().path("configuration"));
-			@NonNull UriBuilder ub2 = ub.clone().path("properties/{prop}");
-			properties = new ArrayList<PropertyDescription>(
-					listener.listProperties().length);
+			@Nonnull UriBuilder ub2 = ub.clone().path("properties/{prop}");
+			properties = new ArrayList<>(listener.listProperties().length);
 			for (String propName : listener.listProperties())
 				if (propName != null)
 					properties.add(new PropertyDescription(propName, ub2));
@@ -348,7 +345,7 @@ public interface TavernaServerListenersREST {
 		 * @param ub
 		 *            The factory for URIs. Must have already been secured.
 		 */
-		PropertyDescription(@NonNull String propName, @NonNull UriBuilder ub) {
+		PropertyDescription(@Nonnull String propName, @Nonnull UriBuilder ub) {
 			super(ub, propName);
 			this.name = propName;
 		}
@@ -372,7 +369,7 @@ public interface TavernaServerListenersREST {
 		 * Make a blank description of listeners.
 		 */
 		public Listeners() {
-			listener = new ArrayList<ListenerDescription>();
+			listener = new ArrayList<>();
 		}
 
 		/**
@@ -422,9 +419,9 @@ public interface TavernaServerListenersREST {
 		 * @param properties
 		 *            The names of the properties.
 		 */
-		public Properties(@NonNull UriBuilder ub, @NonNull String[] properties) {
+		public Properties(@Nonnull UriBuilder ub, @Nonnull String[] properties) {
 			super(true);
-			property = new ArrayList<PropertyDescription>(properties.length);
+			property = new ArrayList<>(properties.length);
 			for (String propName : properties)
 				if (propName != null)
 					property.add(new PropertyDescription(propName, ub));

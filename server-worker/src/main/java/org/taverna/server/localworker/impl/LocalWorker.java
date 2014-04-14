@@ -46,6 +46,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
 import org.taverna.server.localworker.api.Worker;
 import org.taverna.server.localworker.api.WorkerFactory;
 import org.taverna.server.localworker.remote.IllegalStateTransitionException;
@@ -59,10 +62,6 @@ import org.taverna.server.localworker.remote.RemoteStatus;
 import org.taverna.server.localworker.remote.StillWorkingOnItException;
 import org.taverna.server.localworker.server.UsageRecordReceiver;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
-import edu.umd.cs.findbugs.annotations.SuppressWarnings;
-
 /**
  * This class implements one side of the connection between the Taverna Server
  * master server and this process. It delegates to a {@link Worker} instance the
@@ -73,8 +72,7 @@ import edu.umd.cs.findbugs.annotations.SuppressWarnings;
  * @see FileDelegate
  * @see WorkerCore
  */
-@SuppressWarnings({ "SE_BAD_FIELD", "SE_NO_SERIALVERSIONID" })
-@java.lang.SuppressWarnings("serial")
+@SuppressWarnings("serial")
 public class LocalWorker extends UnicastRemoteObject implements RemoteSingleRun {
 	// ----------------------- CONSTANTS -----------------------
 
@@ -100,30 +98,30 @@ public class LocalWorker extends UnicastRemoteObject implements RemoteSingleRun 
 	static boolean DO_MKDIR = true;
 
 	/** What to use to run a workflow engine. */
-	@NonNull
+	@Nonnull
 	private final String executeWorkflowCommand;
 	/** What workflow to run. */
-	@NonNull
+	@Nonnull
 	private final String workflow;
 	/** The remote access object for the working directory. */
-	@NonNull
+	@Nonnull
 	private final DirectoryDelegate baseDir;
 	/** What inputs to pass as files. */
-	@NonNull
+	@Nonnull
 	final Map<String, String> inputFiles;
 	/** What inputs to pass as files (as file refs). */
-	@NonNull
+	@Nonnull
 	final Map<String, File> inputRealFiles;
 	/** What inputs to pass as direct values. */
-	@NonNull
+	@Nonnull
 	final Map<String, String> inputValues;
 	/** What delimiters to use. */
 	final Map<String, String> inputDelimiters;
 	/** The interface to the workflow engine subprocess. */
-	@NonNull
+	@Nonnull
 	private final Worker core;
 	/** Our descriptor token (UUID). */
-	@NonNull
+	@Nonnull
 	private final String masterToken;
 	/**
 	 * The root working directory for a workflow run, or <tt>null</tt> if it has
@@ -144,7 +142,7 @@ public class LocalWorker extends UnicastRemoteObject implements RemoteSingleRun 
 	@Nullable
 	private Date finish;
 	/** The cached status of the workflow run. */
-	@NonNull
+	@Nonnull
 	RemoteStatus status;
 	/**
 	 * The name of the input Baclava document, or <tt>null</tt> to not do it
@@ -183,11 +181,11 @@ public class LocalWorker extends UnicastRemoteObject implements RemoteSingleRun 
 	 */
 	char[] keystorePassword = KEYSTORE_PASSWORD;
 	/** Additional server-specified environment settings. */
-	@NonNull
-	final Map<String, String> environment = new HashMap<String, String>();
+	@Nonnull
+	final Map<String, String> environment = new HashMap<>();
 	/** Additional server-specified java runtime settings. */
-	@NonNull
-	final List<String> runtimeSettings = new ArrayList<String>();
+	@Nonnull
+	final List<String> runtimeSettings = new ArrayList<>();
 	URL interactionFeedURL;
 	URL webdavURL;
 	private boolean doProvenance = true;
@@ -219,11 +217,11 @@ public class LocalWorker extends UnicastRemoteObject implements RemoteSingleRun 
 	 * @throws ImplementationException
 	 *             If something goes wrong during local setup.
 	 */
-	protected LocalWorker(@NonNull String executeWorkflowCommand,
-			@NonNull String workflow, @NonNull UsageRecordReceiver urReceiver,
-			@Nullable UUID id, @NonNull Map<String, String> seedEnvironment,
-			@NonNull List<String> javaParams,
-			@NonNull WorkerFactory workerFactory) throws RemoteException,
+	protected LocalWorker(@Nonnull String executeWorkflowCommand,
+			@Nonnull String workflow, @Nonnull UsageRecordReceiver urReceiver,
+			@Nullable UUID id, @Nonnull Map<String, String> seedEnvironment,
+			@Nonnull List<String> javaParams,
+			@Nonnull WorkerFactory workerFactory) throws RemoteException,
 			ImplementationException {
 		super();
 		if (id == null)
@@ -355,7 +353,7 @@ public class LocalWorker extends UnicastRemoteObject implements RemoteSingleRun 
 
 	@Override
 	public List<RemoteInput> getInputs() throws RemoteException {
-		ArrayList<RemoteInput> result = new ArrayList<RemoteInput>();
+		ArrayList<RemoteInput> result = new ArrayList<>();
 		for (String name : inputFiles.keySet())
 			if (name != null)
 				result.add(new InputDelegate(name));
@@ -377,7 +375,6 @@ public class LocalWorker extends UnicastRemoteObject implements RemoteSingleRun 
 		return outputBaclava;
 	}
 
-	@SuppressWarnings("SE_INNER_CLASS")
 	class SecurityDelegate extends UnicastRemoteObject implements
 			RemoteSecurityContext {
 		private void setPrivatePerms(File dir) {
@@ -498,14 +495,13 @@ public class LocalWorker extends UnicastRemoteObject implements RemoteSingleRun 
 		}
 
 		@Override
-		public void setUriToAliasMap(
-				@Nullable HashMap<URI, String> uriToAliasMap)
+		public void setUriToAliasMap(@Nullable Map<URI, String> uriToAliasMap)
 				throws RemoteException {
 			if (status != Initialized)
 				throw new RemoteException("not initializing");
 			if (uriToAliasMap == null)
 				return;
-			ArrayList<String> lines = new ArrayList<String>();
+			ArrayList<String> lines = new ArrayList<>();
 			for (Entry<URI, String> site : uriToAliasMap.entrySet())
 				lines.add(site.getKey().toASCIIString() + " " + site.getValue());
 			// write(URI_ALIAS_MAP, lines);
@@ -562,12 +558,11 @@ public class LocalWorker extends UnicastRemoteObject implements RemoteSingleRun 
 		}
 	}
 
-	@SuppressWarnings("SE_INNER_CLASS")
 	class InputDelegate extends UnicastRemoteObject implements RemoteInput {
-		@NonNull
+		@Nonnull
 		private String name;
 
-		InputDelegate(@NonNull String name) throws RemoteException {
+		InputDelegate(@Nonnull String name) throws RemoteException {
 			super();
 			this.name = name;
 			if (!inputFiles.containsKey(name)) {
@@ -594,7 +589,7 @@ public class LocalWorker extends UnicastRemoteObject implements RemoteSingleRun 
 		public String getValue() {
 			return inputValues.get(name);
 		}
-		
+
 		@Override
 		public String getDelimiter() throws RemoteException {
 			return inputDelimiters.get(name);
@@ -626,7 +621,7 @@ public class LocalWorker extends UnicastRemoteObject implements RemoteSingleRun 
 				throw new IllegalStateException("not initializing");
 			if (inputBaclava != null)
 				throw new IllegalStateException("input baclava file set");
-			if (delimiter!=null) {
+			if (delimiter != null) {
 				if (delimiter.length() > 1)
 					throw new IllegalStateException(
 							"multi-character delimiter not permitted");

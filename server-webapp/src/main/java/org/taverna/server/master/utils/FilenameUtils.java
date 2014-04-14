@@ -7,6 +7,8 @@ package org.taverna.server.master.utils;
 
 import java.util.List;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.ws.rs.core.PathSegment;
 
 import org.taverna.server.master.common.DirEntryReference;
@@ -16,9 +18,6 @@ import org.taverna.server.master.interfaces.Directory;
 import org.taverna.server.master.interfaces.DirectoryEntry;
 import org.taverna.server.master.interfaces.File;
 import org.taverna.server.master.interfaces.TavernaRun;
-
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 
 /**
  * Utility functions for getting entries from directories.
@@ -47,9 +46,9 @@ public class FilenameUtils {
 	 * @throws FilesystemAccessException
 	 *             If the directory isn't specified or isn't readable.
 	 */
-	@NonNull
-	public DirectoryEntry getDirEntry(@NonNull TavernaRun run,
-			@NonNull String name) throws FilesystemAccessException,
+	@Nonnull
+	public DirectoryEntry getDirEntry(@Nonnull TavernaRun run,
+			@Nonnull String name) throws FilesystemAccessException,
 			NoDirectoryEntryException {
 		Directory dir = run.getWorkingDirectory();
 		if (name == null || name.isEmpty())
@@ -88,8 +87,8 @@ public class FilenameUtils {
 	 * @throws FilesystemAccessException
 	 *             If the directory isn't specified or isn't readable.
 	 */
-	@NonNull
-	public DirectoryEntry getDirEntry(@NonNull TavernaRun run,
+	@Nonnull
+	public DirectoryEntry getDirEntry(@Nonnull TavernaRun run,
 			@Nullable List<PathSegment> d) throws FilesystemAccessException,
 			NoDirectoryEntryException {
 		Directory dir = run.getWorkingDirectory();
@@ -130,8 +129,8 @@ public class FilenameUtils {
 	 * @throws NoDirectoryEntryException
 	 *             If there is no such entry.
 	 */
-	@NonNull
-	public DirectoryEntry getDirEntry(@NonNull TavernaRun run,
+	@Nonnull
+	public DirectoryEntry getDirEntry(@Nonnull TavernaRun run,
 			@Nullable DirEntryReference d) throws FilesystemAccessException,
 			NoDirectoryEntryException {
 		Directory dir = run.getWorkingDirectory();
@@ -167,8 +166,8 @@ public class FilenameUtils {
 	 * @throws FilesystemAccessException
 	 *             If the directory isn't specified or isn't readable.
 	 */
-	@NonNull
-	private DirectoryEntry getEntryFromDir(@NonNull String name,
+	@Nonnull
+	private DirectoryEntry getEntryFromDir(@Nonnull String name,
 			@Nullable Directory dir) throws FilesystemAccessException,
 			NoDirectoryEntryException {
 		if (dir == null)
@@ -196,9 +195,9 @@ public class FilenameUtils {
 	 * @throws NoDirectoryEntryException
 	 *             If there is no such entry.
 	 */
-	@NonNull
-	public Directory getDirectory(@NonNull TavernaRun run,
-			@NonNull DirEntryReference d) throws FilesystemAccessException,
+	@Nonnull
+	public Directory getDirectory(@Nonnull TavernaRun run,
+			@Nonnull DirEntryReference d) throws FilesystemAccessException,
 			NoDirectoryEntryException {
 		DirectoryEntry dirEntry = getDirEntry(run, d);
 		if (dirEntry instanceof Directory)
@@ -221,8 +220,8 @@ public class FilenameUtils {
 	 * @throws NoDirectoryEntryException
 	 *             If there is no such entry.
 	 */
-	@NonNull
-	public Directory getDirectory(@NonNull TavernaRun run, @NonNull String name)
+	@Nonnull
+	public Directory getDirectory(@Nonnull TavernaRun run, @Nonnull String name)
 			throws FilesystemAccessException, NoDirectoryEntryException {
 		DirectoryEntry dirEntry = getDirEntry(run, name);
 		if (dirEntry instanceof Directory)
@@ -247,8 +246,8 @@ public class FilenameUtils {
 	 * @throws NoDirectoryEntryException
 	 *             If there is no such entry.
 	 */
-	@NonNull
-	public File getFile(@NonNull TavernaRun run, @NonNull DirEntryReference d)
+	@Nonnull
+	public File getFile(@Nonnull TavernaRun run, @Nonnull DirEntryReference d)
 			throws FilesystemAccessException, NoDirectoryEntryException {
 		DirectoryEntry dirEntry = getDirEntry(run, d);
 		if (dirEntry instanceof File)
@@ -273,8 +272,8 @@ public class FilenameUtils {
 	 * @throws NoDirectoryEntryException
 	 *             If there is no such entry.
 	 */
-	@NonNull
-	public File getFile(@NonNull TavernaRun run, @NonNull String name)
+	@Nonnull
+	public File getFile(@Nonnull TavernaRun run, @Nonnull String name)
 			throws FilesystemAccessException, NoDirectoryEntryException {
 		DirectoryEntry dirEntry = getDirEntry(run, name);
 		if (dirEntry instanceof File)

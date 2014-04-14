@@ -5,12 +5,12 @@
  */
 package org.taverna.server.master.interfaces;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
 import org.taverna.server.master.common.Status;
 import org.taverna.server.master.exceptions.BadStateChangeException;
 import org.taverna.server.master.exceptions.FilesystemAccessException;
-
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 
 /**
  * This represents the assignment of inputs to input ports of the workflow. Note
@@ -30,7 +30,7 @@ public interface Input {
 	/**
 	 * @return The name of this input port. This may not be changed.
 	 */
-	@NonNull
+	@Nonnull
 	public String getName();
 
 	/**
@@ -61,7 +61,7 @@ public interface Input {
 	 *             If the run isn't in the {@link Status#Initialized
 	 *             Initialized} state.
 	 */
-	public void setFile(@NonNull String file) throws FilesystemAccessException,
+	public void setFile(@Nonnull String file) throws FilesystemAccessException,
 			BadStateChangeException;
 
 	/**
@@ -74,7 +74,7 @@ public interface Input {
 	 *             If the run isn't in the {@link Status#Initialized
 	 *             Initialized} state.
 	 */
-	public void setValue(@NonNull String value) throws BadStateChangeException;
+	public void setValue(@Nonnull String value) throws BadStateChangeException;
 
 	/**
 	 * Sets (or clears) the delimiter for the input port.

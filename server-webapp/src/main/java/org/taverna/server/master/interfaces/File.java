@@ -5,10 +5,10 @@
  */
 package org.taverna.server.master.interfaces;
 
-import org.taverna.server.master.exceptions.FilesystemAccessException;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
+import org.taverna.server.master.exceptions.FilesystemAccessException;
 
 /**
  * Represents a file in the working directory of a workflow instance run, or in
@@ -41,7 +41,7 @@ public interface File extends DirectoryEntry {
 	 * @throws FilesystemAccessException
 	 *             If the write to the file goes wrong.
 	 */
-	public void setContents(@NonNull byte[] data)
+	public void setContents(@Nonnull byte[] data)
 			throws FilesystemAccessException;
 
 	/**
@@ -53,7 +53,7 @@ public interface File extends DirectoryEntry {
 	 * @throws FilesystemAccessException
 	 *             If the write to the file goes wrong.
 	 */
-	public void appendContents(@NonNull byte[] data)
+	public void appendContents(@Nonnull byte[] data)
 			throws FilesystemAccessException;
 
 	/**
@@ -71,5 +71,5 @@ public interface File extends DirectoryEntry {
 	 * @throws FilesystemAccessException
 	 *             If anything goes wrong.
 	 */
-	public void copy(@NonNull File from) throws FilesystemAccessException;
+	public void copy(@Nonnull File from) throws FilesystemAccessException;
 }

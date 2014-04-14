@@ -9,9 +9,9 @@ import java.io.PipedInputStream;
 import java.security.Principal;
 import java.util.Collection;
 
-import org.taverna.server.master.exceptions.FilesystemAccessException;
+import javax.annotation.Nonnull;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
+import org.taverna.server.master.exceptions.FilesystemAccessException;
 
 /**
  * Represents a directory that is the working directory of a workflow run, or a
@@ -26,7 +26,7 @@ public interface Directory extends DirectoryEntry {
 	 * @throws FilesystemAccessException
 	 *             If things go wrong.
 	 */
-	@NonNull
+	@Nonnull
 	Collection<DirectoryEntry> getContents() throws FilesystemAccessException;
 
 	/**
@@ -35,7 +35,7 @@ public interface Directory extends DirectoryEntry {
 	 * @throws FilesystemAccessException
 	 *             If things go wrong.
 	 */
-	@NonNull
+	@Nonnull
 	Collection<DirectoryEntry> getContentsByDate()
 			throws FilesystemAccessException;
 
@@ -44,7 +44,7 @@ public interface Directory extends DirectoryEntry {
 	 * @throws FilesystemAccessException
 	 *             If things go wrong.
 	 */
-	@NonNull
+	@Nonnull
 	ZipStream getContentsAsZip() throws FilesystemAccessException;
 
 	/**
@@ -59,8 +59,8 @@ public interface Directory extends DirectoryEntry {
 	 *             If the name is the same as some existing entry in the
 	 *             directory, or if something else goes wrong during creation.
 	 */
-	@NonNull
-	Directory makeSubdirectory(@NonNull Principal actor, @NonNull String name)
+	@Nonnull
+	Directory makeSubdirectory(@Nonnull Principal actor, @Nonnull String name)
 			throws FilesystemAccessException;
 
 	/**
@@ -75,8 +75,8 @@ public interface Directory extends DirectoryEntry {
 	 *             If the name is the same as some existing entry in the
 	 *             directory, or if something else goes wrong during creation.
 	 */
-	@NonNull
-	File makeEmptyFile(@NonNull Principal actor, @NonNull String name)
+	@Nonnull
+	File makeEmptyFile(@Nonnull Principal actor, @Nonnull String name)
 			throws FilesystemAccessException;
 
 	/**

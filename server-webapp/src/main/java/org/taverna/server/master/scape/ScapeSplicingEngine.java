@@ -32,6 +32,7 @@ import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.annotation.Nonnull;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.ws.Holder;
 import javax.xml.xpath.XPathExpressionException;
@@ -50,8 +51,6 @@ import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.Statement;
-
-import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
  * The splicing engine that turns the workflow part of a Preservation Action
@@ -86,14 +85,14 @@ public class ScapeSplicingEngine extends SplicingEngine {
 
 	public static enum Model {
 		One2OneNoSchema("1to1"), One2OneSchema("1to1_schema");
-		@NonNull
+		@Nonnull
 		private final String key;
 
-		private Model(@NonNull String key) {
+		private Model(@Nonnull String key) {
 			this.key = key;
 		}
 
-		@NonNull
+		@Nonnull
 		public String getKey() {
 			return key;
 		}
@@ -172,34 +171,34 @@ public class ScapeSplicingEngine extends SplicingEngine {
 		wrapperDirectory = directory;
 	}
 
-	@NonNull
-	public Workflow constructWorkflow(@NonNull Element executablePlan,
-			@NonNull Model model) throws Exception {
+	@Nonnull
+	public Workflow constructWorkflow(@Nonnull Element executablePlan,
+			@Nonnull Model model) throws Exception {
 		return constructWorkflow(executablePlan, model.getKey());
 	}
 
-	@NonNull
-	synchronized Element getWrapperInstance(@NonNull Model model)
+	@Nonnull
+	synchronized Element getWrapperInstance(@Nonnull Model model)
 			throws IOException, ParserConfigurationException, SAXException {
 		return getWrapperInstance(model.getKey());
 	}
 
 	@Override
-	protected void connectInnerToOuter(@NonNull Element topDataflow,
-			@NonNull Element linkingDataflow,
-			@NonNull Element insertedDataflow,
-			@NonNull Set<String> createdInputNames,
-			@NonNull Set<String> createdOutputNames) throws Exception {
+	protected void connectInnerToOuter(@Nonnull Element topDataflow,
+			@Nonnull Element linkingDataflow,
+			@Nonnull Element insertedDataflow,
+			@Nonnull Set<String> createdInputNames,
+			@Nonnull Set<String> createdOutputNames) throws Exception {
 		connectInnerInputsToTop(topDataflow, linkingDataflow, insertedDataflow,
 				createdInputNames);
-		@NonNull
+		@Nonnull
 		Set<String> linkingOutputNames = connectInnerOutputsToTop(topDataflow,
 				insertedDataflow, linkingDataflow, createdOutputNames);
 		concatenateDocuments(topDataflow, linkingOutputNames);
 	}
 
-	private void concatenateDocuments(@NonNull Element topMaster,
-			@NonNull Set<String> subjectPorts) throws Exception {
+	private void concatenateDocuments(@Nonnull Element topMaster,
+			@Nonnull Set<String> subjectPorts) throws Exception {
 		int counter = 0;
 		String sourceProcessor = null, currentPort = null;
 		for (String portName : subjectPorts) {
@@ -313,10 +312,10 @@ public class ScapeSplicingEngine extends SplicingEngine {
 		return m.find() ? m.group() : null;
 	}
 
-	@NonNull
-	private Set<String> connectInnerOutputsToTop(@NonNull Element topMaster,
-			@NonNull Element innerMaster, @NonNull Element outerMaster,
-			@NonNull Set<String> createdOut) throws Exception {
+	@Nonnull
+	private Set<String> connectInnerOutputsToTop(@Nonnull Element topMaster,
+			@Nonnull Element innerMaster, @Nonnull Element outerMaster,
+			@Nonnull Set<String> createdOut) throws Exception {
 		Map<String, List<String>> types = new HashMap<String, List<String>>();
 		Set<String> topPortSet = new HashSet<String>();
 		Element outPorts = get(outerMaster, OUTPUT_PORT_LIST);
@@ -396,9 +395,9 @@ public class ScapeSplicingEngine extends SplicingEngine {
 		return topPortSet;
 	}
 
-	private void connectInnerInputsToTop(@NonNull Element topMaster,
-			@NonNull Element outerMaster, @NonNull Element innerMaster,
-			@NonNull Set<String> createdIn) throws Exception {
+	private void connectInnerInputsToTop(@Nonnull Element topMaster,
+			@Nonnull Element outerMaster, @Nonnull Element innerMaster,
+			@Nonnull Set<String> createdIn) throws Exception {
 		Element outProc = get(outerMaster, NAMED_PROCESSOR + REQUIRE_NESTED,
 				innerProcessorName);
 		Element top = getMaybe(topMaster, NAMED_PROCESSOR + REQUIRE_NESTED,
@@ -425,9 +424,9 @@ public class ScapeSplicingEngine extends SplicingEngine {
 		}
 	}
 
-	@NonNull
+	@Nonnull
 	@Override
-	protected String loadWrapperInstance(@NonNull String name)
+	protected String loadWrapperInstance(@Nonnull String name)
 			throws IOException {
 		if (wrapperDirectory != null) {
 			File f = new File(wrapperDirectory, name);
@@ -448,7 +447,7 @@ public class ScapeSplicingEngine extends SplicingEngine {
 		e.setLinkingDataflowName(CONTAINER_NAME);
 		e.setInnerProcessorName(SPLICE_PROCESSOR_NAME);
 		e.setDummyProcessorName(DUMMY_PROCESSOR_NAME);
-		@NonNull
+		@Nonnull
 		Element executablePlan = e.parse(new InputSource(from));
 
 		System.out.println("setup ok");

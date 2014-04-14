@@ -36,6 +36,8 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Path;
 import javax.ws.rs.WebApplicationException;
@@ -96,8 +98,6 @@ import at.ac.tuwien.ifs.dp.plato.Object;
 import at.ac.tuwien.ifs.dp.plato.Objects;
 import at.ac.tuwien.ifs.dp.plato.PreservationActionPlan;
 import at.ac.tuwien.ifs.dp.plato.QualityLevelDescription;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 
 /**
  * SCAPE execution service implementation.
@@ -209,7 +209,7 @@ public class ScapeExecutor implements ScapeExecutionService {
 		this.ccf = ccf;
 	}
 
-	@NonNull
+	@Nonnull
 	private Policy policy() {
 		Policy p = policy;
 		if (p == null)
@@ -218,8 +218,8 @@ public class ScapeExecutor implements ScapeExecutionService {
 		return p;
 	}
 
-	@NonNull
-	private TavernaRun run(@NonNull String id) throws UnknownRunException {
+	@Nonnull
+	private TavernaRun run(@Nonnull String id) throws UnknownRunException {
 		Policy p = policy;
 		if (p == null)
 			throw new WebApplicationException(serverError().entity(
@@ -231,9 +231,9 @@ public class ScapeExecutor implements ScapeExecutionService {
 	@CallCounted
 	@PerfLogged
 	@RolesAllowed(USER)
-	@NonNull
-	public Jobs listJobs(@NonNull UriInfo ui) {
-		@NonNull
+	@Nonnull
+	public Jobs listJobs(@Nonnull UriInfo ui) {
+		@Nonnull
 		Jobs jobs = new Jobs();
 		for (Entry<String, TavernaRun> entry : runStore.listRuns(
 				support.getPrincipal(), policy()).entrySet())
@@ -246,9 +246,9 @@ public class ScapeExecutor implements ScapeExecutionService {
 	@CallCounted
 	@PerfLogged
 	@RolesAllowed(USER)
-	@NonNull
+	@Nonnull
 	public Response startJob(@Nullable JobRequest jobRequest,
-			@NonNull UriInfo ui) throws NoCreateException {
+			@Nonnull UriInfo ui) throws NoCreateException {
 		if (this.serviceUri == null)
 			this.serviceUri = ui.getBaseUri();
 		if (jobRequest == null)
@@ -280,7 +280,7 @@ public class ScapeExecutor implements ScapeExecutionService {
 					"bad content of executable plan: {%s}%s",
 					workflow.getNamespaceURI(), workflow.getLocalName()));
 
-		@NonNull
+		@Nonnull
 		String id;
 		try {
 			Model model = pickExecutionModel(plan);
@@ -295,7 +295,7 @@ public class ScapeExecutor implements ScapeExecutionService {
 				.build();
 	}
 
-	@NonNull
+	@Nonnull
 	private Model pickExecutionModel(PreservationActionPlan plan) {
 		// TODO Find a better way of picking which model workflow to use
 		QualityLevelDescription qld = plan.getQualityLevelDescription();
@@ -308,12 +308,12 @@ public class ScapeExecutor implements ScapeExecutionService {
 	@CallCounted
 	@PerfLogged
 	@RolesAllowed(USER)
-	@NonNull
-	public Job getStatus(@NonNull String id, @NonNull UriInfo ui)
+	@Nonnull
+	public Job getStatus(@Nonnull String id, @Nonnull UriInfo ui)
 			throws UnknownRunException {
 		if (id == null || id.isEmpty())
 			throw new BadInputException("what?");
-		@NonNull
+		@Nonnull
 		TavernaRun r = run(id);
 		if (!isScapeRun(r))
 			throw new UnknownRunException();
@@ -335,8 +335,8 @@ public class ScapeExecutor implements ScapeExecutionService {
 	@CallCounted
 	@PerfLogged
 	@RolesAllowed(USER)
-	@NonNull
-	public Response deleteJob(@NonNull String id) throws UnknownRunException,
+	@Nonnull
+	public Response deleteJob(@Nonnull String id) throws UnknownRunException,
 			NoDestroyException {
 		if (id == null || id.isEmpty())
 			throw new BadInputException("what?");
@@ -353,10 +353,10 @@ public class ScapeExecutor implements ScapeExecutionService {
 		return dao.isScapeJob(run.getId());
 	}
 
-	@NonNull
-	private String submitAndStart(@NonNull Workflow w,
-			@NonNull final String planId, @NonNull final List<Object> objs,
-			@Nullable final Element schematron, @NonNull UriInfo ui)
+	@Nonnull
+	private String submitAndStart(@Nonnull Workflow w,
+			@Nonnull final String planId, @Nonnull final List<Object> objs,
+			@Nullable final Element schematron, @Nonnull UriInfo ui)
 			throws NoCreateException, UnknownRunException {
 		/* Warning: do not move UriInfo across threads */
 		final URI base = ui.getBaseUri();
@@ -384,10 +384,10 @@ public class ScapeExecutor implements ScapeExecutionService {
 		return jobId;
 	}
 
-	private void executeWorkflow(@NonNull String planId,
-			@NonNull List<Object> objs, @Nullable Element schematron,
-			@NonNull URI base, @NonNull String jobId, @NonNull TavernaRun run,
-			@NonNull InputDescription inDesc) throws BadStateChangeException,
+	private void executeWorkflow(@Nonnull String planId,
+			@Nonnull List<Object> objs, @Nullable Element schematron,
+			@Nonnull URI base, @Nonnull String jobId, @Nonnull TavernaRun run,
+			@Nonnull InputDescription inDesc) throws BadStateChangeException,
 			TransformerException, InvalidCredentialException, IOException,
 			GeneralSecurityException {
 		Set<String> inputs = new HashSet<String>();
@@ -413,18 +413,18 @@ public class ScapeExecutor implements ScapeExecutionService {
 		}
 	}
 
-	private void initPlanID(@NonNull TavernaRun run, @NonNull String planId)
+	private void initPlanID(@Nonnull TavernaRun run, @Nonnull String planId)
 			throws BadStateChangeException {
 		run.makeInput("planId").setValue(planId);
 	}
 
-	private void initRepositories(@NonNull TavernaRun run)
+	private void initRepositories(@Nonnull TavernaRun run)
 			throws BadStateChangeException {
 		run.makeInput("SourceRepository").setValue(repository);
 		run.makeInput("DestinationRepository").setValue(repository);
 	}
 
-	private void initObjects(@NonNull TavernaRun run, @NonNull List<Object> objs)
+	private void initObjects(@Nonnull TavernaRun run, @Nonnull List<Object> objs)
 			throws BadStateChangeException {
 		StringBuffer sb = new StringBuffer();
 		for (Object object : objs)
@@ -432,12 +432,12 @@ public class ScapeExecutor implements ScapeExecutionService {
 		run.makeInput("objects").setValue(sb.toString());
 	}
 
-	private void initSLA(@NonNull TavernaRun run, @NonNull Element schematron)
+	private void initSLA(@Nonnull TavernaRun run, @Nonnull Element schematron)
 			throws BadStateChangeException, TransformerException {
 		run.makeInput("sla").setValue(serializeXml(schematron));
 	}
 
-	private void initSecurity(@NonNull TavernaRun run)
+	private void initSecurity(@Nonnull TavernaRun run)
 			throws InvalidCredentialException, IOException,
 			GeneralSecurityException {
 		TavernaSecurityContext ctxt = run.getSecurityContext();
@@ -456,8 +456,8 @@ public class ScapeExecutor implements ScapeExecutionService {
 			ctxt.addTrusted(t);
 	}
 
-	@NonNull
-	private String serializeXml(@NonNull Node node) throws TransformerException {
+	@Nonnull
+	private String serializeXml(@Nonnull Node node) throws TransformerException {
 		Transformer writer = TransformerFactory.newInstance().newTransformer();
 		writer.setOutputProperty(OMIT_XML_DECLARATION, "yes");
 		writer.setOutputProperty(STANDALONE, "yes");
@@ -466,7 +466,7 @@ public class ScapeExecutor implements ScapeExecutionService {
 		return sw.toString();
 	}
 
-	private void setExecuting(@NonNull TavernaRun run)
+	private void setExecuting(@Nonnull TavernaRun run)
 			throws BadStateChangeException {
 		while (run.setStatus(Operating) != null)
 			try {

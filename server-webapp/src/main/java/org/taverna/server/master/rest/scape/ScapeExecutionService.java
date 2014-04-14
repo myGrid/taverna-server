@@ -6,6 +6,7 @@ import static org.taverna.server.master.rest.ContentTypes.XML;
 
 import java.util.List;
 
+import javax.annotation.Nonnull;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -33,7 +34,6 @@ import org.taverna.server.master.exceptions.NoUpdateException;
 import org.taverna.server.master.exceptions.UnknownRunException;
 
 import at.ac.tuwien.ifs.dp.plato.PreservationActionPlan;
-import edu.umd.cs.findbugs.annotations.NonNull;
 
 @RolesAllowed(USER)
 @Description("This is SCAPE service interface sitting on top of Taverna "
@@ -43,14 +43,14 @@ public interface ScapeExecutionService {
 	@Path("/")
 	@Produces(XML)
 	@RolesAllowed(USER)
-	Jobs listJobs(@NonNull @Context UriInfo ui);
+	Jobs listJobs(@Nonnull @Context UriInfo ui);
 
 	@POST
 	@Path("/")
 	@Consumes(XML)
 	@RolesAllowed(USER)
-	Response startJob(@NonNull JobRequest plan,
-			@Context @NonNull UriInfo ui) throws NoCreateException;
+	Response startJob(@Nonnull JobRequest plan,
+			@Context @Nonnull UriInfo ui) throws NoCreateException;
 
 	@OPTIONS
 	@Path("/")
@@ -59,35 +59,35 @@ public interface ScapeExecutionService {
 	@GET
 	@Path("{id}")
 	@Produces(XML)
-	Job getStatus(@NonNull @PathParam("id") String id,
-			@Context @NonNull UriInfo ui) throws UnknownRunException;
+	Job getStatus(@Nonnull @PathParam("id") String id,
+			@Context @Nonnull UriInfo ui) throws UnknownRunException;
 
 	@DELETE
 	@Path("{id}")
-	Response deleteJob(@NonNull @PathParam("id") String id)
+	Response deleteJob(@Nonnull @PathParam("id") String id)
 			throws UnknownRunException, NoDestroyException;
 
 	@OPTIONS
 	@Path("{id}")
-	Response jobOpt(@NonNull @PathParam("id") String id)
+	Response jobOpt(@Nonnull @PathParam("id") String id)
 			throws UnknownRunException;
 
 	@GET
 	@Path("{id}/notification")
 	@Produces(TEXT)
-	String getNotification(@NonNull @PathParam("id") String id)
+	String getNotification(@Nonnull @PathParam("id") String id)
 			throws UnknownRunException;
 
 	@PUT
 	@Path("{id}/notification")
 	@Consumes(TEXT)
 	@Produces(TEXT)
-	String setNotification(@NonNull @PathParam("id") String id, String newValue)
+	String setNotification(@Nonnull @PathParam("id") String id, String newValue)
 			throws UnknownRunException, NoUpdateException;
 
 	@OPTIONS
 	@Path("{id}/notification")
-	Response notifyOpt(@NonNull @PathParam("id") String id)
+	Response notifyOpt(@Nonnull @PathParam("id") String id)
 			throws UnknownRunException;
 
 	@XmlRootElement(name = "jobs")

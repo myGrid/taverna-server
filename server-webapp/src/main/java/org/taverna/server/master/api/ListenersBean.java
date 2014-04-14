@@ -1,9 +1,9 @@
 package org.taverna.server.master.api;
 
+import javax.annotation.Nonnull;
+
 import org.taverna.server.master.interfaces.TavernaRun;
 import org.taverna.server.master.rest.TavernaServerListenersREST;
-
-import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
  * Description of properties supported by {@link ListenersREST}.
@@ -11,6 +11,6 @@ import edu.umd.cs.findbugs.annotations.NonNull;
  * @author Donal Fellows
  */
 public interface ListenersBean extends SupportAware {
-	@NonNull
-	TavernaServerListenersREST connect(@NonNull TavernaRun run);
+	@Nonnull
+	TavernaServerListenersREST connect(@Nonnull TavernaRun run);
 }

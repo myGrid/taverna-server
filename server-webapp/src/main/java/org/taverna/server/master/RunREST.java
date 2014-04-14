@@ -21,6 +21,7 @@ import static org.taverna.server.master.utils.RestUtils.opt;
 
 import java.util.Date;
 
+import javax.annotation.Nonnull;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
@@ -50,8 +51,6 @@ import org.taverna.server.master.rest.TavernaServerSecurityREST;
 import org.taverna.server.master.utils.CallTimeLogger.PerfLogged;
 import org.taverna.server.master.utils.InvocationCounter.CallCounted;
 import org.taverna.server.port_description.OutputDescription;
-
-import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
  * RESTful interface to a single workflow run.
@@ -358,7 +357,7 @@ abstract class RunREST implements TavernaServerRunREST, RunBean {
 	 * 
 	 * @return The handle to the interface, as decorated by Spring.
 	 */
-	@NonNull
+	@Nonnull
 	protected abstract DirectoryREST makeDirectoryInterface();
 
 	/**
@@ -366,7 +365,7 @@ abstract class RunREST implements TavernaServerRunREST, RunBean {
 	 * 
 	 * @return The handle to the interface, as decorated by Spring.
 	 */
-	@NonNull
+	@Nonnull
 	protected abstract InputREST makeInputInterface();
 
 	/**
@@ -374,7 +373,7 @@ abstract class RunREST implements TavernaServerRunREST, RunBean {
 	 * 
 	 * @return The handle to the interface, as decorated by Spring.
 	 */
-	@NonNull
+	@Nonnull
 	protected abstract ListenersREST makeListenersInterface();
 
 	/**
@@ -382,7 +381,7 @@ abstract class RunREST implements TavernaServerRunREST, RunBean {
 	 * 
 	 * @return The handle to the interface, as decorated by Spring.
 	 */
-	@NonNull
+	@Nonnull
 	protected abstract RunSecurityREST makeSecurityInterface();
 
 	/**
@@ -390,7 +389,7 @@ abstract class RunREST implements TavernaServerRunREST, RunBean {
 	 * 
 	 * @return The handle to the interaface, as decorated by Spring.
 	 */
-	@NonNull
+	@Nonnull
 	protected abstract InteractionFeed makeInteractionFeed();
 
 	@Override

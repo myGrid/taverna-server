@@ -12,14 +12,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Required;
 import org.taverna.server.master.interfaces.MessageDispatcher;
 import org.taverna.server.master.interfaces.TavernaRun;
-
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 
 /**
  * A common object for handling dispatch of event-driven messages.
@@ -37,7 +37,7 @@ public class NotificationEngine {
 	 */
 	@Required
 	public void setDispatchers(List<MessageDispatcher> dispatchers) {
-		this.dispatchers = new HashMap<String, MessageDispatcher>();
+		this.dispatchers = new HashMap<>();
 		for (MessageDispatcher d : dispatchers)
 			this.dispatchers.put(d.getName(), d);
 	}
@@ -51,9 +51,9 @@ public class NotificationEngine {
 		this.universalDispatchers = dispatcherList;
 	}
 
-	private void dispatchToChosenTarget(@NonNull TavernaRun originator,
-			@NonNull String scheme, @NonNull String target,
-			@NonNull Message message) throws Exception {
+	private void dispatchToChosenTarget(@Nonnull TavernaRun originator,
+			@Nonnull String scheme, @Nonnull String target,
+			@Nonnull Message message) throws Exception {
 		try {
 			MessageDispatcher d = dispatchers.get(scheme);
 			if (d != null && d.isAvailable())
@@ -83,8 +83,8 @@ public class NotificationEngine {
 		}
 	}
 
-	private void dispatchUniversally(@NonNull TavernaRun originator,
-			@NonNull Message message) throws Exception {
+	private void dispatchUniversally(@Nonnull TavernaRun originator,
+			@Nonnull Message message) throws Exception {
 		for (MessageDispatcher d : universalDispatchers)
 			try {
 				if (d.isAvailable())
@@ -113,15 +113,15 @@ public class NotificationEngine {
 	 * @throws Exception
 	 *             If anything goes wrong with the dispatch process.
 	 */
-	public void dispatchMessage(@NonNull TavernaRun originator,
-			@Nullable String destination, @NonNull Message message)
+	public void dispatchMessage(@Nonnull TavernaRun originator,
+			@Nullable String destination, @Nonnull Message message)
 			throws Exception {
 		if (destination != null && !destination.trim().isEmpty()) {
 			try {
 				URI toURI = new URI(destination.trim());
 				dispatchToChosenTarget(originator, toURI.getScheme(),
 						toURI.getSchemeSpecificPart(), message);
-			} catch (java.net.URISyntaxException e) {
+			} catch (URISyntaxException e) {
 				// Ignore
 			}
 		}
@@ -133,7 +133,7 @@ public class NotificationEngine {
 	 *         disabled by configuration somewhere).
 	 */
 	public List<String> listAvailableDispatchers() {
-		ArrayList<String> result = new ArrayList<String>();
+		ArrayList<String> result = new ArrayList<>();
 		for (Map.Entry<String, MessageDispatcher> entry : dispatchers
 				.entrySet()) {
 			if (entry.getValue().isAvailable())
@@ -143,8 +143,8 @@ public class NotificationEngine {
 	}
 
 	public interface Message {
-		@NonNull String getContent(@NonNull String type);
+		@Nonnull String getContent(@Nonnull String type);
 
-		@NonNull String getTitle(@NonNull String type);
+		@Nonnull String getTitle(@Nonnull String type);
 	}
 }

@@ -31,6 +31,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
@@ -49,10 +51,6 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
-import edu.umd.cs.findbugs.annotations.SuppressWarnings;
-
 /**
  * The registered factory for runs, this class is responsible for constructing
  * runs that are suitable for particular users. It is also the entry point for
@@ -61,25 +59,24 @@ import edu.umd.cs.findbugs.annotations.SuppressWarnings;
  * @author Donal Fellows
  * @see LocalWorker
  */
-@SuppressWarnings({ "SE_BAD_FIELD", "SE_NO_SERIALVERSIONID" })
-@java.lang.SuppressWarnings("serial")
+@SuppressWarnings("serial")
 public class TavernaRunManager extends UnicastRemoteObject implements
 		RemoteRunFactory, RunAccounting, WorkerFactory {
-	@NonNull
+	@Nonnull
 	final DocumentBuilderFactory dbf;
-	@NonNull
+	@Nonnull
 	final TransformerFactory tf;
-	@NonNull
+	@Nonnull
 	final String command;
 	// Hacks!
 	public static String interactionHost;
 	public static String interactionPort;
 	public static String interactionWebdavPath;
 	public static String interactionFeedPath;
-	@NonNull
-	final Map<String, String> seedEnvironment = new HashMap<String, String>();
-	@NonNull
-	final List<String> javaInitParams = new ArrayList<String>();
+	@Nonnull
+	final Map<String, String> seedEnvironment = new HashMap<>();
+	@Nonnull
+	final List<String> javaInitParams = new ArrayList<>();
 	private int activeRuns = 0;
 
 	/**
@@ -105,7 +102,7 @@ public class TavernaRunManager extends UnicastRemoteObject implements
 	 * @throws RemoteException
 	 *             If anything goes wrong during creation of the instance.
 	 */
-	public TavernaRunManager(@NonNull String command) throws RemoteException {
+	public TavernaRunManager(@Nonnull String command) throws RemoteException {
 		this.command = command;
 		this.dbf = DocumentBuilderFactory.newInstance();
 		this.dbf.setNamespaceAware(true);
@@ -125,10 +122,9 @@ public class TavernaRunManager extends UnicastRemoteObject implements
 	 * @throws RemoteException
 	 *             If anything goes wrong.
 	 */
-	@SuppressWarnings("REC_CATCH_EXCEPTION")
-	@NonNull
-	private String unwrapWorkflow(@NonNull String workflow,
-			@NonNull Holder<String> wfid) throws RemoteException {
+	@Nonnull
+	private String unwrapWorkflow(@Nonnull String workflow,
+			@Nonnull Holder<String> wfid) throws RemoteException {
 		StringReader sr = new StringReader(workflow);
 		StringWriter sw = new StringWriter();
 		try {
@@ -166,8 +162,8 @@ public class TavernaRunManager extends UnicastRemoteObject implements
 			};
 
 		try {
-			Holder<String> wfid = new Holder<String>("???");
-			@NonNull
+			Holder<String> wfid = new Holder<>("???");
+			@Nonnull
 			String wf = unwrapWorkflow(workflow, wfid);
 			out.println("Creating run from workflow <" + wfid.value + "> for <"
 					+ creator + ">");
@@ -204,7 +200,6 @@ public class TavernaRunManager extends UnicastRemoteObject implements
 
 	static class DelayedDeath implements Runnable {
 		@Override
-		@SuppressWarnings("DM_EXIT")
 		public void run() {
 			try {
 				Thread.sleep(DEATH_DELAY);
@@ -246,7 +241,7 @@ public class TavernaRunManager extends UnicastRemoteObject implements
 	 *             the workflow, or if we can't build the worker instance, or
 	 *             register it. Also if the arguments are wrong.
 	 */
-	public static void main(@NonNull String[] args) throws Exception {
+	public static void main(@Nonnull String[] args) throws Exception {
 		if (args.length < 2)
 			throw new Exception("wrong # args: must be \"" + usage + "\"");
 		if (!getProperty(UNSECURE_PROP, "no").equals("yes")) {

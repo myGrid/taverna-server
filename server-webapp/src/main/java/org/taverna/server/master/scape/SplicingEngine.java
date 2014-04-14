@@ -29,6 +29,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -49,9 +51,6 @@ import org.xml.sax.ErrorHandler;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
-
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 
 public abstract class SplicingEngine extends XPathSupport {
 	private static final String T2_CORE_PKG = "net.sf.taverna.t2.core";
@@ -129,9 +128,9 @@ public abstract class SplicingEngine extends XPathSupport {
 		return db.parse(source).getDocumentElement();
 	}
 
-	@NonNull
+	@Nonnull
 	protected final synchronized Element getWrapperInstance(
-			@NonNull String modelName) throws IOException,
+			@Nonnull String modelName) throws IOException,
 			ParserConfigurationException, SAXException {
 		if (!wrapperContents.containsKey(modelName))
 			wrapperContents.put(modelName, loadWrapperInstance(wrapperPrefix
@@ -140,8 +139,8 @@ public abstract class SplicingEngine extends XPathSupport {
 				wrapperContents.get(modelName))));
 	}
 
-	@NonNull
-	protected String loadWrapperInstance(@NonNull String fileName)
+	@Nonnull
+	protected String loadWrapperInstance(@Nonnull String fileName)
 			throws IOException {
 		URL resource = getClass().getResource(fileName);
 		if (resource == null)
@@ -176,9 +175,9 @@ public abstract class SplicingEngine extends XPathSupport {
 	 * @throws Exception
 	 *             If anything goes wrong
 	 */
-	@NonNull
-	public Workflow constructWorkflow(@NonNull Element executablePlan,
-			@NonNull String modelName) throws Exception {
+	@Nonnull
+	public Workflow constructWorkflow(@Nonnull Element executablePlan,
+			@Nonnull String modelName) throws Exception {
 		Element wrap = getWrapperInstance(modelName);
 
 		/*
@@ -234,24 +233,24 @@ public abstract class SplicingEngine extends XPathSupport {
 	 * @throws Exception
 	 *             If anything goes wrong.
 	 */
-	protected abstract void connectInnerToOuter(@NonNull Element topDataflow,
-			@NonNull Element linkingDataflow,
-			@NonNull Element insertedDataflow,
-			@NonNull Set<String> createdInputNames,
-			@NonNull Set<String> createdOutputNames) throws Exception;
+	protected abstract void connectInnerToOuter(@Nonnull Element topDataflow,
+			@Nonnull Element linkingDataflow,
+			@Nonnull Element insertedDataflow,
+			@Nonnull Set<String> createdInputNames,
+			@Nonnull Set<String> createdOutputNames) throws Exception;
 
-	@NonNull
-	protected static Element port(@NonNull Element container,
-			@NonNull String name, @Nullable Integer depth,
+	@Nonnull
+	protected static Element port(@Nonnull Element container,
+			@Nonnull String name, @Nullable Integer depth,
 			@Nullable Integer granularDepth) {
 		return DOMUtils.port(container, name,
 				depth != null ? Integer.toString(depth) : null,
 				granularDepth != null ? Integer.toString(granularDepth) : null);
 	}
 
-	protected Element datalink(@NonNull Element dataflow,
-			@Nullable String fromProc, @NonNull String fromPort,
-			@Nullable String toProc, @NonNull String toPort) throws Exception {
+	protected Element datalink(@Nonnull Element dataflow,
+			@Nullable String fromProc, @Nonnull String fromPort,
+			@Nullable String toProc, @Nonnull String toPort) throws Exception {
 		return DOMUtils.datalink(get(dataflow, "t:datalinks"), fromProc,
 				fromPort, toProc, toPort);
 	}
@@ -461,9 +460,9 @@ public abstract class SplicingEngine extends XPathSupport {
 	 * @return
 	 * @throws XPathExpressionException
 	 */
-	@NonNull
-	protected Set<String> spliceInputs(@NonNull Element processor,
-			@NonNull Element outer, @NonNull Element inner)
+	@Nonnull
+	protected Set<String> spliceInputs(@Nonnull Element processor,
+			@Nonnull Element outer, @Nonnull Element inner)
 			throws XPathExpressionException {
 		Document doc = outer.getOwnerDocument();
 		Set<String> created = new HashSet<String>();
@@ -525,9 +524,9 @@ public abstract class SplicingEngine extends XPathSupport {
 		return created;
 	}
 
-	@NonNull
-	protected Set<String> spliceOutputs(@NonNull Element processor,
-			@NonNull Element outer, @NonNull Element inner)
+	@Nonnull
+	protected Set<String> spliceOutputs(@Nonnull Element processor,
+			@Nonnull Element outer, @Nonnull Element inner)
 			throws XPathExpressionException, DOMException {
 		Set<String> created = new HashSet<String>();
 
@@ -548,9 +547,9 @@ public abstract class SplicingEngine extends XPathSupport {
 		return created;
 	}
 
-	@NonNull
-	protected Element getInnerMasterAndSplice(@NonNull Element executablePlan,
-			@NonNull Element wrap) throws NoCreateException,
+	@Nonnull
+	protected Element getInnerMasterAndSplice(@Nonnull Element executablePlan,
+			@Nonnull Element wrap) throws NoCreateException,
 			XPathExpressionException, DOMException {
 		wrap.removeChild(getDataflow(wrap, innerProcessorName));
 		Element innerMaster = null;
@@ -576,14 +575,14 @@ public abstract class SplicingEngine extends XPathSupport {
 	 * @throws XPathExpressionException
 	 */
 	@Nullable
-	Element getDataflow(@NonNull Element workflow, @NonNull String name)
+	Element getDataflow(@Nonnull Element workflow, @Nonnull String name)
 			throws XPathExpressionException {
 		return get(workflow, "t:dataflow[t:name = \"%s\"]",
 				name.substring(0, min(20, name.length())));
 	}
 
-	@NonNull
-	private Element getOuterMaster(@NonNull Element wrap)
+	@Nonnull
+	private Element getOuterMaster(@Nonnull Element wrap)
 			throws NoCreateException, XPathExpressionException {
 		Element dataflow = getDataflow(wrap, linkingDataflowName);
 		if (dataflow != null)
@@ -593,8 +592,8 @@ public abstract class SplicingEngine extends XPathSupport {
 						+ linkingDataflowName + ")");
 	}
 
-	@NonNull
-	private Element getTop(@NonNull Element wrap) throws NoCreateException,
+	@Nonnull
+	private Element getTop(@Nonnull Element wrap) throws NoCreateException,
 			XPathExpressionException {
 		Element top = get(wrap, "t:dataflow[@role = \"top\"]");
 		if (top != null)
@@ -602,9 +601,9 @@ public abstract class SplicingEngine extends XPathSupport {
 		throw new NoCreateException("template workflow had no top dataflow!");
 	}
 
-	@NonNull
-	private Element spliceSubworkflowProcessor(@NonNull Element outer,
-			@NonNull Element inner) throws NoCreateException,
+	@Nonnull
+	private Element spliceSubworkflowProcessor(@Nonnull Element outer,
+			@Nonnull Element inner) throws NoCreateException,
 			XPathExpressionException, DOMException {
 		for (Element processor : select(outer,
 				NAMED_PROCESSOR + REQUIRE_NESTED, innerProcessorName)) {

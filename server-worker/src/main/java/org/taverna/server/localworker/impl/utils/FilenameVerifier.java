@@ -10,8 +10,8 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * Utility class that handles filename validation on different target platforms.
@@ -105,7 +105,7 @@ public abstract class FilenameVerifier {
 	 * @throws IOException
 	 *             If validation fails.
 	 */
-	@NonNull
+	@Nonnull
 	public static File getValidatedFile(@Nullable File dir, String... names)
 			throws IOException {
 		if (names == null || names.length == 0)
@@ -144,9 +144,9 @@ public abstract class FilenameVerifier {
 	 * @throws IOException
 	 *             If validation fails or the file doesn't exist.
 	 */
-	@NonNull
-	public static File getValidatedExistingFile(@NonNull File dir,
-			@NonNull String name) throws IOException {
+	@Nonnull
+	public static File getValidatedExistingFile(@Nonnull File dir,
+			@Nonnull String name) throws IOException {
 		File f = getValidatedFile(dir, name);
 		if (!f.exists())
 			throw new IOException("doesn't exist");
@@ -164,9 +164,9 @@ public abstract class FilenameVerifier {
 	 * @throws IOException
 	 *             If validation fails or the file does exist.
 	 */
-	@NonNull
-	public static File getValidatedNewFile(@NonNull File dir,
-			@NonNull String name) throws IOException {
+	@Nonnull
+	public static File getValidatedNewFile(@Nonnull File dir,
+			@Nonnull String name) throws IOException {
 		File f = getValidatedFile(dir, name);
 		if (f.exists())
 			throw new IOException("already exists");

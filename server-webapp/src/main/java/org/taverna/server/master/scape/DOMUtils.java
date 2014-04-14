@@ -1,10 +1,10 @@
 package org.taverna.server.master.scape;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 
 abstract class DOMUtils {
 	private DOMUtils() {
@@ -19,14 +19,14 @@ abstract class DOMUtils {
 		return element;
 	}
 
-	@NonNull
-	static Element branch(@NonNull Element parent, String... name) {
+	@Nonnull
+	static Element branch(@Nonnull Element parent, String... name) {
 		if (name.length == 0)
 			throw new IllegalArgumentException("need at least one element name");
 		Document doc = parent.getOwnerDocument();
 		Element elem = parent;
 		for (String n : name) {
-			@NonNull
+			@Nonnull
 			Element created = doc.createElementNS(elem.getNamespaceURI(), n);
 			elem.appendChild(created);
 			elem = created;
@@ -42,7 +42,7 @@ abstract class DOMUtils {
 		return elem;
 	}
 
-	static void cls(@NonNull Element parent, String group, String artifact,
+	static void cls(@Nonnull Element parent, String group, String artifact,
 			String version, String clazz) {
 		Element raven = branch(parent, "raven");
 		leaf(raven, "group", group);
@@ -51,7 +51,7 @@ abstract class DOMUtils {
 		leaf(parent, "class", clazz);
 	}
 
-	static Element config(@NonNull Element parent, String name) {
+	static Element config(@Nonnull Element parent, String name) {
 		Element config = attrs(branch(parent, "configBean"), "encoding",
 				"xstream");
 		Element created = parent.getOwnerDocument().createElementNS("", name);
@@ -60,7 +60,7 @@ abstract class DOMUtils {
 		return created;
 	}
 
-	static Element datalink(@NonNull Element datalinks, String fromProc,
+	static Element datalink(@Nonnull Element datalinks, String fromProc,
 			String fromPort, String toProc, String toPort) {
 		Element link = branch(datalinks, "datalink");
 		Element sink = attrs(branch(link, "sink"), "type",
@@ -76,8 +76,8 @@ abstract class DOMUtils {
 		return link;
 	}
 
-	@NonNull
-	static Element port(@NonNull Element container, @NonNull String name,
+	@Nonnull
+	static Element port(@Nonnull Element container, @Nonnull String name,
 			@Nullable String depth, @Nullable String granularDepth) {
 		Element port = branch(container, "port");
 		leaf(port, "name", name);

@@ -7,11 +7,11 @@ package org.taverna.server.master.interfaces;
 
 import java.util.Map;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
 import org.taverna.server.master.exceptions.UnknownRunException;
 import org.taverna.server.master.utils.UsernamePrincipal;
-
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 
 /**
  * Interface to the mechanism that looks after the mapping of names to runs.
@@ -35,9 +35,9 @@ public interface RunStore {
 	 *             If the lookup fails (either because it does not exist or
 	 *             because it is not permitted for the user by the policy).
 	 */
-	@NonNull
-	TavernaRun getRun(@NonNull UsernamePrincipal user, @NonNull Policy p,
-			@NonNull String uuid) throws UnknownRunException;
+	@Nonnull
+	TavernaRun getRun(@Nonnull UsernamePrincipal user, @Nonnull Policy p,
+			@Nonnull String uuid) throws UnknownRunException;
 
 	/**
 	 * Obtain the named workflow run.
@@ -49,8 +49,8 @@ public interface RunStore {
 	 *             If the lookup fails (either because it does not exist or
 	 *             because it is not permitted for the user by the policy).
 	 */
-	@NonNull
-	public TavernaRun getRun(@NonNull String uuid) throws UnknownRunException;
+	@Nonnull
+	public TavernaRun getRun(@Nonnull String uuid) throws UnknownRunException;
 
 	/**
 	 * List the runs that a particular user may access.
@@ -63,9 +63,9 @@ public interface RunStore {
 	 *            The general policy system context.
 	 * @return A mapping from run names to run instances.
 	 */
-	@NonNull
+	@Nonnull
 	Map<String, TavernaRun> listRuns(@Nullable UsernamePrincipal user,
-			@NonNull Policy p);
+			@Nonnull Policy p);
 
 	/**
 	 * Adds a workflow instance run to the store. Note that this operation is
@@ -76,8 +76,8 @@ public interface RunStore {
 	 *            The run itself.
 	 * @return The name of the run.
 	 */
-	@NonNull
-	String registerRun(@NonNull TavernaRun run);
+	@Nonnull
+	String registerRun(@Nonnull TavernaRun run);
 
 	/**
 	 * Removes a run from the store. Note that this operation is <i>not</i>
@@ -86,5 +86,5 @@ public interface RunStore {
 	 * @param uuid
 	 *            The name of the run.
 	 */
-	void unregisterRun(@NonNull String uuid);
+	void unregisterRun(@Nonnull String uuid);
 }

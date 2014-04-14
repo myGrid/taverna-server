@@ -8,15 +8,15 @@ package org.taverna.server.master.interfaces;
 import java.net.URI;
 import java.util.List;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
 import org.taverna.server.master.common.Status;
 import org.taverna.server.master.common.Workflow;
 import org.taverna.server.master.exceptions.NoCreateException;
 import org.taverna.server.master.exceptions.NoDestroyException;
 import org.taverna.server.master.exceptions.NoUpdateException;
 import org.taverna.server.master.utils.UsernamePrincipal;
-
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 
 /**
  * Simple policy interface.
@@ -39,7 +39,7 @@ public interface Policy {
 	 *         enforced.
 	 */
 	@Nullable
-	Integer getMaxRuns(@NonNull UsernamePrincipal user);
+	Integer getMaxRuns(@Nonnull UsernamePrincipal user);
 
 	/**
 	 * Test whether the user can create an instance of the given workflow.
@@ -52,7 +52,7 @@ public interface Policy {
 	 *             If they may not instantiate it.
 	 */
 	void permitCreate(@Nullable UsernamePrincipal user,
-			@NonNull Workflow workflow) throws NoCreateException;
+			@Nonnull Workflow workflow) throws NoCreateException;
 
 	/**
 	 * Test whether the user can destroy a workflow instance run or manipulate
@@ -65,7 +65,7 @@ public interface Policy {
 	 * @throws NoDestroyException
 	 *             If they may not destroy it.
 	 */
-	void permitDestroy(@Nullable UsernamePrincipal user, @NonNull TavernaRun run)
+	void permitDestroy(@Nullable UsernamePrincipal user, @Nonnull TavernaRun run)
 			throws NoDestroyException;
 
 	/**
@@ -81,7 +81,7 @@ public interface Policy {
 	 *         the user.
 	 */
 	boolean permitAccess(@Nullable UsernamePrincipal user,
-			@NonNull TavernaRun run);
+			@Nonnull TavernaRun run);
 
 	/**
 	 * Test whether the user can modify a workflow run (other than for its
@@ -94,7 +94,7 @@ public interface Policy {
 	 * @throws NoUpdateException
 	 *             If they may not modify it.
 	 */
-	void permitUpdate(@Nullable UsernamePrincipal user, @NonNull TavernaRun run)
+	void permitUpdate(@Nullable UsernamePrincipal user, @Nonnull TavernaRun run)
 			throws NoUpdateException;
 
 	/**
