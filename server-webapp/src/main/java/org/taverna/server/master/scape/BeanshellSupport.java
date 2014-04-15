@@ -3,12 +3,16 @@ package org.taverna.server.master.scape;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.io.Writer;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Scanner;
 
 import javax.xml.transform.stream.StreamSource;
 
@@ -31,10 +35,10 @@ import com.phloc.schematron.pure.SchematronResourcePure;
 class BeanshellSupport {
 	@Deprecated
 	static class RealizeDOs {
-		String repository;
-		String voidToken;
-		String workDirectory;
-		String objects;
+		static String repository;
+		static String voidToken;
+		static String workDirectory;
+		static String objects;
 		List<String> files;
 		List<String> objectList;
 		List<String> resolvedObjectList;
@@ -73,12 +77,13 @@ class BeanshellSupport {
 
 	@Deprecated
 	static class AssessMetrics {
-		String QLD;
-		String metrics;
+		static String QLD;
+		static String metrics;
 		List<String> failures;
 		String isSatisfied;
 
 		public void shell() throws Exception {
+			// FIXME add random token
 			File schematron = new File("schematron.xml");
 			File measuresDoc = new File("measures.xml");
 
@@ -113,39 +118,97 @@ class BeanshellSupport {
 	static class WriteDOsToRepository {
 		String errors;
 		String written;
-		String repository;
-		List<String> isSatisfied;
-		List<String> outputFiles;
-		List<String> digitalObjects;
+		static String repository;
+		static List<String> isSatisfied;
+		static List<String> outputFiles;
+		static List<String> digitalObjects;
+		static List<String> metadata;
 
 		public void shell() throws Exception {
-			StringBuilder errorsBuffer = new StringBuilder("<h1>Errors:</h1><ul>");
-			StringBuilder writtenBuffer = new StringBuilder("<h1>Written:</h1><ul>");
 			Iterator sat = isSatisfied.iterator();
 			Iterator out = outputFiles.iterator();
 			Iterator dos = digitalObjects.iterator();
+			Iterator mds = metadata.iterator();
+			StringBuilder errorsBuffer = new StringBuilder("<h1>Errors:</h1><ul>");
+			StringBuilder writtenBuffer = new StringBuilder("<h1>Written:</h1><ul>");
 			int nout = 0, nerr = 0;
-			while (sat.hasNext() && out.hasNext()) {
-				Object src = dos.next();
-				Object dst = out.next();
-				if (sat.next().equals("true")) {
-					// FIXME
-					writtenBuffer.append("<li>wrote ").append(dst)
-							.append(" from ").append(src)
-							.append(" back to repo ").append(repository)
-							.append("</li>");
-					nout++;
-				} else {
-					errorsBuffer.append("<li>did not write ").append(dst)
-							.append(" from ").append(src)
-							.append(" back; failed quality check</li>");
-					nerr++;
-				}
+			while (sat.hasNext() && out.hasNext() && mds.hasNext()) {
+			    Object src = dos.next();
+			    Object dst = out.next();
+			    if (sat.next().equals("true")) {
+			        URL url = new URL(repository + src);
+			        java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
+			        conn.setRequestMethod("PUT");
+			        conn.setDoOutput(true);
+			        Writer w = new OutputStreamWriter(conn.getOutputStream());
+			        w.write((String) mds.next());
+			        w.close();
+			        if (conn.getResponseCode() >= 400) {
+			        	errorsBuffer.append("<li>failed during write because of error: " + conn.getResponseMessage() + "<pre>");
+			        	Scanner sc = new Scanner(conn.getErrorStream());
+			        	while (sc.hasNextLine())
+			        		errorsBuffer.append("\n").append(sc.nextLine());
+			        	sc.close();
+			        	errorsBuffer.append("\n</pre></li>");
+			        	nerr++;
+			        } else {
+						writtenBuffer.append("<li>wrote ").append(dst)
+								.append(" from ").append(src)
+								.append(" back to repo ").append(repository)
+								.append("</li>");
+						nout++;
+					}
+			    } else {
+			        errorsBuffer.append("<li>did not write ").append(dst)
+			                .append(" from ").append(src)
+			                .append(" back; failed quality check</li>");
+			        nerr++;
+			    }
 			}
 			errors = errorsBuffer.append("</ul>Total errors: ").append(nerr)
-					.toString();
+			        .toString();
 			written = writtenBuffer.append("</ul>Total written: ").append(nout)
-					.toString();
+			        .toString();
+		}
+	}
+
+	@Deprecated
+	static class ConstructNewMetadata {
+		static String originalMetadata;
+		static String newInformation;
+		static String generatedFilename;
+		static String outputFile;
+		static String creator;
+		String newMetadata;
+
+		public void shell() throws Exception {
+			String id1 = java.util.UUID.randomUUID().toString();
+			String id2 = java.util.UUID.randomUUID().toString();
+			String file = new File(generatedFilename).toURI().toString();
+			StringBuffer b = new StringBuffer();
+			// TODO what is PROFILE anyway?
+			// TODO do we need a <dmdSec>?
+			b.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>")
+					.append("<mets PROFILE='SCAPE' xmlns='http://www.loc.gov/METS/'"
+							+ " xmlns:xlin='http://www.w3.org/1999/xlink'>")
+					.append("<metsHdr><agent ROLE='CREATOR'><name>")
+					.append(creator)
+					.append("</name></agent></metsHdr>")
+					.append("<amdSec><sourceMD ID='item'><mdWrap MDTYPE='XML'><xmlData>")
+					.append(newInformation)
+					.append("</xmlData></mdWrap></sourceMD></amdSec>")
+					.append("<fileSec><fileGrp><file ID='")
+					.append(id1)
+					.append("' MIMETYPE='application/octet-stream'><FLocat LOCTYPE='URL' xlin:href='")
+					.append(file)
+					.append("' TITLE='data'/></file></fileGrp></fileSec>")
+					.append("<structMap><div ID='Representations'><div ID='")
+					.append(id2)
+					.append("' TYPE='taverna:PAP_output' xlin:label='derived_by_PAP'><fptr FILEID='")
+					.append(id1)
+					.append("'/></div></div></structMap>")
+					.append("</mets>");
+			newMetadata = b.toString();
 		}
 	}
 }
