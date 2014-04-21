@@ -67,6 +67,9 @@
 	<bean id="ExceptionProvider.AccessDenied" class="org.taverna.server.master.rest.handler.AccessDeniedHandler">
 		<property name="managementModel" ref="webapp.state" />
 	</bean>
+	<bean id="ExceptionProvider.BadInput" class="org.taverna.server.master.scape.BadInputHandler">
+		<property name="managementModel" ref="webapp.state" />
+	</bean>
     <bean id="ExceptionProvider.NegotiationFailed" class="org.taverna.server.master.rest.handler.NegotiationFailedHandler">
     </bean>
 	<bean id="MessagingProvider.File" class="org.taverna.server.master.rest.handler.FileMessageHandler">

@@ -252,11 +252,13 @@ public class ScapeExecutor implements ScapeExecutionService {
 		if (this.serviceUri == null)
 			this.serviceUri = ui.getBaseUri();
 		if (jobRequest == null)
-			throw new BadInputException("what?");
+			throw new BadInputException("null request received!");
 		String planId = jobRequest.planId;
+		if (planId == null)
+			throw new BadInputException("preservation plan id is missing");
 		PreservationActionPlan plan = jobRequest.preservationActionPlan;
 		if (planId == null || plan == null)
-			throw new BadInputException("what?");
+			throw new BadInputException("preservation action plan is missing");
 
 		Objects objs = plan.getObjects();
 		ExecutablePlan ep = plan.getExecutablePlan();

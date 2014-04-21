@@ -121,6 +121,7 @@
 		</jaxrs:serviceBeans>
 		<jaxrs:providers>
 			<ref bean="ExceptionProvider.AccessDenied" />
+			<ref bean="ExceptionProvider.BadInput" />
 			<ref bean="ExceptionProvider.BadInputPortName" />
 			<ref bean="ExceptionProvider.BadPropertyValue" />
 			<ref bean="ExceptionProvider.BadStateChange" />
