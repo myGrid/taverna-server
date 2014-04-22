@@ -11,7 +11,6 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 
 import org.taverna.server.master.rest.handler.HandlerCore;
-import org.taverna.server.master.scape.ScapeExecutor.BadInputException;
 
 public class BadInputHandler extends HandlerCore implements
 		ExceptionMapper<BadInputException> {

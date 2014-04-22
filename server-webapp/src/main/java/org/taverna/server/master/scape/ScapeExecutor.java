@@ -4,7 +4,6 @@ import static at.ac.tuwien.ifs.dp.plato.ExecutablePlanType.T_2_FLOW;
 import static java.lang.String.format;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.serverError;
-import static javax.ws.rs.core.Response.status;
 import static javax.ws.rs.core.UriBuilder.fromUri;
 import static javax.xml.bind.DatatypeConverter.printBase64Binary;
 import static javax.xml.transform.OutputKeys.OMIT_XML_DECLARATION;
@@ -313,12 +312,7 @@ public class ScapeExecutor implements ScapeExecutionService {
 	@Nonnull
 	public Job getStatus(@Nonnull String id, @Nonnull UriInfo ui)
 			throws UnknownRunException {
-		if (id == null || id.isEmpty())
-			throw new BadInputException("what?");
-		@Nonnull
-		TavernaRun r = run(id);
-		if (!isScapeRun(r))
-			throw new UnknownRunException();
+		TavernaRun r = getScapeRun(id);
 		Job job = new Job();
 		job.status = r.getStatus();
 		job.serverJob = new Uri(ui.getBaseUriBuilder(), "rest/runs/{id}", id);
@@ -340,11 +334,7 @@ public class ScapeExecutor implements ScapeExecutionService {
 	@Nonnull
 	public Response deleteJob(@Nonnull String id) throws UnknownRunException,
 			NoDestroyException {
-		if (id == null || id.isEmpty())
-			throw new BadInputException("what?");
-		TavernaRun r = run(id);
-		if (!isScapeRun(r))
-			throw new UnknownRunException();
+		getScapeRun(id);
 		support.unregisterRun(id, null);
 		return Response.noContent().build();
 	}
@@ -353,6 +343,22 @@ public class ScapeExecutor implements ScapeExecutionService {
 		if (run == null)
 			return false;
 		return dao.isScapeJob(run.getId());
+	}
+
+	/**
+	 * @param id Job ID
+	 * @return Job object
+	 * @throws BadInputException If the ID is nonsense (e.g., empty).
+	 * @throws UnknownRunException If the ID is unknown or not for a SCAPE job.
+	 */
+	@Nonnull
+	private TavernaRun getScapeRun(@Nullable String id) throws UnknownRunException {
+		if (id == null || id.isEmpty())
+			throw new BadInputException("missing/bad job ID");
+		TavernaRun r = run(id);
+		if (!isScapeRun(r))
+			throw new UnknownRunException();
+		return r;
 	}
 
 	@Nonnull
@@ -364,9 +370,8 @@ public class ScapeExecutor implements ScapeExecutionService {
 		final URI base = ui.getBaseUri();
 		final String jobId = support.buildWorkflow(w);
 		dao.setScapeJob(jobId, planId);
-		if (notifyService != null) {
+		if (notifyService != null)
 			dao.setNotify(jobId, notifyService);
-		}
 		final TavernaRun run = run(jobId);
 		final InputDescription inDesc = cb.makeInputDescriptor(run, ui);
 		Thread worker = new Thread(new Runnable() {
@@ -603,26 +608,11 @@ public class ScapeExecutor implements ScapeExecutionService {
 		notifyPlanService(planId, change);
 	}
 
-	@SuppressWarnings("serial")
-	public static class BadInputException extends WebApplicationException {
-		public BadInputException(String message) {
-			super(status(400).entity(message).build());
-		}
-
-		public BadInputException(String message, Throwable t) {
-			super(t, status(400).entity(message).build());
-		}
-	}
-
 	@RolesAllowed(USER)
 	@PerfLogged
 	@Override
 	public String getNotification(String id) throws UnknownRunException {
-		if (id == null || id.isEmpty())
-			throw new BadInputException("what?");
-		run(id);
-		if (!dao.isScapeJob(id))
-			throw new UnknownRunException();
+		getScapeRun(id);
 		return Integer.toString(dao.getNotify(id));
 	}
 
@@ -631,11 +621,7 @@ public class ScapeExecutor implements ScapeExecutionService {
 	@Override
 	public String setNotification(String id, String newValue)
 			throws UnknownRunException, NoUpdateException {
-		if (id == null || id.isEmpty())
-			throw new BadInputException("what?");
-		run(id);
-		if (!dao.isScapeJob(id))
-			throw new UnknownRunException();
+		getScapeRun(id);
 		return Integer.toString(dao.updateNotify(id, newValue));
 	}
 
@@ -646,17 +632,13 @@ public class ScapeExecutor implements ScapeExecutionService {
 
 	@Override
 	public Response jobOpt(String id) throws UnknownRunException {
-		if (id == null || id.isEmpty())
-			throw new BadInputException("what?");
-		run(id);
+		getScapeRun(id);
 		return opt("DELETE");
 	}
 
 	@Override
 	public Response notifyOpt(String id) throws UnknownRunException {
-		if (id == null || id.isEmpty())
-			throw new BadInputException("what?");
-		run(id);
+		getScapeRun(id);
 		return opt("PUT");
 	}
 }
