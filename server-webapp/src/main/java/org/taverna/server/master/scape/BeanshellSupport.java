@@ -188,6 +188,7 @@ class ConstructNewMetadata {
 	static String generatedFilename;
 	static String outputFile;
 	static String creator;
+	static String contentType;
 	String newMetadata;
 
 	public void shell() throws Exception {
@@ -197,6 +198,7 @@ class ConstructNewMetadata {
 		StringBuffer b = new StringBuffer();
 		// TODO what is PROFILE anyway?
 		// TODO do we need a <dmdSec>?
+		// TODO how do we encode what the source was?
 		b.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>")
 				.append("<mets PROFILE='SCAPE' xmlns='http://www.loc.gov/METS/'"
 						+ " xmlns:xlin='http://www.w3.org/1999/xlink'>")
@@ -208,13 +210,16 @@ class ConstructNewMetadata {
 				.append("</xmlData></mdWrap></sourceMD></amdSec>")
 				.append("<fileSec><fileGrp><file ID='")
 				.append(id1)
-				.append("' MIMETYPE='application/octet-stream'><FLocat LOCTYPE='URL' xlin:href='")
+				.append("' MIMETYPE='")
+				.append(contentType)
+				.append("'><FLocat LOCTYPE='URL' xlin:href='")
 				.append(file)
 				.append("' TITLE='data'/></file></fileGrp></fileSec>")
 				.append("<structMap><div ID='Representations'><div ID='")
 				.append(id2)
 				.append("' TYPE='taverna:PAP_output' xlin:label='derived_by_PAP'><fptr FILEID='")
-				.append(id1).append("'/></div></div></structMap>")
+				.append(id1)
+				.append("'/></div></div></structMap>")
 				.append("</mets>");
 		newMetadata = b.toString();
 	}

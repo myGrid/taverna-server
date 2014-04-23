@@ -11,6 +11,7 @@
 		<config>src/main/webapp/WEB-INF/insecure.xml</config>
 		<config>src/main/webapp/WEB-INF/secure.xml</config>
 		<config>src/main/webapp/WEB-INF/partsecure.xml</config>
+		<config>src/main/webapp/WEB-INF/scape.xml</config>
 	</configs>
 	<configSets>
 		<configSet>
