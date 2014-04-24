@@ -1,5 +1,7 @@
 package org.taverna.server.master.scape;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
@@ -7,21 +9,32 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.io.StringReader;
 import java.io.Writer;
+import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Scanner;
+import java.util.UUID;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.stream.StreamSource;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
 
 import com.phloc.schematron.ISchematronResource;
 import com.phloc.schematron.pure.SchematronResourcePure;
+
+import eu.scape_project.model.Identifier;
+import eu.scape_project.model.IntellectualEntity;
+import eu.scape_project.model.Representation;
+import eu.scape_project.util.ScapeMarshaller;
 
 /**
  * This class is used to help write the beanshell scripts inside the outer
@@ -82,9 +95,9 @@ class AssessMetrics {
 	String isSatisfied;
 
 	public void shell() throws Exception {
-		// FIXME add random token
-		File schematron = new File("schematron.xml");
-		File measuresDoc = new File("measures.xml");
+		String id = java.util.UUID.randomUUID().toString();
+		File schematron = new File("schematron_"+id+".xml");
+		File measuresDoc = new File("measures_"+id+".xml");
 
 		PrintWriter pw = new PrintWriter(schematron, "UTF-8");
 		pw.println(QLD);
@@ -186,41 +199,37 @@ class ConstructNewMetadata {
 	static String originalMetadata;
 	static String newInformation;
 	static String generatedFilename;
-	static String outputFile;
 	static String creator;
 	static String contentType;
 	String newMetadata;
 
 	public void shell() throws Exception {
-		String id1 = java.util.UUID.randomUUID().toString();
-		String id2 = java.util.UUID.randomUUID().toString();
-		String file = new File(generatedFilename).toURI().toString();
-		StringBuffer b = new StringBuffer();
-		// TODO what is PROFILE anyway?
-		// TODO do we need a <dmdSec>?
-		// TODO how do we encode what the source was?
-		b.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>")
-				.append("<mets PROFILE='SCAPE' xmlns='http://www.loc.gov/METS/'"
-						+ " xmlns:xlin='http://www.w3.org/1999/xlink'>")
-				.append("<metsHdr><agent ROLE='CREATOR'><name>")
-				.append(creator)
-				.append("</name></agent></metsHdr>")
-				.append("<amdSec><sourceMD ID='item'><mdWrap MDTYPE='XML'><xmlData>")
-				.append(newInformation)
-				.append("</xmlData></mdWrap></sourceMD></amdSec>")
-				.append("<fileSec><fileGrp><file ID='")
-				.append(id1)
-				.append("' MIMETYPE='")
-				.append(contentType)
-				.append("'><FLocat LOCTYPE='URL' xlin:href='")
-				.append(file)
-				.append("' TITLE='data'/></file></fileGrp></fileSec>")
-				.append("<structMap><div ID='Representations'><div ID='")
-				.append(id2)
-				.append("' TYPE='taverna:PAP_output' xlin:label='derived_by_PAP'><fptr FILEID='")
-				.append(id1)
-				.append("'/></div></div></structMap>")
-				.append("</mets>");
-		newMetadata = b.toString();
+		ScapeMarshaller sm = ScapeMarshaller.newInstance();
+		String id1 = UUID.randomUUID().toString();
+		String id2 = UUID.randomUUID().toString();
+		File file = new File(generatedFilename);
+
+		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		DocumentBuilder builder = factory.newDocumentBuilder();
+		InputSource is = new InputSource(new StringReader(newInformation));
+		Element newMeta = builder.parse(is).getDocumentElement();
+
+		IntellectualEntity original = (IntellectualEntity) sm
+				.deserialize(new ByteArrayInputStream(originalMetadata
+						.getBytes()));
+		IntellectualEntity.Builder ie = new IntellectualEntity.Builder(original);
+
+		ie.representation(new Representation.Builder()
+				.identifier(new Identifier(id2))
+				.technical(newMeta)
+				.title("output from " + creator)
+				.file(new eu.scape_project.model.File.Builder()
+						.identifier(new Identifier(id1)).mimetype(contentType)
+						.uri(file.toURI()).filename(file.getName()).build())
+				.build());
+
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		sm.serialize(ie.build(), baos);
+		newMetadata = baos.toString();
 	}
 }
