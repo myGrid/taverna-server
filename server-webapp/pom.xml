@@ -23,6 +23,8 @@
 		<version.commandline>2.5.0</version.commandline>
 		<edition.commandline>enterprise</edition.commandline>
 		<version.jdoapi>3.0.1</version.jdoapi>
+		<version.phloc-schematron>2.6.4</version.phloc-schematron>
+		<version.scape-platform-datamodel>0.1.8-SNAPSHOT</version.scape-platform-datamodel>
 		<forker.module>server-unix-forker</forker.module>
 		<util.dir>${project.build.directory}/${project.build.finalName}/WEB-INF/classes/util</util.dir>
 	</properties>
@@ -33,6 +35,17 @@
 			<url>http://repo.phloc.com/maven2</url>
 			<releases>
 				<enabled>true</enabled>
+			</releases>
+			<snapshots>
+				<enabled>true</enabled>
+			</snapshots>
+		</repository>
+		<repository>
+			<id>sonatype-nexus-snapshots</id>
+			<name>Sonatype Nexus Snapshots</name>
+			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
+			<releases>
+				<enabled>false</enabled>
 			</releases>
 			<snapshots>
 				<enabled>true</enabled>
@@ -309,8 +322,13 @@
 		<dependency>
 			<groupId>com.phloc</groupId>
 			<artifactId>phloc-schematron</artifactId>
-			<version>2.6.4</version>
+			<version>${version.phloc-schematron}</version>
 			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>eu.scape-project.model</groupId>
+			<artifactId>scape-platform-datamodel</artifactId>
+			<version>${version.scape-platform-datamodel}</version>
 		</dependency>
 	</dependencies>
 
@@ -604,7 +622,12 @@
 								<artifactItem>
 									<groupId>com.phloc</groupId>
 									<artifactId>phloc-schematron</artifactId>
-									<version>2.6.4</version>
+									<version>${version.phloc-schematron}</version>
+								</artifactItem>
+								<artifactItem>
+									<groupId>eu.scape-project.model</groupId>
+									<artifactId>scape-platform-datamodel</artifactId>
+									<version>${version.scape-platform-datamodel}</version>
 								</artifactItem>
 							</artifactItems>
 							<outputDirectory>${util.dir}/taverna-commandline-${version.commandline}/lib</outputDirectory>
