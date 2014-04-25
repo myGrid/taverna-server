@@ -84,7 +84,9 @@ public class ScapeSplicingEngine extends SplicingEngine {
 	private final String baseSubject;
 
 	public static enum Model {
-		One2OneNoSchema("1to1"), One2OneSchema("1to1_schema");
+		One2OneNoSchema("1to1"), One2OneSchema("1to1_schema"), Characterise(
+				"characterise"), CharacteriseSchema("characterise_schema");
+		// FIXME Write these alternate schemas
 		@Nonnull
 		private final String key;
 

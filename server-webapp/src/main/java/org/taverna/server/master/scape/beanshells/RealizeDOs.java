@@ -14,7 +14,7 @@ class RealizeDOs implements BeanshellSupport {
 	static String repository;
 	static String voidToken;
 	static String workDirectory;
-	static String objects;
+	static List<String> objects;
 	List<String> files;
 	List<String> objectList;
 	List<String> resolvedObjectList;
@@ -29,7 +29,7 @@ class RealizeDOs implements BeanshellSupport {
 		resolvedObjectList = new ArrayList();
 		int ids = 0;
 		byte[] buffer = new byte[4096];
-		for (String obj : objects.split("\n")) {
+		for (String obj : objects) {
 			int id = ++ids;
 			File f = new File(wd, "" + id);
 			objectList.add(obj);
