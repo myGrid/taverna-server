@@ -120,6 +120,7 @@ public class ScapeExecutor implements ScapeExecutionService {
 	private URI serviceUri;
 	private long timeout;
 	private String repository;
+	private String repoDir;
 	private CertificateChainFetcher ccf;
 
 	public ScapeExecutor() throws JAXBException {
@@ -195,6 +196,12 @@ public class ScapeExecutor implements ScapeExecutionService {
 	@Required
 	public void setRepository(String repositoryURL) {
 		this.repository = repositoryURL;
+	}
+
+	/** The place that holds files that are the data in digital objects. */
+	@Required
+	public void setRepositoryDirectory(String repositoryDirectory) {
+		this.repoDir = repositoryDirectory;
 	}
 
 	/** How long an execution is given to run. */
@@ -400,8 +407,8 @@ public class ScapeExecutor implements ScapeExecutionService {
 		Set<String> inputs = new HashSet<String>();
 		for (InputPort o : inDesc.input)
 			inputs.add(o.name);
-		if (inputs.contains("planId"))
-			initPlanID(run, planId);
+		if (inputs.contains("CreatorIdentity"))
+			initCreatorIdentity(run, planId);
 		run.setGenerateProvenance(true);
 		Date deadline = new Date();
 		deadline.setTime(deadline.getTime() + timeout);
@@ -420,15 +427,16 @@ public class ScapeExecutor implements ScapeExecutionService {
 		}
 	}
 
-	private void initPlanID(@Nonnull TavernaRun run, @Nonnull String planId)
+	private void initCreatorIdentity(@Nonnull TavernaRun run, @Nonnull String planId)
 			throws BadStateChangeException {
-		run.makeInput("planId").setValue(planId);
+		run.makeInput("CreatorIdentity").setValue(planId);
 	}
 
 	private void initRepositories(@Nonnull TavernaRun run)
 			throws BadStateChangeException {
 		run.makeInput("SourceRepository").setValue(repository);
 		run.makeInput("DestinationRepository").setValue(repository);
+		run.makeInput("RepositoryDirectory").setValue(repoDir);
 	}
 
 	private void initObjects(@Nonnull TavernaRun run, @Nonnull List<Object> objs)
@@ -436,12 +444,12 @@ public class ScapeExecutor implements ScapeExecutionService {
 		StringBuffer sb = new StringBuffer();
 		for (Object object : objs)
 			sb.append(object.getUid()).append('\n');
-		run.makeInput("objects").setValue(sb.toString());
+		run.makeInput("digitalObjects").setValue(sb.toString());
 	}
 
 	private void initSLA(@Nonnull TavernaRun run, @Nonnull Element schematron)
 			throws BadStateChangeException, TransformerException {
-		run.makeInput("sla").setValue(serializeXml(schematron));
+		run.makeInput("SLA").setValue(serializeXml(schematron));
 	}
 
 	private void initSecurity(@Nonnull TavernaRun run)
