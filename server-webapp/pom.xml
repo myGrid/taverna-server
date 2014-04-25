@@ -27,6 +27,7 @@
 		<version.scape-platform-datamodel>0.1.8-SNAPSHOT</version.scape-platform-datamodel>
 		<forker.module>server-unix-forker</forker.module>
 		<util.dir>${project.build.directory}/${project.build.finalName}/WEB-INF/classes/util</util.dir>
+		<cmdline.dir>${util.dir}/taverna-commandline-${edition.commandline}-${version.commandline}</cmdline.dir>
 	</properties>
 
 	<repositories>
@@ -630,7 +631,7 @@
 									<version>${version.scape-platform-datamodel}</version>
 								</artifactItem>
 							</artifactItems>
-							<outputDirectory>${util.dir}/taverna-commandline-${version.commandline}/lib</outputDirectory>
+							<outputDirectory>${cmdline.dir}/lib</outputDirectory>
 							<overWriteReleases>false</overWriteReleases>
 							<overWriteSnapshots>true</overWriteSnapshots>
 							<excludeTransitive>true</excludeTransitive>
@@ -789,7 +790,7 @@
 							<goal>copy-resources</goal>
 						</goals>
 						<configuration>
-							<outputDirectory>${util.dir}/taverna-commandline-${version.commandline}</outputDirectory>
+							<outputDirectory>${cmdline.dir}</outputDirectory>
 							<resources>
 								<resource>
 									<directory>src/main/replacementscripts</directory>
@@ -814,9 +815,9 @@
 						</goals>
 						<configuration>
 							<executable>/bin/sh</executable>
-							<workingDirectory>${util.dir}/taverna-commandline-${version.commandline}</workingDirectory>
+							<workingDirectory>${cmdline.dir}</workingDirectory>
 							<environmentVariables>
-								<RAVEN_APPHOME>${util.dir}/taverna-commandline-${version.commandline}</RAVEN_APPHOME>
+								<RAVEN_APPHOME>${cmdline.dir}</RAVEN_APPHOME>
 							</environmentVariables>
 							<arguments>
 								<argument>./executeworkflow.sh</argument>
