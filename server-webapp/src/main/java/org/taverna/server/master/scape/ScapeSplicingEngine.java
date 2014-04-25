@@ -199,6 +199,7 @@ public class ScapeSplicingEngine extends SplicingEngine {
 		concatenateDocuments(topDataflow, linkingOutputNames);
 	}
 
+	// FIXME put splicing inside the ObjectTransform
 	private void concatenateDocuments(@Nonnull Element topMaster,
 			@Nonnull Set<String> subjectPorts) throws Exception {
 		int counter = 0;
