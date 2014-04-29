@@ -16,6 +16,7 @@ import com.phloc.schematron.ISchematronResource;
 import com.phloc.schematron.pure.SchematronResourcePure;
 
 @Deprecated
+@SuppressWarnings({ "rawtypes", "unchecked" })
 class AssessMetrics implements BeanshellSupport {
 	static String QLD;
 	static String metrics;
@@ -34,22 +35,28 @@ class AssessMetrics implements BeanshellSupport {
 		pw = new PrintWriter(measuresDoc, "UTF-8");
 		pw.println(metrics);
 		pw.close();
-		failures = new ArrayList<String>();
+		failures = new ArrayList();
 
-		ISchematronResource validator = SchematronResourcePure
-				.fromFile(schematron);
-		if (!validator.isValidSchematron())
-			throw new Exception("invalid schematron document");
-		Document result = validator.applySchematronValidation(new StreamSource(
-				measuresDoc));
-		NodeList nl = result.getDocumentElement().getElementsByTagNameNS(
-				"http://purl.oclc.org/dsdl/svrl", "failed-assert");
-		for (int i = 0; i < nl.getLength(); i++) {
-			Element elem = (Element) nl.item(0);
-			failures.add(elem
-					.getElementsByTagNameNS("http://purl.oclc.org/dsdl/svrl",
-							"text").item(0).getTextContent());
+		try {
+			ISchematronResource validator = SchematronResourcePure
+					.fromFile(schematron);
+			if (!validator.isValidSchematron())
+				throw new Exception("invalid schematron document");
+			Document result = validator
+					.applySchematronValidation(new StreamSource(measuresDoc));
+			NodeList nl = result.getDocumentElement().getElementsByTagNameNS(
+					"http://purl.oclc.org/dsdl/svrl", "failed-assert");
+			for (int i = 0; i < nl.getLength(); i++) {
+				Element elem = (Element) nl.item(0);
+				failures.add(elem
+						.getElementsByTagNameNS(
+								"http://purl.oclc.org/dsdl/svrl", "text")
+						.item(0).getTextContent());
+			}
+			isSatisfied = "" + failures.isEmpty();
+		} finally {
+			measuresDoc.delete();
+			schematron.delete();
 		}
-		isSatisfied = "" + failures.isEmpty();
 	}
 }

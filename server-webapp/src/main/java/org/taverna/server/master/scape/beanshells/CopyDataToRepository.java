@@ -1,6 +1,7 @@
 package org.taverna.server.master.scape.beanshells;
 
 import java.io.File;
+import java.nio.file.CopyOption;
 import java.nio.file.Files;
 
 @Deprecated
@@ -11,6 +12,6 @@ class CopyDataToRepository implements BeanshellSupport {
 	public void shell() throws Exception {
 		if ("true".equals(doWrite))
 			Files.copy(new File(temporaryFile).toPath(), new File(
-					repositoryFile).toPath());
+					repositoryFile).toPath(), new CopyOption[0]);
 	}
 }
