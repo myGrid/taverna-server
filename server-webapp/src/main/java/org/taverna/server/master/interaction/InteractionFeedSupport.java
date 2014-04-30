@@ -141,8 +141,8 @@ public class InteractionFeedSupport {
 
 	private List<DirectoryEntry> listPossibleEntries(TavernaRun run)
 			throws FilesystemAccessException, NoDirectoryEntryException {
-		List<DirectoryEntry> entries = new ArrayList<DirectoryEntry>(utils
-				.getDirectory(run, FEED_DIR).getContentsByDate());
+		List<DirectoryEntry> entries = new ArrayList<>(utils.getDirectory(run,
+				FEED_DIR).getContentsByDate());
 		reverse(entries);
 		return entries;
 	}
@@ -179,15 +179,15 @@ public class InteractionFeedSupport {
 				if (STRIP_CONTENTS)
 					e.setContentElement(null);
 				feed.addEntry(e);
-				if (!fetchedDate) {
-					Date last = e.getUpdated();
-					if (last == null)
-						last = e.getPublished();
-					if (last == null)
-						last = de.getModificationDate();
-					feed.setUpdated(last);
-					fetchedDate = true;
-				}
+				if (fetchedDate)
+					continue;
+				Date last = e.getUpdated();
+				if (last == null)
+					last = e.getPublished();
+				if (last == null)
+					last = de.getModificationDate();
+				feed.setUpdated(last);
+				fetchedDate = true;
 			} catch (FilesystemAccessException e) {
 				// Can't do anything about it, so we'll just drop the entry.
 			}

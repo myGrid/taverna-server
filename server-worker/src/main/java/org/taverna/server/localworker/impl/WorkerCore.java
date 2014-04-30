@@ -9,6 +9,7 @@ import static java.io.File.createTempFile;
 import static java.io.File.pathSeparator;
 import static java.lang.Boolean.parseBoolean;
 import static java.lang.Double.parseDouble;
+import static java.lang.Integer.parseInt;
 import static java.lang.Long.parseLong;
 import static java.lang.Runtime.getRuntime;
 import static java.lang.System.out;
@@ -19,23 +20,26 @@ import static org.apache.commons.io.FileUtils.write;
 import static org.apache.commons.io.IOUtils.copy;
 import static org.taverna.server.localworker.api.Constants.CREDENTIAL_MANAGER_DIRECTORY;
 import static org.taverna.server.localworker.api.Constants.CREDENTIAL_MANAGER_PASSWORD;
+import static org.taverna.server.localworker.api.Constants.DEATH_TIME;
 import static org.taverna.server.localworker.api.Constants.DEFAULT_LISTENER_NAME;
 import static org.taverna.server.localworker.api.Constants.KEYSTORE_PASSWORD;
 import static org.taverna.server.localworker.api.Constants.START_WAIT_TIME;
 import static org.taverna.server.localworker.api.Constants.SYSTEM_ENCODING;
 import static org.taverna.server.localworker.api.Constants.TIME;
+import static org.taverna.server.localworker.impl.Status.Aborted;
+import static org.taverna.server.localworker.impl.Status.Completed;
+import static org.taverna.server.localworker.impl.Status.Failed;
+import static org.taverna.server.localworker.impl.Status.Held;
+import static org.taverna.server.localworker.impl.Status.Started;
 import static org.taverna.server.localworker.impl.TavernaRunManager.interactionFeedPath;
 import static org.taverna.server.localworker.impl.TavernaRunManager.interactionHost;
 import static org.taverna.server.localworker.impl.TavernaRunManager.interactionPort;
 import static org.taverna.server.localworker.impl.TavernaRunManager.interactionWebdavPath;
-import static org.taverna.server.localworker.impl.WorkerCore.Status.Aborted;
-import static org.taverna.server.localworker.impl.WorkerCore.Status.Completed;
-import static org.taverna.server.localworker.impl.WorkerCore.Status.Failed;
-import static org.taverna.server.localworker.impl.WorkerCore.Status.Held;
-import static org.taverna.server.localworker.impl.WorkerCore.Status.Started;
+import static org.taverna.server.localworker.impl.WorkerCore.pmap;
 import static org.taverna.server.localworker.remote.RemoteStatus.Finished;
 import static org.taverna.server.localworker.remote.RemoteStatus.Initialized;
 import static org.taverna.server.localworker.remote.RemoteStatus.Operating;
+import static org.taverna.server.localworker.remote.RemoteStatus.Stopped;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -61,18 +65,19 @@ import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.ws.Holder;
 
 import org.ogf.usage.JobUsageRecord;
 import org.taverna.server.localworker.api.RunAccounting;
 import org.taverna.server.localworker.api.Worker;
+import org.taverna.server.localworker.impl.utils.TimingOutTask;
 import org.taverna.server.localworker.remote.ImplementationException;
 import org.taverna.server.localworker.remote.RemoteListener;
 import org.taverna.server.localworker.remote.RemoteStatus;
 import org.taverna.server.localworker.server.UsageRecordReceiver;
-
-import edu.umd.cs.findbugs.annotations.SuppressWarnings;
 
 /**
  * The core class that connects to a Taverna command-line workflow execution
@@ -83,15 +88,16 @@ import edu.umd.cs.findbugs.annotations.SuppressWarnings;
  * 
  * @author Donal Fellows
  */
-@SuppressWarnings({ "SE_BAD_FIELD", "SE_NO_SERIALVERSIONID" })
-@java.lang.SuppressWarnings("serial")
+@SuppressWarnings("serial")
 public class WorkerCore extends UnicastRemoteObject implements Worker,
 		RemoteListener {
-	static final Map<String, Property> pmap = new HashMap<String, Property>();
+	@Nonnull
+	static final Map<String, Property> pmap = new HashMap<>();
 	/**
 	 * Regular expression to extract the detailed timing information from the
 	 * output of /usr/bin/time
 	 */
+	@Nonnull
 	private static final Pattern TimeRE;
 	static {
 		final String TIMERE = "([0-9.:]+)";
@@ -100,159 +106,64 @@ public class WorkerCore extends UnicastRemoteObject implements Worker,
 				+ " *" + TERMS + "[ \t]*" + TIMERE + " *" + TERMS);
 	}
 
-	enum Property {
-		STDOUT("stdout"), STDERR("stderr"), EXIT_CODE("exitcode"), READY_TO_NOTIFY(
-				"readyToNotify"), EMAIL("notificationAddress"), USAGE(
-				"usageRecord");
-
-		private String s;
-
-		private Property(String s) {
-			this.s = s;
-			pmap.put(s, this);
-		}
-
-		@Override
-		public String toString() {
-			return s;
-		}
-
-		public static Property is(String s) {
-			return pmap.get(s);
-		}
-
-		public static String[] names() {
-			return pmap.keySet().toArray(new String[pmap.size()]);
-		}
-	}
-
-	enum Status {
-		Aborted, Completed, Failed, Held, Queued, Started, Suspended
-	}
-
 	/**
 	 * Environment variables to remove before any fork (because they're large or
 	 * potentially leaky).
 	 */
 	// TODO Conduct a proper survey of what to remove
+	@Nonnull
 	private static final String[] ENVIRONMENT_TO_REMOVE = { "SUDO_COMMAND",
 			"SUDO_USER", "SUDO_GID", "SUDO_UID", "DISPLAY", "LS_COLORS",
 			"XFILESEARCHPATH", "SSH_AGENT_PID", "SSH_AUTH_SOCK" };
 
+	@Nullable
 	Process subprocess;
-	StringWriter stdout;
-	StringWriter stderr;
+	@Nonnull
+	final StringWriter stdout;
+	@Nonnull
+	final StringWriter stderr;
+	@Nullable
 	Integer exitCode;
 	boolean readyToSendEmail;
+	@Nullable
 	String emailAddress;
+	@Nullable
 	Date start;
-	RunAccounting accounting;
-	Holder<Integer> pid;
+	@Nonnull
+	final RunAccounting accounting;
+	@Nonnull
+	final Holder<Integer> pid;
 
 	private boolean finished;
+	@Nullable
 	private JobUsageRecord ur;
+	@Nullable
 	private File wd;
+	@Nullable
 	private UsageRecordReceiver urreceiver;
+	@Nullable
 	private File workflowFile;
+	private boolean stopped;
 
 	/**
 	 * @param accounting
 	 *            Object that looks after how many runs are executing.
 	 * @throws RemoteException
 	 */
-	public WorkerCore(RunAccounting accounting) throws RemoteException {
+	public WorkerCore(@Nonnull RunAccounting accounting) throws RemoteException {
 		super();
 		stdout = new StringWriter();
 		stderr = new StringWriter();
-		pid = new Holder<Integer>();
+		pid = new Holder<>();
 		this.accounting = accounting;
 	}
 
 	private int getPID() {
-		synchronized(pid) {
+		synchronized (pid) {
 			if (pid.value == null)
 				return -1;
 			return pid.value;
 		}
-	}
-
-	/**
-	 * An engine for asynchronously copying from an {@link InputStream} to a
-	 * {@link Writer}.
-	 * 
-	 * @author Donal Fellows
-	 */
-	private static class AsyncCopy extends Thread {
-		private BufferedReader from;
-		private Writer to;
-		private Holder<Integer> pidHolder;
-
-		AsyncCopy(InputStream from, Writer to) throws UnsupportedEncodingException {
-			this(from, to, null);
-		}
-		AsyncCopy(InputStream from, Writer to, Holder<Integer> pid) throws UnsupportedEncodingException {
-			this.from = new BufferedReader(new InputStreamReader(from, SYSTEM_ENCODING));
-			this.to = to;
-			this.pidHolder = pid;
-			setDaemon(true);
-			start();
-		}
-
-		@Override
-		public void run() {
-			try {
-				if (pidHolder != null) {
-					String line = from.readLine();
-					if (line.matches("^pid:\\d+$"))
-						synchronized(pidHolder) {
-							pidHolder.value = Integer.parseInt(line.substring(4));
-						}
-					else
-						to.write(line + System.getProperty("line.separator"));
-				}
-				copy(from, to);
-			} catch (IOException e) {
-			}
-		}
-	}
-
-	/**
-	 * A helper for asynchronously writing a password to a subprocess's stdin.
-	 * 
-	 * @author Donal Fellows
-	 */
-	private static class PasswordWriterThread extends Thread {
-		private OutputStream to;
-		private char[] chars;
-
-		PasswordWriterThread(Process to, char[] chars) {
-			this.to = to.getOutputStream();
-			assert chars != null;
-			this.chars = chars;
-			setDaemon(true);
-			start();
-		}
-
-		@Override
-		public void run() {
-			PrintWriter pw = null;
-			try {
-				pw = new PrintWriter(
-						new OutputStreamWriter(to, SYSTEM_ENCODING));
-				pw.println(chars);
-			} catch (UnsupportedEncodingException e) {
-				// Not much we can do here
-				e.printStackTrace();
-			} finally {
-				// We don't trust GC to clear password from memory
-				// We also take care not to clear the default password!
-				if (chars != KEYSTORE_PASSWORD)
-					Arrays.fill(chars, '\00');
-				if (pw != null)
-					pw.close();
-			}
-		}
-
 	}
 
 	/**
@@ -281,59 +192,62 @@ public class WorkerCore extends UnicastRemoteObject implements Worker,
 	 *            subdirectory.
 	 * @param token
 	 *            The name of the workflow run.
+	 * @return <tt>true</tt> if the worker started, or <tt>false</tt> if a
+	 *         timeout occurred.
 	 * @throws IOException
 	 *             If any of quite a large number of things goes wrong.
 	 */
 	@Override
-	public boolean initWorker(final LocalWorker local,
-			final String executeWorkflowCommand, final String workflow,
-			final File workingDir, final File inputBaclava,
-			final Map<String, File> inputFiles,
-			final Map<String, String> inputValues, final File outputBaclava,
-			final File securityDir, final char[] password,
-			final Map<String, String> environment, final String token,
-			final List<String> runtime) throws IOException {
-		final Holder<IOException> h = new Holder<IOException>();
-		Thread t = new Thread(new Runnable() {
-			@Override
-			public void run() {
-				try {
-					ProcessBuilder pb = createProcessBuilder(local,
-							executeWorkflowCommand, workflow, workingDir,
-							inputBaclava, inputFiles, inputValues,
-							outputBaclava, securityDir, password, environment,
-							token, runtime);
-
-					// Start the subprocess
-					out.println("starting " + pb.command() + " in directory "
-							+ pb.directory() + " with environment "
-							+ pb.environment());
-					subprocess = pb.start();
-					if (subprocess == null)
-						throw new IOException(
-								"unknown failure creating process");
-					start = new Date();
-					accounting.runStarted();
-
-					// Capture its stdout and stderr
-					new AsyncCopy(subprocess.getInputStream(), stdout, pid);
-					new AsyncCopy(subprocess.getErrorStream(), stderr);
-					if (password != null)
-						new PasswordWriterThread(subprocess, password);
-				} catch (IOException e) {
-					h.value = e;
-				}
-			}
-		});
-		t.start();
+	public boolean initWorker(@Nonnull final LocalWorker local,
+			@Nonnull final String executeWorkflowCommand,
+			@Nonnull final String workflow, @Nonnull final File workingDir,
+			@Nullable final File inputBaclava,
+			@Nonnull final Map<String, File> inputFiles,
+			@Nonnull final Map<String, String> inputValues,
+			@Nonnull final Map<String, String> inputDelimiters,
+			@Nullable final File outputBaclava,
+			@Nonnull final File securityDir, @Nullable final char[] password,
+			final boolean generateProvenance,
+			@Nonnull final Map<String, String> environment,
+			@Nonnull final String token, @Nonnull final List<String> runtime)
+			throws IOException {
 		try {
-			t.join(START_WAIT_TIME);
-		} catch (InterruptedException e) {
-			// Won't happen
+			new TimingOutTask() {
+				@Override
+				public void doIt() throws IOException {
+					startExecutorSubprocess(
+							createProcessBuilder(local, executeWorkflowCommand,
+									workflow, workingDir, inputBaclava,
+									inputFiles, inputValues, inputDelimiters,
+									outputBaclava, securityDir, password,
+									generateProvenance, environment, token,
+									runtime), password);
+				}
+			}.doOrTimeOut(START_WAIT_TIME);
+		} catch (IOException e) {
+			throw e;
+		} catch (Exception e) {
+			throw new IOException(e);
 		}
-		if (h.value != null)
-			throw h.value;
 		return subprocess != null;
+	}
+
+	private void startExecutorSubprocess(@Nonnull ProcessBuilder pb,
+			@Nullable char[] password) throws IOException {
+		// Start the subprocess
+		out.println("starting " + pb.command() + " in directory "
+				+ pb.directory() + " with environment " + pb.environment());
+		subprocess = pb.start();
+		if (subprocess == null)
+			throw new IOException("unknown failure creating process");
+		start = new Date();
+		accounting.runStarted();
+
+		// Capture its stdout and stderr
+		new AsyncCopy(subprocess.getInputStream(), stdout, pid);
+		new AsyncCopy(subprocess.getErrorStream(), stderr);
+		if (password != null)
+			new PasswordWriterThread(subprocess, password);
 	}
 
 	/**
@@ -373,12 +287,17 @@ public class WorkerCore extends UnicastRemoteObject implements Worker,
 	 * @throws FileNotFoundException
 	 *             If we can't write the workflow out (unlikely)
 	 */
-	ProcessBuilder createProcessBuilder(LocalWorker local,
-			String executeWorkflowCommand, String workflow, File workingDir,
-			File inputBaclava, Map<String, File> inputFiles,
-			Map<String, String> inputValues, File outputBaclava,
-			File securityDir, char[] password, Map<String, String> environment,
-			String token, List<String> runtime) throws IOException,
+	@Nonnull
+	ProcessBuilder createProcessBuilder(@Nonnull LocalWorker local,
+			@Nonnull String executeWorkflowCommand, @Nonnull String workflow,
+			@Nonnull File workingDir, @Nullable File inputBaclava,
+			@Nonnull Map<String, File> inputFiles,
+			@Nonnull Map<String, String> inputValues,
+			@Nonnull Map<String, String> inputDelimiters,
+			@Nullable File outputBaclava, @Nonnull File securityDir,
+			@Nonnull char[] password, boolean generateProvenance,
+			@Nonnull Map<String, String> environment, @Nonnull String token,
+			@Nonnull List<String> runtime) throws IOException,
 			UnsupportedEncodingException, FileNotFoundException {
 		ProcessBuilder pb = new ProcessBuilder();
 		pb.command().add(TIME);
@@ -449,6 +368,13 @@ public class WorkerCore extends UnicastRemoteObject implements Worker,
 				pb.command().add(f.getAbsolutePath());
 				write(f, port.getValue(), "UTF-8");
 			}
+			for (Entry<String, String> delim : inputDelimiters.entrySet()) {
+				if (delim.getValue() == null)
+					continue;
+				pb.command().add("-inputdelimiter");
+				pb.command().add(delim.getKey());
+				pb.command().add(delim.getValue());
+			}
 		}
 
 		// Add arguments denoting outputs
@@ -460,6 +386,7 @@ public class WorkerCore extends UnicastRemoteObject implements Worker,
 						"parent directory of output baclava file does not exist");
 			if (outputBaclava.exists())
 				throw new IOException("output baclava file exists");
+			// Provenance cannot be supported when using baclava output
 		} else {
 			File out = new File(workingDir, "out");
 			if (!out.mkdir())
@@ -468,6 +395,13 @@ public class WorkerCore extends UnicastRemoteObject implements Worker,
 			forceDelete(out);
 			pb.command().add("-outputdir");
 			pb.command().add(out.getAbsolutePath());
+			// Enable provenance generation
+			if (generateProvenance) {
+				pb.command().add("-embedded");
+				pb.command().add("-provenance");
+				pb.command().add("-provbundle");
+				pb.command().add("out.bundle.zip");
+			}
 		}
 
 		// Add an argument holding the workflow
@@ -509,12 +443,15 @@ public class WorkerCore extends UnicastRemoteObject implements Worker,
 		return pb;
 	}
 
-	private static String makeInterHost(URL url) {
+	@Nullable
+	private static String makeInterHost(@Nullable URL url) {
 		if (url == null)
 			return interactionHost;
 		return url.getProtocol() + "://" + url.getHost();
 	}
-	private static String makeInterPort(URL url) {
+
+	@Nullable
+	private static String makeInterPort(@Nullable URL url) {
 		if (url == null)
 			return interactionPort;
 		int port = url.getPort();
@@ -522,7 +459,9 @@ public class WorkerCore extends UnicastRemoteObject implements Worker,
 			port = url.getDefaultPort();
 		return Integer.toString(port);
 	}
-	private static String makeInterPath(URL url) {
+
+	@Nullable
+	private static String makeInterPath(@Nullable URL url) {
 		if (url == null)
 			return interactionFeedPath;
 		return url.getPath();
@@ -534,34 +473,63 @@ public class WorkerCore extends UnicastRemoteObject implements Worker,
 	@Override
 	public void killWorker() {
 		if (!finished && subprocess != null) {
-			int code;
-			try {
-				// Check if the workflow terminated of its own accord
-				code = subprocess.exitValue();
-				accounting.runCeased();
-				buildUR(code == 0 ? Completed : Failed, code);
-			} catch (IllegalThreadStateException e) {
-				subprocess.destroy();
-				try {
-					code = subprocess.waitFor();
-				} catch (InterruptedException e1) {
-					e1.printStackTrace(out); // not expected
-					return;
+			final Holder<Integer> code = new Holder<>();
+			for (TimingOutTask tot : new TimingOutTask[] { new TimingOutTask() {
+				/** Check if the workflow terminated of its own accord */
+				@Override
+				public void doIt() throws IOException {
+					code.value = subprocess.exitValue();
+					accounting.runCeased();
+					buildUR(code.value == 0 ? Completed : Failed, code.value);
 				}
-				accounting.runCeased();
-				buildUR(code == 0 ? Completed : Aborted, code);
+			}, new TimingOutTask() {
+				/** Tell the workflow to stop */
+				@Override
+				public void doIt() throws IOException {
+					code.value = killNicely();
+					accounting.runCeased();
+					buildUR(code.value == 0 ? Completed : Aborted, code.value);
+				}
+			}, new TimingOutTask() {
+				/** Kill the workflow, kill it with fire */
+				@Override
+				public void doIt() throws IOException {
+					code.value = killHard();
+					accounting.runCeased();
+					buildUR(code.value == 0 ? Completed : Aborted, code.value);
+				}
+			} }) {
+				try {
+					tot.doOrTimeOut(DEATH_TIME);
+				} catch (Exception e) {
+				}
+				if (code.value != null)
+					break;
 			}
 			finished = true;
-			exitCode = code;
+			setExitCode(code.value);
 			readyToSendEmail = true;
-			if (code > 128) {
-				out.println("workflow aborted, signal=" + (code - 128));
-			} else {
-				out.println("workflow exited, code=" + code);
-			}
 		}
 	}
 
+	/**
+	 * Integrated spot to handle writing/logging of the exit code.
+	 * 
+	 * @param code
+	 *            The exit code.
+	 */
+	private void setExitCode(int code) {
+		exitCode = code;
+		if (code > 256 - 8) {
+			out.println("workflow aborted, Raven issue = " + (code - 256));
+		} else if (code > 128) {
+			out.println("workflow aborted, signal=" + (code - 128));
+		} else {
+			out.println("workflow exited, code=" + code);
+		}
+	}
+
+	@Nonnull
 	private JobUsageRecord newUR() throws DatatypeConfigurationException {
 		try {
 			if (wd != null)
@@ -571,14 +539,13 @@ public class WorkerCore extends UnicastRemoteObject implements Worker,
 		return new JobUsageRecord("unknown");
 	}
 
-
 	/**
 	 * Fills in the accounting information from the exit code and stderr.
 	 * 
 	 * @param exitCode
 	 *            The exit code from the program.
 	 */
-	private void buildUR(Status status, int exitCode) {
+	private void buildUR(@Nonnull Status status, int exitCode) {
 		try {
 			Date now = new Date();
 			long user = -1, sys = -1, real = -1;
@@ -610,16 +577,14 @@ public class WorkerCore extends UnicastRemoteObject implements Worker,
 			ur.addDisk(sizeOfDirectory(wd)).setStorageUnit("B");
 			if (urreceiver != null)
 				urreceiver.acceptUsageRecord(ur.marshal());
-		} catch (RuntimeException e) {
-			e.printStackTrace();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 
-	private long parseDuration(String durationString) {
+	private long parseDuration(@Nonnull String durationString) {
 		try {
-			return (long)(parseDouble(durationString) * 1000);
+			return (long) (parseDouble(durationString) * 1000);
 		} catch (NumberFormatException nfe) {
 			// Not a double; maybe MM:SS.mm or HH:MM:SS.mm
 		}
@@ -629,18 +594,38 @@ public class WorkerCore extends UnicastRemoteObject implements Worker,
 				dur = 60 * dur + parseLong(d);
 			} catch (NumberFormatException nfe) {
 				// Assume that only one thing is fractional, and that it is last
-				return 60000 * dur + (long)(parseDouble(d) * 1000);
+				return 60000 * dur + (long) (parseDouble(d) * 1000);
 			}
 		return dur * 1000;
 	}
 
-	private void signal(String signal) throws Exception {
+	private void signal(@Nonnull String signal) throws Exception {
 		int pid = getPID();
 		if (pid > 0
 				&& getRuntime().exec("kill -" + signal + " " + pid).waitFor() == 0)
 			return;
 		throw new Exception("failed to send signal " + signal + " to process "
 				+ pid);
+	}
+
+	@Nullable
+	private Integer killNicely() {
+		try {
+			signal("TERM");
+			return subprocess.waitFor();
+		} catch (Exception e) {
+			return null;
+		}
+	}
+
+	@Nullable
+	private Integer killHard() {
+		try {
+			signal("QUIT");
+			return subprocess.waitFor();
+		} catch (Exception e) {
+			return null;
+		}
 	}
 
 	/**
@@ -652,6 +637,7 @@ public class WorkerCore extends UnicastRemoteObject implements Worker,
 	@Override
 	public void startWorker() throws Exception {
 		signal("CONT");
+		stopped = false;
 	}
 
 	/**
@@ -663,6 +649,7 @@ public class WorkerCore extends UnicastRemoteObject implements Worker,
 	@Override
 	public void stopWorker() throws Exception {
 		signal("STOP");
+		stopped = true;
 	}
 
 	/**
@@ -676,15 +663,17 @@ public class WorkerCore extends UnicastRemoteObject implements Worker,
 		if (finished)
 			return Finished;
 		try {
-			exitCode = subprocess.exitValue();
-			finished = true;
-			readyToSendEmail = true;
-			accounting.runCeased();
-			buildUR(exitCode.intValue() == 0 ? Completed : Failed, exitCode);
-			return Finished;
+			setExitCode(subprocess.exitValue());
 		} catch (IllegalThreadStateException e) {
+			if (stopped)
+				return Stopped;
 			return Operating;
 		}
+		finished = true;
+		readyToSendEmail = true;
+		accounting.runCeased();
+		buildUR(exitCode.intValue() == 0 ? Completed : Failed, exitCode);
+		return Finished;
 	}
 
 	@Override
@@ -698,7 +687,6 @@ public class WorkerCore extends UnicastRemoteObject implements Worker,
 	}
 
 	@Override
-	@SuppressWarnings("REC_CATCH_EXCEPTION")
 	public String getProperty(String propName) throws RemoteException {
 		switch (Property.is(propName)) {
 		case STDOUT:
@@ -725,8 +713,10 @@ public class WorkerCore extends UnicastRemoteObject implements Worker,
 				} else {
 					toReturn = ur;
 				}
-				// Note that this record is not to be pushed to the server
-				// That is done elsewhere (when a proper record is produced)
+				/*
+				 * Note that this record is not to be pushed to the server. That
+				 * is done elsewhere (when a proper record is produced)
+				 */
 				return toReturn.marshal();
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -773,7 +763,7 @@ public class WorkerCore extends UnicastRemoteObject implements Worker,
 	}
 
 	@Override
-	public void setURReceiver(UsageRecordReceiver receiver) {
+	public void setURReceiver(@Nonnull UsageRecordReceiver receiver) {
 		urreceiver = receiver;
 	}
 
@@ -787,4 +777,117 @@ public class WorkerCore extends UnicastRemoteObject implements Worker,
 					e);
 		}
 	}
+}
+
+/**
+ * An engine for asynchronously copying from an {@link InputStream} to a
+ * {@link Writer}.
+ * 
+ * @author Donal Fellows
+ */
+class AsyncCopy extends Thread {
+	@Nonnull
+	private BufferedReader from;
+	@Nonnull
+	private Writer to;
+	@Nullable
+	private Holder<Integer> pidHolder;
+
+	AsyncCopy(@Nonnull InputStream from, @Nonnull Writer to)
+			throws UnsupportedEncodingException {
+		this(from, to, null);
+	}
+
+	AsyncCopy(@Nonnull InputStream from, @Nonnull Writer to,
+			@Nullable Holder<Integer> pid) throws UnsupportedEncodingException {
+		this.from = new BufferedReader(new InputStreamReader(from,
+				SYSTEM_ENCODING));
+		this.to = to;
+		this.pidHolder = pid;
+		setDaemon(true);
+		start();
+	}
+
+	@Override
+	public void run() {
+		try {
+			if (pidHolder != null) {
+				String line = from.readLine();
+				if (line.matches("^pid:\\d+$"))
+					synchronized (pidHolder) {
+						pidHolder.value = parseInt(line.substring(4));
+					}
+				else
+					to.write(line + System.getProperty("line.separator"));
+			}
+			copy(from, to);
+		} catch (IOException e) {
+		}
+	}
+}
+
+/**
+ * A helper for asynchronously writing a password to a subprocess's stdin.
+ * 
+ * @author Donal Fellows
+ */
+class PasswordWriterThread extends Thread {
+	private OutputStream to;
+	private char[] chars;
+
+	PasswordWriterThread(@Nonnull Process to, @Nonnull char[] chars) {
+		this.to = to.getOutputStream();
+		assert chars != null;
+		this.chars = chars;
+		setDaemon(true);
+		start();
+	}
+
+	@Override
+	public void run() {
+		try (PrintWriter pw = new PrintWriter(new OutputStreamWriter(to,
+				SYSTEM_ENCODING))) {
+			pw.println(chars);
+		} catch (UnsupportedEncodingException e) {
+			// Not much we can do here
+			e.printStackTrace();
+		} finally {
+			/*
+			 * We don't trust GC to clear password from memory. We also take
+			 * care not to clear the default password!
+			 */
+			if (chars != KEYSTORE_PASSWORD)
+				Arrays.fill(chars, '\00');
+		}
+	}
+}
+
+enum Property {
+	STDOUT("stdout"), STDERR("stderr"), EXIT_CODE("exitcode"), READY_TO_NOTIFY(
+			"readyToNotify"), EMAIL("notificationAddress"), USAGE("usageRecord");
+
+	private String s;
+
+	private Property(String s) {
+		this.s = s;
+		pmap.put(s, this);
+	}
+
+	@Override
+	public String toString() {
+		return s;
+	}
+
+	public static Property is(@Nonnull String s) {
+		return pmap.get(s);
+	}
+
+	@Nonnull
+	public static String[] names() {
+		return pmap.keySet().toArray(new String[pmap.size()]);
+	}
+}
+
+enum Status {
+	Aborted, Completed, Failed, Held, Queued, Started, Suspended
 }

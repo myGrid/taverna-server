@@ -31,11 +31,11 @@ import org.taverna.server.master.api.ManagementModel;
 import org.taverna.server.master.exceptions.GeneralFailureException;
 import org.taverna.server.master.factories.ConfigurableRunFactory;
 import org.taverna.server.master.identity.User;
-import org.taverna.server.master.identity.UserStore;
+import org.taverna.server.master.identity.UserStoreAPI;
 import org.taverna.server.master.usage.UsageRecordRecorder;
 import org.taverna.server.master.utils.InvocationCounter;
-import org.taverna.server.master.worker.WorkerModel;
 import org.taverna.server.master.worker.RunDBSupport;
+import org.taverna.server.master.worker.WorkerModel;
 
 /**
  * The administration interface to Taverna Server.
@@ -69,7 +69,7 @@ public class AdminBean implements Admin {
 	}
 
 	@Required
-	public void setUserStore(UserStore userStore) {
+	public void setUserStore(UserStoreAPI userStore) {
 		this.userStore = userStore;
 	}
 
@@ -97,7 +97,7 @@ public class AdminBean implements Admin {
 	private RunDBSupport runDB;
 	private ConfigurableRunFactory factory;
 	private UsageRecordRecorder usageRecords;
-	private UserStore userStore;
+	private UserStoreAPI userStore;
 	private WorkerModel localWorker;
 	private String adminHtmlFile = "/admin.html";
 	private String resourceRoot = "/static/";
@@ -736,6 +736,7 @@ public class AdminBean implements Admin {
 		return opt("PUT");
 	}
 
+	// /////////////////////////////////////////////////////
 	@RolesAllowed(ADMIN)
 	@Override
 	public StringList getPermittedWorkflowURIs() {
@@ -752,8 +753,8 @@ public class AdminBean implements Admin {
 	@RolesAllowed(ADMIN)
 	@Override
 	public StringList setPermittedWorkflowURIs(StringList permitted) {
-		List<URI> uris = new ArrayList<URI>();
-		for (String uri: permitted.string)
+		List<URI> uris = new ArrayList<>();
+		for (String uri : permitted.string)
 			try {
 				uris.add(myExp.resolve(uri));
 			} catch (Exception e) {
@@ -766,6 +767,28 @@ public class AdminBean implements Admin {
 	@RolesAllowed(ADMIN)
 	@Override
 	public Response optionsPermittedWorkflowURIs() {
+		return opt("PUT");
+	}
+
+	// /////////////////////////////////////////////////////
+
+	@RolesAllowed(ADMIN)
+	@Override
+	public String getGenerateProvenance() {
+		return Boolean.toString(localWorker.getGenerateProvenance());
+	}
+
+	@RolesAllowed(ADMIN)
+	@Override
+	public String setGenerateProvenance(String newValue) {
+		boolean b = Boolean.parseBoolean(newValue);
+		localWorker.setGenerateProvenance(b);
+		return Boolean.toString(localWorker.getGenerateProvenance());
+	}
+
+	@RolesAllowed(ADMIN)
+	@Override
+	public Response optionsGenerateProvenance() {
 		return opt("PUT");
 	}
 }

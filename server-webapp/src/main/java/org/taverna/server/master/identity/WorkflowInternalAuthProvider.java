@@ -5,6 +5,7 @@
  */
 package org.taverna.server.master.identity;
 
+import static java.util.Collections.synchronizedMap;
 import static org.springframework.web.context.request.RequestContextHolder.currentRequestAttributes;
 import static org.taverna.server.master.common.Roles.SELF;
 
@@ -12,8 +13,11 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Set;
 
+import javax.annotation.Nonnull;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.servlet.http.HttpServletRequest;
@@ -37,10 +41,9 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import org.taverna.server.master.exceptions.UnknownRunException;
 import org.taverna.server.master.interfaces.LocalIdentityMapper;
 import org.taverna.server.master.interfaces.RunStore;
+import org.taverna.server.master.utils.CallTimeLogger.PerfLogged;
 import org.taverna.server.master.utils.UsernamePrincipal;
 import org.taverna.server.master.worker.RunDatabaseDAO;
-
-import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
  * A special authentication provider that allows a workflow to authenticate to
@@ -55,14 +58,26 @@ public class WorkflowInternalAuthProvider extends
 	private static final boolean logDecisions = true;
 	public static final String PREFIX = "wfrun_";
 	private RunDatabaseDAO dao;
+	private Map<String, String> cache;
 
 	@Required
 	public void setDao(RunDatabaseDAO dao) {
 		this.dao = dao;
 	}
 
+	@Required
+	@SuppressWarnings("serial")
+	public void setCacheBound(final int bound) {
+		cache = synchronizedMap(new LinkedHashMap<String, String>() {
+			@Override
+			protected boolean removeEldestEntry(Map.Entry<String, String> eldest) {
+				return size() > bound;
+			}
+		});
+	}
+
 	public void setAuthorizedAddresses(String[] addresses) {
-		authorizedAddresses = new HashSet<String>(localAddresses);
+		authorizedAddresses = new HashSet<>(localAddresses);
 		for (String s : addresses)
 			authorizedAddresses.add(s);
 	}
@@ -78,7 +93,7 @@ public class WorkflowInternalAuthProvider extends
 		log = null;
 	}
 
-	private final Set<String> localAddresses = new HashSet<String>();
+	private final Set<String> localAddresses = new HashSet<>();
 	private Set<String> authorizedAddresses;
 	{
 		localAddresses.add("127.0.0.1"); // IPv4
@@ -90,10 +105,10 @@ public class WorkflowInternalAuthProvider extends
 		} catch (UnknownHostException e) {
 			// Ignore the exception
 		}
-		authorizedAddresses = new HashSet<String>(localAddresses);
+		authorizedAddresses = new HashSet<>(localAddresses);
 	}
 
-    /**
+	/**
 	 * Check that the authentication request is actually valid for the given
 	 * user record.
 	 * 
@@ -116,9 +131,9 @@ public class WorkflowInternalAuthProvider extends
 	 *             generic AuthenticationException.
 	 */
 	protected void additionalAuthenticationChecks(UserDetails userRecord,
-			@NonNull Object principal, @NonNull Object credentials)
+			@Nonnull Object principal, @Nonnull Object credentials)
 			throws Exception {
-		@NonNull
+		@Nonnull
 		HttpServletRequest req = ((ServletRequestAttributes) currentRequestAttributes())
 				.getRequest();
 
@@ -127,8 +142,10 @@ public class WorkflowInternalAuthProvider extends
 				&& !authorizedAddresses.contains(req.getRemoteAddr())) {
 			if (logDecisions)
 				log.info("attempt to use workflow magic token from untrusted address:"
-						+ " token=" + userRecord.getUsername()
-						+ ", address=" + req.getRemoteAddr());
+						+ " token="
+						+ userRecord.getUsername()
+						+ ", address="
+						+ req.getRemoteAddr());
 			throw new BadCredentialsException("bad login token");
 		}
 
@@ -136,8 +153,10 @@ public class WorkflowInternalAuthProvider extends
 		if (!credentials.equals(userRecord.getPassword())) {
 			if (logDecisions)
 				log.info("workflow magic token is untrusted due to password mismatch:"
-						+ " wanted=" + userRecord.getPassword()
-						+ ", got=" + credentials);
+						+ " wanted="
+						+ userRecord.getPassword()
+						+ ", got="
+						+ credentials);
 			throw new BadCredentialsException("bad login token");
 		}
 
@@ -146,7 +165,7 @@ public class WorkflowInternalAuthProvider extends
 					+ userRecord.getUsername());
 	}
 
-    /**
+	/**
 	 * Retrieve the <code>UserDetails</code> from the relevant store, with the
 	 * option of throwing an <code>AuthenticationException</code> immediately if
 	 * the presented credentials are incorrect (this is especially useful if it
@@ -169,8 +188,9 @@ public class WorkflowInternalAuthProvider extends
 	 *             If something goes wrong. It will be logged and converted into
 	 *             a general AuthenticationException.
 	 */
-	@NonNull
-	protected UserDetails retrieveUser(String username, Object details) throws Exception {
+	@Nonnull
+	protected UserDetails retrieveUser(String username, Object details)
+			throws Exception {
 		if (details == null || !(details instanceof WebAuthenticationDetails))
 			throw new UsernameNotFoundException("context unsupported");
 		if (!username.startsWith(PREFIX))
@@ -179,11 +199,15 @@ public class WorkflowInternalAuthProvider extends
 		if (logDecisions)
 			log.info("request for auth for user " + username);
 		String wfid = username.substring(PREFIX.length());
-		final String securityToken;
+		String securityToken;
 		try {
-			securityToken = dao.getSecurityToken(wfid);
-			if (securityToken == null)
-				throw new UsernameNotFoundException("no such user");
+			securityToken = cache.get(wfid);
+			if (securityToken == null) {
+				securityToken = dao.getSecurityToken(wfid);
+				if (securityToken == null)
+					throw new UsernameNotFoundException("no such user");
+				cache.put(wfid, securityToken);
+			}
 		} catch (NullPointerException npe) {
 			throw new UsernameNotFoundException("no such user");
 		}
@@ -193,6 +217,7 @@ public class WorkflowInternalAuthProvider extends
 	}
 
 	@Override
+	@PerfLogged
 	protected final void additionalAuthenticationChecks(UserDetails userRecord,
 			UsernamePasswordAuthenticationToken token) {
 		try {
@@ -208,7 +233,8 @@ public class WorkflowInternalAuthProvider extends
 	}
 
 	@Override
-	@NonNull
+	@Nonnull
+	@PerfLogged
 	protected final UserDetails retrieveUser(String username,
 			UsernamePasswordAuthenticationToken token) {
 		try {
@@ -217,7 +243,8 @@ public class WorkflowInternalAuthProvider extends
 			throw e;
 		} catch (Exception e) {
 			log.warn("unexpected failure in authentication", e);
-			throw new AuthenticationServiceException("unexpected failure in authentication", e);
+			throw new AuthenticationServiceException(
+					"unexpected failure in authentication", e);
 		}
 	}
 
@@ -253,11 +280,12 @@ public class WorkflowInternalAuthProvider extends
 
 		private String getUsernameForSelfAccess(WorkflowSelfAuthority authority)
 				throws UnknownRunException {
-			return runStore.getRun(authority.getWorkflowID()).getSecurityContext()
-					.getOwner().getName();
+			return runStore.getRun(authority.getWorkflowID())
+					.getSecurityContext().getOwner().getName();
 		}
 
 		@Override
+		@PerfLogged
 		public String getUsernameForPrincipal(UsernamePrincipal user) {
 			Authentication auth = SecurityContextHolder.getContext()
 					.getAuthentication();

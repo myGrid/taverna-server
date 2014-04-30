@@ -24,6 +24,8 @@ import java.rmi.RemoteException;
 import java.util.Calendar;
 import java.util.UUID;
 
+import javax.annotation.Nonnull;
+import javax.annotation.PostConstruct;
 import javax.xml.bind.JAXBException;
 
 import org.apache.commons.logging.Log;
@@ -35,8 +37,6 @@ import org.taverna.server.master.common.Workflow;
 import org.taverna.server.master.exceptions.NoCreateException;
 import org.taverna.server.master.factories.ConfigurableRunFactory;
 import org.taverna.server.master.utils.UsernamePrincipal;
-
-import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
  * A simple factory for workflow runs that forks runs from a subprocess.
@@ -59,6 +59,12 @@ public class ForkRunFactory extends AbstractRemoteRunFactory implements
 	 *             Shouldn't happen.
 	 */
 	public ForkRunFactory() throws JAXBException {
+	}
+
+	@PostConstruct
+	protected void initRegistry() {
+		log.info("waiting for availability of default RMI registry");
+		getTheRegistry();
 	}
 
 	@Override
@@ -181,6 +187,8 @@ public class ForkRunFactory extends AbstractRemoteRunFactory implements
 				lastException = e;
 			}
 		}
+		if (lastException == null)
+			lastException = new InterruptedException();
 		throw lastException;
 	}
 
@@ -190,9 +198,7 @@ public class ForkRunFactory extends AbstractRemoteRunFactory implements
 		try {
 			// Validate registry connection first
 			getTheRegistry().list();
-		} catch (ConnectException ce) {
-			log.warn("connection problems with registry", ce);
-		} catch (ConnectIOException e) {
+		} catch (ConnectException | ConnectIOException e) {
 			log.warn("connection problems with registry", e);
 		}
 		RemoteRunFactory rrf = (RemoteRunFactory) getTheRegistry().lookup(name);
@@ -285,8 +291,9 @@ public class ForkRunFactory extends AbstractRemoteRunFactory implements
 			} catch (RemoteException e) {
 				log.warn(factoryProcessName + " failed to shut down nicely", e);
 			} catch (InterruptedException e) {
-				log.debug("interrupted during wait after asking "
-						+ factoryProcessName + " to shut down", e);
+				if (log.isDebugEnabled())
+					log.debug("interrupted during wait after asking "
+							+ factoryProcessName + " to shut down", e);
 			} finally {
 				factory = null;
 			}
@@ -338,8 +345,8 @@ public class ForkRunFactory extends AbstractRemoteRunFactory implements
 	 * @throws RemoteException
 	 *             If anything fails (communications error, etc.)
 	 */
-	private RemoteSingleRun getRealRun(@NonNull UsernamePrincipal creator,
-			@NonNull String wf, UUID id) throws RemoteException {
+	private RemoteSingleRun getRealRun(@Nonnull UsernamePrincipal creator,
+			@Nonnull String wf, UUID id) throws RemoteException {
 		String globaluser = "Unknown Person";
 		if (creator != null)
 			globaluser = creator.getName();
@@ -357,9 +364,7 @@ public class ForkRunFactory extends AbstractRemoteRunFactory implements
 			initFactory();
 			try {
 				return getRealRun(creator, wf, id);
-			} catch (ConnectException e) {
-				// factory was lost; try to recreate
-			} catch (ConnectIOException e) {
+			} catch (ConnectException | ConnectIOException e) {
 				// factory was lost; try to recreate
 			}
 			killFactory();

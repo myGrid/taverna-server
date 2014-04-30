@@ -37,6 +37,7 @@
 			<map key-type="java.lang.String" value-type="java.lang.String">
 				<description>Maps suffixes (post '.') to content types.</description>
 				<entry key="baclava" value="application/vnd.taverna.baclava+xml" />
+				<entry key="robundle.zip" value="application/vnd.wf4ever.robundle+zip" />
 			</map>
 		</property>
 		<property name="capabilitySource" ref="capabilities" />
@@ -66,6 +67,9 @@
 	</bean>
 
 	<bean id="webapp.invocationCounter" class="org.taverna.server.master.utils.InvocationCounter" />
+	<bean id="webapp.perfLogger" class="org.taverna.server.master.utils.CallTimeLogger">
+		<property name="threshold" value="${calltime.logthreshold:4000000}" />
+	</bean>
 
 	<bean id="run.coreView.prototype" scope="prototype"
 		class="org.taverna.server.master.RunREST">
@@ -121,6 +125,7 @@
 		<property name="eventSource" ref="dispatch.atom" />
 		<property name="support" ref="webapp.support" />
 		<property name="feedLanguage" value="${atom.language}" />
+		<property name="abdera" ref="abdera" />
 	</bean>
 
 	<bean id="admin" class="org.taverna.server.master.admin.AdminBean">
@@ -172,7 +177,7 @@
 	</bean>
 
 	<bean id="passwordEncoder"
-		class="org.springframework.security.authentication.encoding.Md5PasswordEncoder" />
+		class="org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder" />
 	<bean class="org.taverna.server.master.identity.UserStore" id="userStore">
 		<property name="persistenceManagerFactory" ref="pmf" />
 		<property name="baselineUserProperties">
@@ -216,7 +221,8 @@
 		<property name="targetMethod" value="putAll" />
 		<property name="arguments">
 			<util:properties>
-				<prop key="derby.stream.error.field">org.taverna.server.master.utils.DerbyUtils.DEV_NULL</prop>
+				<prop key="derby.stream.error.field">org.taverna.server.master.utils.DerbyUtils.TO_LOG</prop>
+				<prop key="derby.stream.error.logSeverityLevel">30000</prop>
 			</util:properties>
 		</property>
 	</bean>
@@ -280,7 +286,9 @@
 		<!-- <property name="length" value="8" /> -->
 	</bean>
 
-	<bean id="certificateChainFetcher" class="org.taverna.server.master.utils.CertificateChainFetcher"/>
+	<bean id="certificateChainFetcher" class="org.taverna.server.master.utils.CertificateChainFetcher">
+		<property name="secure" value="${fetchCertificateChain}" />
+	</bean>
 
 	<bean id="localworker.state" class="org.taverna.server.master.localworker.LocalWorkerState"
 		scope="singleton" lazy-init="false">
@@ -329,7 +337,7 @@
 			to the executeworkflow.sh in either the Taverna 2 Workbench distribution 
 			or the Taverna 2 Command Line distribution.</description> </property> -->
 		<property name="self" ref="localworker.state" />
-		<property name="defaultExecuteWorkflowScript" value="${executeWorkflowScript}" />
+		<property name="defaultExecuteWorkflowScript" value="${executeWorkflowScript:NONE}" />
 	</bean>
 
 	<bean id="worker.policy" class="org.taverna.server.master.worker.PolicyImpl">
@@ -445,6 +453,7 @@
 		<property name="expiryAgeDays" value="${atom.lifespan}" />
 		<property name="persistenceManagerFactory" ref="pmf" />
 		<property name="uriBuilderFactory" ref="feed" />
+		<property name="self" ref="dispatch.atom" />
 	</bean>
 
 	<bean id="worker.notifier"
@@ -467,27 +476,25 @@
 		<property name="uriBuilder" ref="webapp" />
 		<property name="utils" ref="fileUtils" />
 	</bean>
-	<bean class="org.taverna.server.master.interaction.FeedHandler" id="interactionFeedHandler">
+	<bean class="org.taverna.server.master.rest.handler.FeedHandler" id="atomFeedHandler">
 		<property name="abdera" ref="abdera" />
 	</bean>
-	<bean class="org.taverna.server.master.interaction.EntryHandler" id="interactionEntryHandler">
+	<bean class="org.taverna.server.master.rest.handler.EntryHandler" id="atomEntryHandler">
 		<property name="abdera" ref="abdera" />
 	</bean>
 
-	<bean id="authProvider"
-		class="org.springframework.security.authentication.dao.DaoAuthenticationProvider">
+	<bean id="authProvider" class="org.taverna.server.master.identity.StrippedDownAuthProvider">
 		<property name="passwordEncoder" ref="passwordEncoder" />
-		<property name="saltSource">
-			<bean id="saltSource"
-				class="org.springframework.security.authentication.dao.ReflectionSaltSource">
-				<property name="userPropertyToUse" value="username" />
+		<property name="userDetailsService">
+			<bean class="org.taverna.server.master.identity.UserStore.CachedUserStore">
+				<property name="realStore" ref="userStore" />
 			</bean>
 		</property>
-		<property name="userDetailsService" ref="userStore" />
 	</bean>
 	<bean id="workflowInternalAuthProvder"
 		class="org.taverna.server.master.identity.WorkflowInternalAuthProvider">
 		<property name="dao" ref="worker.runDAO" />
+		<property name="cacheBound" value="${default.runlimit}" />
 	</bean>
 	<bean id="velocity" class="org.apache.velocity.app.VelocityEngine"
 		init-method="init" lazy-init="false">

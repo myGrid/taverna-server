@@ -33,6 +33,7 @@ import org.taverna.server.master.exceptions.BadStateChangeException;
 import org.taverna.server.master.exceptions.FilesystemAccessException;
 import org.taverna.server.master.exceptions.InvalidCredentialException;
 import org.taverna.server.master.exceptions.NoListenerException;
+import org.taverna.server.master.exceptions.UnknownRunException;
 import org.taverna.server.master.factories.RunFactory;
 import org.taverna.server.master.interfaces.Directory;
 import org.taverna.server.master.interfaces.Input;
@@ -42,10 +43,7 @@ import org.taverna.server.master.interfaces.TavernaRun;
 import org.taverna.server.master.interfaces.TavernaSecurityContext;
 import org.taverna.server.master.utils.UsernamePrincipal;
 
-import edu.umd.cs.findbugs.annotations.SuppressWarnings;
-
-@SuppressWarnings
-@java.lang.SuppressWarnings("serial")
+@SuppressWarnings("serial")
 public class ExampleRun implements TavernaRun, TavernaSecurityContext {
 	String id;
 	List<Listener> listeners;
@@ -61,12 +59,12 @@ public class ExampleRun implements TavernaRun, TavernaSecurityContext {
 
 	public ExampleRun(UsernamePrincipal creator, Workflow workflow, Date expiry) {
 		this.id = randomUUID().toString();
-		this.listeners = new ArrayList<Listener>();
+		this.listeners = new ArrayList<>();
 		this.status = Initialized;
 		this.owner = creator;
 		this.workflow = workflow;
 		this.expiry = expiry;
-		this.inputs = new ArrayList<Input>();
+		this.inputs = new ArrayList<>();
 		listeners.add(new DefaultListener());
 	}
 
@@ -202,6 +200,7 @@ public class ExampleRun implements TavernaRun, TavernaSecurityContext {
 		public String name;
 		public String file;
 		public String value;
+		public String delim;
 
 		public ExampleInput(String name) {
 			this.name = name;
@@ -245,6 +244,22 @@ public class ExampleRun implements TavernaRun, TavernaSecurityContext {
 		void reset() {
 			this.file = null;
 			this.value = null;
+		}
+
+		@Override
+		public String getDelimiter() {
+			return delim;
+		}
+
+		@Override
+		public void setDelimiter(String delimiter)
+				throws BadStateChangeException {
+			if (status != Status.Initialized)
+				throw new BadStateChangeException();
+			if (delimiter == null)
+				delim = null;
+			else
+				delim = delimiter.substring(0, 1);
 		}
 	}
 
@@ -416,5 +431,22 @@ public class ExampleRun implements TavernaRun, TavernaSecurityContext {
 	@Override
 	public void setName(String name) {
 		this.name = (name.length() > 5 ? name.substring(0, 5) : name);
+	}
+
+	@Override
+	public void ping() throws UnknownRunException {
+		// Do nothing
+	}
+
+	@Override
+	public boolean getGenerateProvenance() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public void setGenerateProvenance(boolean generateProvenance) {
+		// TODO Auto-generated method stub
+		
 	}
 }

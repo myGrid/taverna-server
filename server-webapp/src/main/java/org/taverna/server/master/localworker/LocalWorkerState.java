@@ -127,6 +127,8 @@ public class LocalWorkerState extends JDOSupport<PersistedState> implements
 
 	URI[] permittedWorkflows;
 	private String registryJar;
+	private static final String DEFAULT_REGISTRY_JAR = LocalWorkerState.class
+			.getClassLoader().getResource(REGISTRY_JAR).getFile();
 
 	@Override
 	public void setDefaultLifetime(int defaultLifetime) {
@@ -210,7 +212,7 @@ public class LocalWorkerState extends JDOSupport<PersistedState> implements
 	 *            Full path to the script to use.
 	 */
 	public void setDefaultExecuteWorkflowScript(String defaultScript) {
-		if (defaultScript.startsWith("${")) {
+		if (defaultScript.startsWith("${") || defaultScript.equals("NONE")) {
 			this.defaultExecuteWorkflowScript = guessWorkflowScript();
 			return;
 		}
@@ -337,7 +339,7 @@ public class LocalWorkerState extends JDOSupport<PersistedState> implements
 
 	@Override
 	public String getRegistryJar() {
-		return registryJar == null ? REGISTRY_JAR : registryJar;
+		return registryJar == null ? DEFAULT_REGISTRY_JAR : registryJar;
 	}
 
 	@Override
@@ -362,6 +364,22 @@ public class LocalWorkerState extends JDOSupport<PersistedState> implements
 		else
 			this.permittedWorkflows = permittedWorkflows
 					.toArray(new URI[permittedWorkflows.size()]);
+		if (loadedState)
+			self.store();
+	}
+
+	public static final boolean DEFAULT_GENERATE_PROVENANCE = false;
+	private Boolean generateProvenance;
+
+	@Override
+	public boolean getGenerateProvenance() {
+		Boolean g = generateProvenance;
+		return g == null ? DEFAULT_GENERATE_PROVENANCE : (boolean) g;
+	}
+
+	@Override
+	public void setGenerateProvenance(boolean generate) {
+		this.generateProvenance = generate;
 		if (loadedState)
 			self.store();
 	}
@@ -398,6 +416,7 @@ public class LocalWorkerState extends JDOSupport<PersistedState> implements
 		List<URI> pwu = state.getPermittedWorkflowURIs();
 		permittedWorkflows = (URI[]) pwu.toArray(new URI[pwu.size()]);
 		registryJar = state.getRegistryJar();
+		generateProvenance = state.getGenerateProvenance();
 
 		loadedState = true;
 	}
@@ -407,9 +426,8 @@ public class LocalWorkerState extends JDOSupport<PersistedState> implements
 		if (!isPersistent())
 			return;
 		WorkerModel state = getById(KEY);
-		if (state == null) {
+		if (state == null)
 			state = persist(makeInstance());
-		}
 
 		state.setDefaultLifetime(defaultLifetime);
 		state.setExecuteWorkflowScript(executeWorkflowScript);
@@ -428,6 +446,8 @@ public class LocalWorkerState extends JDOSupport<PersistedState> implements
 		if (permittedWorkflows != null)
 			state.setPermittedWorkflowURIs(asList(permittedWorkflows));
 		state.setRegistryJar(registryJar);
+		if (generateProvenance != null)
+			state.setGenerateProvenance(generateProvenance);
 
 		loadedState = true;
 	}

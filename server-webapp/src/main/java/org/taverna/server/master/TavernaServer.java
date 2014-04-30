@@ -19,9 +19,11 @@ import static javax.xml.ws.handler.MessageContext.HTTP_REQUEST_HEADERS;
 import static javax.xml.ws.handler.MessageContext.PATH_INFO;
 import static org.apache.commons.io.IOUtils.toByteArray;
 import static org.apache.commons.logging.LogFactory.getLog;
+import static org.taverna.server.master.TavernaServerSupport.PROV_BUNDLE;
 import static org.taverna.server.master.common.DirEntryReference.newInstance;
 import static org.taverna.server.master.common.Namespaces.SERVER_SOAP;
 import static org.taverna.server.master.common.Roles.ADMIN;
+import static org.taverna.server.master.common.Roles.SELF;
 import static org.taverna.server.master.common.Roles.USER;
 import static org.taverna.server.master.common.Status.Initialized;
 import static org.taverna.server.master.common.Uri.secure;
@@ -42,6 +44,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
 import javax.annotation.security.DeclareRoles;
@@ -74,6 +78,7 @@ import org.taverna.server.master.common.Status;
 import org.taverna.server.master.common.Trust;
 import org.taverna.server.master.common.Workflow;
 import org.taverna.server.master.common.version.Version;
+import org.taverna.server.master.exceptions.BadPropertyValueException;
 import org.taverna.server.master.exceptions.BadStateChangeException;
 import org.taverna.server.master.exceptions.FilesystemAccessException;
 import org.taverna.server.master.exceptions.InvalidCredentialException;
@@ -108,13 +113,10 @@ import org.taverna.server.master.soap.FileContents;
 import org.taverna.server.master.soap.PermissionList;
 import org.taverna.server.master.soap.TavernaServerSOAP;
 import org.taverna.server.master.soap.ZippedDirectory;
+import org.taverna.server.master.utils.CallTimeLogger.PerfLogged;
 import org.taverna.server.master.utils.FilenameUtils;
 import org.taverna.server.master.utils.InvocationCounter.CallCounted;
 import org.taverna.server.port_description.OutputDescription;
-
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
-import edu.umd.cs.findbugs.annotations.SuppressWarnings;
 
 /**
  * The core implementation of the web application.
@@ -147,7 +149,6 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 	@Resource
 	WebServiceContext jaxws;
 	@Context
-	@SuppressWarnings("UWF_UNWRITTEN_FIELD")
 	private HttpHeaders jaxrsHeaders;
 
 	// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -244,29 +245,31 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 
 	@Override
 	@CallCounted
+	@PerfLogged
 	public ServerDescription describeService(UriInfo ui) {
-		jaxrsUriInfo.set(new WeakReference<UriInfo>(ui));
+		jaxrsUriInfo.set(new WeakReference<>(ui));
 		return new ServerDescription(ui, resolve(interactionFeed));
 	}
 
 	private static final MediaType[] RUN_LIST_TYPES = { APPLICATION_XML_TYPE,
 			APPLICATION_JSON_TYPE, URILIST_TYPE };
-	private static final Set<MediaType> LIST_TYPE_SET = new HashSet<MediaType>(
+	private static final Set<MediaType> LIST_TYPE_SET = new HashSet<>(
 			Arrays.asList(RUN_LIST_TYPES));
 	private static final List<Variant> LIST_TYPE_VARS = VariantListBuilder
 			.newInstance().mediaTypes(RUN_LIST_TYPES).build();
 
 	@Override
 	@CallCounted
+	@PerfLogged
 	@RolesAllowed(USER)
 	public Response listUsersRuns(UriInfo ui, HttpHeaders headers) {
-		jaxrsUriInfo.set(new WeakReference<UriInfo>(ui));
+		jaxrsUriInfo.set(new WeakReference<>(ui));
 		RunList rl = new RunList(runs(), secure(ui).path("{name}"));
 		for (MediaType mt : headers.getAcceptableMediaTypes())
 			if (LIST_TYPE_SET.contains(mt)) {
 				if (!mt.isCompatible(URILIST_TYPE))
 					return ok(rl, mt).build();
-				List<URI> response = new ArrayList<URI>();
+				List<URI> response = new ArrayList<>();
 				for (RunReference s : rl.run)
 					response.add(s.link);
 				return ok(response, mt).build();
@@ -276,10 +279,11 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 
 	@Override
 	@CallCounted
+	@PerfLogged
 	@RolesAllowed(USER)
 	public Response submitWorkflow(Workflow workflow, UriInfo ui)
 			throws NoUpdateException {
-		jaxrsUriInfo.set(new WeakReference<UriInfo>(ui));
+		jaxrsUriInfo.set(new WeakReference<>(ui));
 		checkCreatePolicy(workflow);
 		String name = support.buildWorkflow(workflow);
 		return created(secure(ui).path("{uuid}").build(name)).build();
@@ -287,10 +291,11 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 
 	@Override
 	@CallCounted
+	@PerfLogged
 	@RolesAllowed(USER)
 	public Response submitWorkflowByURL(List<URI> referenceList, UriInfo ui)
 			throws NoCreateException {
-		jaxrsUriInfo.set(new WeakReference<UriInfo>(ui));
+		jaxrsUriInfo.set(new WeakReference<>(ui));
 		if (referenceList == null || referenceList.size() == 0)
 			throw new NoCreateException("no workflow URI supplied");
 		URI workflowURI = referenceList.get(0);
@@ -307,23 +312,25 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 
 	@Override
 	@CallCounted
+	@PerfLogged
 	public int getServerMaxRuns() {
 		return support.getMaxSimultaneousRuns();
 	}
 
 	@Override
 	@CallCounted
-	@RolesAllowed(USER)
-	public TavernaServerRunREST getRunResource(final String runName, UriInfo ui)
+	@PerfLogged
+	@RolesAllowed({ USER, SELF })
+	public TavernaServerRunREST getRunResource(String runName, UriInfo ui)
 			throws UnknownRunException {
-		jaxrsUriInfo.set(new WeakReference<UriInfo>(ui));
+		jaxrsUriInfo.set(new WeakReference<>(ui));
 		RunREST rr = makeRunInterface();
 		rr.setRun(support.getRun(runName));
 		rr.setRunName(runName);
 		return rr;
 	}
 
-	private ThreadLocal<Reference<UriInfo>> jaxrsUriInfo = new InheritableThreadLocal<Reference<UriInfo>>();
+	private ThreadLocal<Reference<UriInfo>> jaxrsUriInfo = new InheritableThreadLocal<>();
 
 	private UriInfo getUriInfo() {
 		if (jaxrsUriInfo.get() == null)
@@ -359,9 +366,10 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 
 	@Override
 	@CallCounted
+	@PerfLogged
 	@RolesAllowed(USER)
 	public RunReference[] listRuns() {
-		ArrayList<RunReference> ws = new ArrayList<RunReference>();
+		ArrayList<RunReference> ws = new ArrayList<>();
 		UriBuilder ub = getRunUriBuilder();
 		for (String runName : runs().keySet())
 			ws.add(new RunReference(runName, ub));
@@ -387,6 +395,7 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 
 	@Override
 	@CallCounted
+	@PerfLogged
 	@RolesAllowed(USER)
 	public RunReference submitWorkflow(Workflow workflow)
 			throws NoUpdateException {
@@ -397,6 +406,7 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 
 	@Override
 	@CallCounted
+	@PerfLogged
 	@RolesAllowed(USER)
 	public RunReference submitWorkflowByURI(URI workflowURI)
 			throws NoCreateException {
@@ -413,12 +423,14 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 
 	@Override
 	@CallCounted
+	@PerfLogged
 	public URI[] getServerWorkflows() {
 		return support.getPermittedWorkflowURIs();
 	}
 
 	@Override
 	@CallCounted
+	@PerfLogged
 	public String[] getServerListeners() {
 		List<String> types = support.getListenerTypes();
 		return types.toArray(new String[types.size()]);
@@ -426,6 +438,7 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 
 	@Override
 	@CallCounted
+	@PerfLogged
 	public String[] getServerNotifiers() {
 		List<String> dispatchers = notificationEngine
 				.listAvailableDispatchers();
@@ -434,12 +447,14 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 
 	@Override
 	@CallCounted
-	public List<Capability> getServerCapabilities(){
+	@PerfLogged
+	public List<Capability> getServerCapabilities() {
 		return support.getCapabilities();
 	}
 
 	@Override
 	@CallCounted
+	@PerfLogged
 	@RolesAllowed(USER)
 	public void destroyRun(String runName) throws UnknownRunException,
 			NoUpdateException {
@@ -448,6 +463,7 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 
 	@Override
 	@CallCounted
+	@PerfLogged
 	@RolesAllowed(USER)
 	public String getRunDescriptiveName(String runName)
 			throws UnknownRunException {
@@ -456,6 +472,7 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 
 	@Override
 	@CallCounted
+	@PerfLogged
 	@RolesAllowed(USER)
 	public void setRunDescriptiveName(String runName, String descriptiveName)
 			throws UnknownRunException, NoUpdateException {
@@ -466,6 +483,7 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 
 	@Override
 	@CallCounted
+	@PerfLogged
 	@RolesAllowed(USER)
 	public Workflow getRunWorkflow(String runName) throws UnknownRunException {
 		return support.getRun(runName).getWorkflow();
@@ -473,6 +491,7 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 
 	@Override
 	@CallCounted
+	@PerfLogged
 	@RolesAllowed(USER)
 	public Date getRunExpiry(String runName) throws UnknownRunException {
 		return support.getRun(runName).getExpiry();
@@ -480,6 +499,7 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 
 	@Override
 	@CallCounted
+	@PerfLogged
 	@RolesAllowed(USER)
 	public void setRunExpiry(String runName, Date d)
 			throws UnknownRunException, NoUpdateException {
@@ -488,6 +508,7 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 
 	@Override
 	@CallCounted
+	@PerfLogged
 	@RolesAllowed(USER)
 	public Date getRunCreationTime(String runName) throws UnknownRunException {
 		return support.getRun(runName).getCreationTimestamp();
@@ -495,6 +516,7 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 
 	@Override
 	@CallCounted
+	@PerfLogged
 	@RolesAllowed(USER)
 	public Date getRunFinishTime(String runName) throws UnknownRunException {
 		return support.getRun(runName).getFinishTimestamp();
@@ -502,6 +524,7 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 
 	@Override
 	@CallCounted
+	@PerfLogged
 	@RolesAllowed(USER)
 	public Date getRunStartTime(String runName) throws UnknownRunException {
 		return support.getRun(runName).getStartTimestamp();
@@ -509,6 +532,7 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 
 	@Override
 	@CallCounted
+	@PerfLogged
 	@RolesAllowed(USER)
 	public Status getRunStatus(String runName) throws UnknownRunException {
 		return support.getRun(runName).getStatus();
@@ -516,6 +540,7 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 
 	@Override
 	@CallCounted
+	@PerfLogged
 	@RolesAllowed(USER)
 	public String setRunStatus(String runName, Status s)
 			throws UnknownRunException, NoUpdateException {
@@ -531,12 +556,9 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 				if (issue.isEmpty())
 					return "unknown reason for partial change";
 				return issue;
-			} catch (RuntimeException re) {
-				log.info("failed to start run " + runName, re);
-				throw re;
-			} catch (NoUpdateException nue) {
-				log.info("failed to start run " + runName, nue);
-				throw nue;
+			} catch (RuntimeException | NoUpdateException e) {
+				log.info("failed to start run " + runName, e);
+				throw e;
 			}
 		} else {
 			w.setStatus(s);
@@ -546,6 +568,7 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 
 	@Override
 	@CallCounted
+	@PerfLogged
 	@RolesAllowed(USER)
 	public String getRunStdout(String runName) throws UnknownRunException {
 		try {
@@ -557,6 +580,7 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 
 	@Override
 	@CallCounted
+	@PerfLogged
 	@RolesAllowed(USER)
 	public String getRunStderr(String runName) throws UnknownRunException {
 		try {
@@ -568,6 +592,7 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 
 	@Override
 	@CallCounted
+	@PerfLogged
 	@RolesAllowed(USER)
 	public JobUsageRecord getRunUsageRecord(String runName)
 			throws UnknownRunException {
@@ -586,6 +611,7 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 
 	@Override
 	@CallCounted
+	@PerfLogged
 	@RolesAllowed(USER)
 	public String getRunLog(String runName) throws UnknownRunException {
 		try {
@@ -596,11 +622,46 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 		}
 	}
 
+	@Override
+	@CallCounted
+	@PerfLogged
+	@RolesAllowed(USER)
+	public FileContents getRunBundle(String runName)
+			throws UnknownRunException, FilesystemAccessException,
+			NoDirectoryEntryException {
+		File f = fileUtils.getFile(support.getRun(runName), PROV_BUNDLE);
+		FileContents fc = new FileContents();
+		// We *know* the content type, by definition
+		fc.setFile(f, "application/vnd.wf4ever.robundle+zip");
+		return fc;
+	}
+
+	@Override
+	@CallCounted
+	@PerfLogged
+	@RolesAllowed(USER)
+	public boolean getRunGenerateProvenance(String runName)
+			throws UnknownRunException {
+		return support.getRun(runName).getGenerateProvenance();
+	}
+
+	@Override
+	@CallCounted
+	@PerfLogged
+	@RolesAllowed(USER)
+	public void setRunGenerateProvenance(String runName, boolean generate)
+			throws UnknownRunException, NoUpdateException {
+		TavernaRun run = support.getRun(runName);
+		support.permitUpdate(run);
+		run.setGenerateProvenance(generate);
+	}
+
 	// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	// SOAP INTERFACE - Security
 
 	@Override
 	@CallCounted
+	@PerfLogged
 	@RolesAllowed(USER)
 	public String getRunOwner(String runName) throws UnknownRunException {
 		return support.getRun(runName).getSecurityContext().getOwner()
@@ -634,6 +695,7 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 
 	@Override
 	@CallCounted
+	@PerfLogged
 	@RolesAllowed(USER)
 	public Credential[] getRunCredentials(String runName)
 			throws UnknownRunException, NotOwnerException {
@@ -664,6 +726,7 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 
 	@Override
 	@CallCounted
+	@PerfLogged
 	@RolesAllowed(USER)
 	public String setRunCredential(String runName, String credentialID,
 			Credential credential) throws UnknownRunException,
@@ -685,6 +748,7 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 
 	@Override
 	@CallCounted
+	@PerfLogged
 	@RolesAllowed(USER)
 	public void deleteRunCredential(String runName, String credentialID)
 			throws UnknownRunException, NotOwnerException,
@@ -695,6 +759,7 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 
 	@Override
 	@CallCounted
+	@PerfLogged
 	@RolesAllowed(USER)
 	public Trust[] getRunCertificates(String runName)
 			throws UnknownRunException, NotOwnerException {
@@ -709,6 +774,7 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 
 	@Override
 	@CallCounted
+	@PerfLogged
 	@RolesAllowed(USER)
 	public String setRunCertificates(String runName, String certificateID,
 			Trust certificate) throws UnknownRunException, NotOwnerException,
@@ -730,6 +796,7 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 
 	@Override
 	@CallCounted
+	@PerfLogged
 	@RolesAllowed(USER)
 	public void deleteRunCertificates(String runName, String certificateID)
 			throws UnknownRunException, NotOwnerException,
@@ -742,11 +809,12 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 
 	@Override
 	@CallCounted
+	@PerfLogged
 	@RolesAllowed(USER)
 	public PermissionList listRunPermissions(String runName)
 			throws UnknownRunException, NotOwnerException {
 		PermissionList pl = new PermissionList();
-		pl.permission = new ArrayList<PermissionList.SinglePermissionMapping>();
+		pl.permission = new ArrayList<>();
 		Map<String, Permission> perm;
 		try {
 			perm = support.getPermissionMap(getRunSecurityContext(runName,
@@ -755,7 +823,7 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 			log.error("unexpected error from internal API", e);
 			perm = emptyMap();
 		}
-		List<String> users = new ArrayList<String>(perm.keySet());
+		List<String> users = new ArrayList<>(perm.keySet());
 		sort(users);
 		for (String user : users)
 			pl.permission.add(new PermissionList.SinglePermissionMapping(user,
@@ -765,6 +833,7 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 
 	@Override
 	@CallCounted
+	@PerfLogged
 	@RolesAllowed(USER)
 	public void setRunPermission(String runName, String userName,
 			Permission permission) throws UnknownRunException,
@@ -782,6 +851,7 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 
 	@Override
 	@CallCounted
+	@PerfLogged
 	@RolesAllowed(USER)
 	public OutputDescription getRunOutputDescription(String runName)
 			throws UnknownRunException, BadStateChangeException,
@@ -795,11 +865,12 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 
 	@Override
 	@CallCounted
+	@PerfLogged
 	@RolesAllowed(USER)
 	public DirEntry[] getRunDirectoryContents(String runName, DirEntry d)
 			throws UnknownRunException, FilesystemAccessException,
 			NoDirectoryEntryException {
-		List<DirEntry> result = new ArrayList<DirEntry>();
+		List<DirEntry> result = new ArrayList<>();
 		for (DirectoryEntry e : fileUtils.getDirectory(support.getRun(runName),
 				convert(d)).getContents())
 			result.add(convert(newInstance(null, e)));
@@ -808,6 +879,7 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 
 	@Override
 	@CallCounted
+	@PerfLogged
 	@RolesAllowed(USER)
 	public byte[] getRunDirectoryAsZip(String runName, DirEntry d)
 			throws UnknownRunException, FilesystemAccessException,
@@ -823,6 +895,7 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 
 	@Override
 	@CallCounted
+	@PerfLogged
 	@RolesAllowed(USER)
 	public ZippedDirectory getRunDirectoryAsZipMTOM(String runName, DirEntry d)
 			throws UnknownRunException, FilesystemAccessException,
@@ -833,6 +906,7 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 
 	@Override
 	@CallCounted
+	@PerfLogged
 	@RolesAllowed(USER)
 	public DirEntry makeRunDirectory(String runName, DirEntry parent,
 			String name) throws UnknownRunException, NoUpdateException,
@@ -846,6 +920,7 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 
 	@Override
 	@CallCounted
+	@PerfLogged
 	@RolesAllowed(USER)
 	public DirEntry makeRunFile(String runName, DirEntry parent, String name)
 			throws UnknownRunException, NoUpdateException,
@@ -859,6 +934,7 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 
 	@Override
 	@CallCounted
+	@PerfLogged
 	@RolesAllowed(USER)
 	public void destroyRunDirectoryEntry(String runName, DirEntry d)
 			throws UnknownRunException, NoUpdateException,
@@ -870,6 +946,7 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 
 	@Override
 	@CallCounted
+	@PerfLogged
 	@RolesAllowed(USER)
 	public byte[] getRunFileContents(String runName, DirEntry d)
 			throws UnknownRunException, FilesystemAccessException,
@@ -880,6 +957,7 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 
 	@Override
 	@CallCounted
+	@PerfLogged
 	@RolesAllowed(USER)
 	public void setRunFileContents(String runName, DirEntry d,
 			byte[] newContents) throws UnknownRunException, NoUpdateException,
@@ -891,6 +969,7 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 
 	@Override
 	@CallCounted
+	@PerfLogged
 	@RolesAllowed(USER)
 	public FileContents getRunFileContentsMTOM(String runName, DirEntry d)
 			throws UnknownRunException, FilesystemAccessException,
@@ -903,6 +982,7 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 
 	@Override
 	@CallCounted
+	@PerfLogged
 	@RolesAllowed(USER)
 	public void setRunFileContentsMTOM(String runName, FileContents newContents)
 			throws UnknownRunException, NoUpdateException,
@@ -916,6 +996,7 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 
 	@Override
 	@CallCounted
+	@PerfLogged
 	@RolesAllowed(USER)
 	public String getRunFileType(String runName, DirEntry d)
 			throws UnknownRunException, FilesystemAccessException,
@@ -926,6 +1007,7 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 
 	@Override
 	@CallCounted
+	@PerfLogged
 	@RolesAllowed(USER)
 	public long getRunFileLength(String runName, DirEntry d)
 			throws UnknownRunException, FilesystemAccessException,
@@ -935,6 +1017,7 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 
 	@Override
 	@CallCounted
+	@PerfLogged
 	@RolesAllowed(USER)
 	public Date getRunFileModified(String runName, DirEntry d)
 			throws UnknownRunException, FilesystemAccessException,
@@ -948,10 +1031,11 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 
 	@Override
 	@CallCounted
+	@PerfLogged
 	@RolesAllowed(USER)
 	public String[] getRunListeners(String runName) throws UnknownRunException {
 		TavernaRun w = support.getRun(runName);
-		List<String> result = new ArrayList<String>();
+		List<String> result = new ArrayList<>();
 		for (Listener l : w.getListeners())
 			result.add(l.getName());
 		return result.toArray(new String[result.size()]);
@@ -959,6 +1043,7 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 
 	@Override
 	@CallCounted
+	@PerfLogged
 	@RolesAllowed(USER)
 	public String addRunListener(String runName, String listenerType,
 			String configuration) throws UnknownRunException,
@@ -969,6 +1054,7 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 
 	@Override
 	@CallCounted
+	@PerfLogged
 	@RolesAllowed(USER)
 	public String getRunListenerConfiguration(String runName,
 			String listenerName) throws UnknownRunException,
@@ -978,6 +1064,7 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 
 	@Override
 	@CallCounted
+	@PerfLogged
 	@RolesAllowed(USER)
 	public String[] getRunListenerProperties(String runName, String listenerName)
 			throws UnknownRunException, NoListenerException {
@@ -987,6 +1074,7 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 
 	@Override
 	@CallCounted
+	@PerfLogged
 	@RolesAllowed(USER)
 	public String getRunListenerProperty(String runName, String listenerName,
 			String propName) throws UnknownRunException, NoListenerException {
@@ -995,6 +1083,7 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 
 	@Override
 	@CallCounted
+	@PerfLogged
 	@RolesAllowed(USER)
 	public void setRunListenerProperty(String runName, String listenerName,
 			String propName, String value) throws UnknownRunException,
@@ -1013,6 +1102,7 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 
 	@Override
 	@CallCounted
+	@PerfLogged
 	@RolesAllowed(USER)
 	public InputDescription getRunInputs(String runName)
 			throws UnknownRunException {
@@ -1021,6 +1111,7 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 
 	@Override
 	@CallCounted
+	@PerfLogged
 	@RolesAllowed(USER)
 	public String getRunOutputBaclavaFile(String runName)
 			throws UnknownRunException {
@@ -1029,6 +1120,7 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 
 	@Override
 	@CallCounted
+	@PerfLogged
 	@RolesAllowed(USER)
 	public void setRunInputBaclavaFile(String runName, String fileName)
 			throws UnknownRunException, NoUpdateException,
@@ -1040,6 +1132,7 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 
 	@Override
 	@CallCounted
+	@PerfLogged
 	@RolesAllowed(USER)
 	public void setRunInputPortFile(String runName, String portName,
 			String portFilename) throws UnknownRunException, NoUpdateException,
@@ -1054,6 +1147,7 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 
 	@Override
 	@CallCounted
+	@PerfLogged
 	@RolesAllowed(USER)
 	public void setRunInputPortValue(String runName, String portName,
 			String portValue) throws UnknownRunException, NoUpdateException,
@@ -1068,6 +1162,31 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 
 	@Override
 	@CallCounted
+	@PerfLogged
+	@RolesAllowed(USER)
+	public void setRunInputPortListDelimiter(String runName, String portName,
+			String delimiter) throws UnknownRunException, NoUpdateException,
+			BadStateChangeException, BadPropertyValueException {
+		TavernaRun w = support.getRun(runName);
+		support.permitUpdate(w);
+		Input i = support.getInput(w, portName);
+		if (i == null)
+			i = w.makeInput(portName);
+		if (delimiter != null && delimiter.isEmpty())
+			delimiter = null;
+		if (delimiter != null) {
+			if (delimiter.length() > 1)
+				throw new BadPropertyValueException("delimiter too long");
+			if (delimiter.charAt(0) < 1 || delimiter.charAt(0) > 127)
+				throw new BadPropertyValueException(
+						"delimiter character must be non-NUL ASCII");
+		}
+		i.setDelimiter(delimiter);
+	}
+
+	@Override
+	@CallCounted
+	@PerfLogged
 	@RolesAllowed(USER)
 	public void setRunOutputBaclavaFile(String runName, String outputFile)
 			throws UnknownRunException, NoUpdateException,
@@ -1079,6 +1198,7 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 
 	@Override
 	@CallCounted
+	@PerfLogged
 	@RolesAllowed(USER)
 	public org.taverna.server.port_description.InputDescription getRunInputDescriptor(
 			String runName) throws UnknownRunException {
@@ -1087,6 +1207,7 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 
 	@Override
 	@CallCounted
+	@PerfLogged
 	@RolesAllowed(USER)
 	public String getServerStatus() {
 		return support.getAllowNewWorkflowRuns() ? "operational" : "suspended";
@@ -1147,7 +1268,7 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 		return DEFAULT_HOST;
 	}
 
-	@NonNull
+	@Nonnull
 	private URI getPossiblyInsecureBaseUri() {
 		// See if JAX-RS can supply the info
 		UriInfo ui = getUriInfo();
@@ -1214,12 +1335,15 @@ class PolicyREST implements PolicyView, SupportAware {
 	}
 
 	@Override
+	@CallCounted
+	@PerfLogged
 	public PolicyDescription getDescription(UriInfo ui) {
 		return new PolicyDescription(ui);
 	}
 
 	@Override
 	@CallCounted
+	@PerfLogged
 	public int getMaxSimultaneousRuns() {
 		Integer limit = policy.getMaxRuns(support.getPrincipal());
 		if (limit == null)
@@ -1229,6 +1353,7 @@ class PolicyREST implements PolicyView, SupportAware {
 
 	@Override
 	@CallCounted
+	@PerfLogged
 	public PermittedListeners getPermittedListeners() {
 		return new PermittedListeners(
 				listenerFactory.getSupportedListenerTypes());
@@ -1236,6 +1361,7 @@ class PolicyREST implements PolicyView, SupportAware {
 
 	@Override
 	@CallCounted
+	@PerfLogged
 	public PermittedWorkflows getPermittedWorkflows() {
 		return new PermittedWorkflows(policy.listPermittedWorkflowURIs(support
 				.getPrincipal()));
@@ -1243,17 +1369,22 @@ class PolicyREST implements PolicyView, SupportAware {
 
 	@Override
 	@CallCounted
+	@PerfLogged
 	public EnabledNotificationFabrics getEnabledNotifiers() {
 		return new EnabledNotificationFabrics(
 				notificationEngine.listAvailableDispatchers());
 	}
 
 	@Override
+	@CallCounted
+	@PerfLogged
 	public int getMaxOperatingRuns() {
 		return policy.getOperatingLimit();
 	}
 
 	@Override
+	@CallCounted
+	@PerfLogged
 	public CapabilityList getCapabilities() {
 		CapabilityList cl = new CapabilityList();
 		cl.capability.addAll(support.getCapabilities());

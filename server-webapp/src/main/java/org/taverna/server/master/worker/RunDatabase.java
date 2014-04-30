@@ -14,12 +14,16 @@ import java.io.ObjectOutputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.UUID;
+
+import javax.annotation.Nullable;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Required;
+import org.taverna.server.master.common.Status;
 import org.taverna.server.master.exceptions.UnknownRunException;
 import org.taverna.server.master.interfaces.Listener;
 import org.taverna.server.master.interfaces.Policy;
@@ -42,6 +46,7 @@ public class RunDatabase implements RunStore, RunDBSupport {
 	private NotificationEngine notificationEngine;
 	@Autowired
 	private FactoryBean factory;
+	private Map<String, TavernaRun> cache = new HashMap<>();
 
 	@Override
 	@Required
@@ -50,7 +55,7 @@ public class RunDatabase implements RunStore, RunDBSupport {
 	}
 
 	public void setTypeNotifiers(List<CompletionNotifier> notifiers) {
-		typedNotifiers = new HashMap<String, CompletionNotifier>();
+		typedNotifiers = new HashMap<>();
 		for (CompletionNotifier n : notifiers)
 			typedNotifiers.put(n.getName(), n);
 	}
@@ -68,7 +73,30 @@ public class RunDatabase implements RunStore, RunDBSupport {
 
 	@Override
 	public void checkForFinishNow() {
-		for (RemoteRunDelegate rrd : dao.getNotifiable())
+		/*
+		 * Get which runs are actually newly finished; this requires getting the
+		 * candidates from the database and *then* doing the expensive requests
+		 * to the back end to find out the status.
+		 */
+		Map<String, RemoteRunDelegate> notifiable = new HashMap<>();
+		for (RemoteRunDelegate p : dao.getPotentiallyNotifiable())
+			if (p.getStatus() == Status.Finished)
+				notifiable.put(p.getId(), p);
+
+		// Check if there's nothing more to do
+		if (notifiable.isEmpty())
+			return;
+
+		/*
+		 * Tell the database about the ones we've got.
+		 */
+		dao.markFinished(notifiable.keySet());
+
+		/*
+		 * Send out the notifications. The notification addresses are stored in
+		 * the back-end engine, so this is *another* thing that can take time.
+		 */
+		for (RemoteRunDelegate rrd : notifiable.values())
 			for (Listener l : rrd.getListeners())
 				if (l.getName().equals("io")) {
 					try {
@@ -82,10 +110,16 @@ public class RunDatabase implements RunStore, RunDBSupport {
 
 	@Override
 	public void cleanNow() {
+		List<String> cleaned;
 		try {
-			dao.doClean();
+			cleaned = dao.doClean();
 		} catch (Exception e) {
 			log.warn("failure during deletion of expired runs", e);
+			return;
+		}
+		synchronized (cache) {
+			for (String id : cleaned)
+				cache.remove(id);
 		}
 	}
 
@@ -115,6 +149,26 @@ public class RunDatabase implements RunStore, RunDBSupport {
 		return dao.listRunNames();
 	}
 
+	@Nullable
+	private TavernaRun get(String uuid) {
+		TavernaRun run = null;
+		synchronized (cache) {
+			run = cache.get(uuid);
+		}
+		try {
+			if (run != null)
+				run.ping();
+		} catch (UnknownRunException e) {
+			if (log.isDebugEnabled())
+				log.debug("stale mapping in cache?", e);
+			// Don't need to flush the cache; this happens when cleaning anyway
+			run = null;
+		}
+		if (run == null)
+			run = dao.get(uuid);
+		return run;
+	}
+
 	@Override
 	public TavernaRun getRun(UsernamePrincipal user, Policy p, String uuid)
 			throws UnknownRunException {
@@ -123,10 +177,11 @@ public class RunDatabase implements RunStore, RunDBSupport {
 		try {
 			UUID.fromString(uuid);
 		} catch (IllegalArgumentException e) {
-			log.debug("run ID does not look like UUID; rejecting...");
+			if (log.isDebugEnabled())
+				log.debug("run ID does not look like UUID; rejecting...");
 			throw new UnknownRunException();
 		}
-		TavernaRun run = dao.get(uuid);
+		TavernaRun run = get(uuid);
 		if (run != null && (user == null || p.permitAccess(user, run)))
 			return run;
 		throw new UnknownRunException();
@@ -134,7 +189,7 @@ public class RunDatabase implements RunStore, RunDBSupport {
 
 	@Override
 	public TavernaRun getRun(String uuid) throws UnknownRunException {
-		TavernaRun run = dao.get(uuid);
+		TavernaRun run = get(uuid);
 		if (run != null)
 			return run;
 		throw new UnknownRunException();
@@ -142,6 +197,16 @@ public class RunDatabase implements RunStore, RunDBSupport {
 
 	@Override
 	public Map<String, TavernaRun> listRuns(UsernamePrincipal user, Policy p) {
+		synchronized (cache) {
+			Map<String, TavernaRun> cached = new HashMap<>();
+			for (Entry<String, TavernaRun> e : cache.entrySet()) {
+				TavernaRun r = e.getValue();
+				if (p.permitAccess(user, r))
+					cached.put(e.getKey(), r);
+			}
+			if (!cached.isEmpty())
+				return cached;
+		}
 		return dao.listRuns(user, p);
 	}
 
@@ -150,9 +215,9 @@ public class RunDatabase implements RunStore, RunDBSupport {
 			return;
 		try {
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
-			ObjectOutputStream oos = new ObjectOutputStream(baos);
-			oos.writeObject(obj);
-			oos.close();
+			try (ObjectOutputStream oos = new ObjectOutputStream(baos)) {
+				oos.writeObject(obj);
+			}
 			log.debug(message + ": " + baos.size());
 		} catch (Exception e) {
 			log.warn("oops", e);
@@ -175,15 +240,23 @@ public class RunDatabase implements RunStore, RunDBSupport {
 					"unexpected problem when persisting run record in database",
 					e);
 		}
+		synchronized (cache) {
+			cache.put(rrd.getId(), run);
+		}
 		return rrd.getId();
 	}
 
 	@Override
 	public void unregisterRun(String uuid) {
 		try {
-			dao.unpersistRun(uuid);
+			if (dao.unpersistRun(uuid))
+				synchronized (cache) {
+					cache.remove(uuid);
+				}
 		} catch (RuntimeException e) {
-			log.debug("problem persisting the deletion of the run " + uuid, e);
+			if (log.isDebugEnabled())
+				log.debug("problem persisting the deletion of the run " + uuid,
+						e);
 		}
 	}
 

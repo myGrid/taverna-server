@@ -7,9 +7,6 @@ package org.taverna.server.master.common.version;
 
 import static org.taverna.server.master.common.version.Constants.PATCH;
 import static org.taverna.server.master.common.version.Constants.VERSION;
-import static org.taverna.server.master.common.version.Constants.alphaChar;
-import static org.taverna.server.master.common.version.Constants.alphaHEnt;
-import static org.taverna.server.master.common.version.Constants.alphaXEnt;
 
 /**
  * Common location for describing the version of the server.
@@ -17,9 +14,9 @@ import static org.taverna.server.master.common.version.Constants.alphaXEnt;
  * @author Donal Fellows
  */
 public interface Version {
-	public static final String JAVA = VERSION + alphaChar + PATCH;
-	public static final String HTML = VERSION + alphaHEnt + PATCH;
-	public static final String XML = VERSION + alphaXEnt + PATCH;
+	public static final String JAVA = VERSION + Constants.releaseChar + PATCH;
+	public static final String HTML = VERSION + Constants.releaseHEnt + PATCH;
+	public static final String XML = VERSION + Constants.releaseXEnt + PATCH;
 }
 
 /**
@@ -30,7 +27,7 @@ public interface Version {
 interface Constants {
 	static final String MAJOR = "2";
 	static final String MINOR = "5";
-	static final String PATCH = "1";
+	static final String PATCH = "4";
 
 	static final char alphaChar = '\u03b1';
 	static final char betaChar = '\u03b2';

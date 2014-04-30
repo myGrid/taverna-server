@@ -21,11 +21,14 @@ import org.taverna.server.master.worker.WorkerModel;
  * 
  * @author Donal Fellows
  */
-// WARNING! If you change the name of this class, update persistence.xml as
-// well!
+/*
+ * WARNING! If you change the name of this class, update persistence.xml as
+ * well!
+ */
 @PersistenceCapable(table = PersistedState.TABLE)
 class PersistedState implements WorkerModel {
 	static final String TABLE = "LOCALWORKERSTATE__PERSISTEDSTATE";
+
 	static PersistedState makeInstance() {
 		PersistedState o = new PersistedState();
 		o.ID = KEY;
@@ -70,6 +73,8 @@ class PersistedState implements WorkerModel {
 	@Persistent(defaultFetchGroup = "true")
 	@Join(table = TABLE + "_PERMWFURI", column = "ID")
 	private String[] permittedWorkflows;
+	@Persistent
+	private int generateProvenance;
 
 	@Override
 	public void setDefaultLifetime(int defaultLifetime) {
@@ -215,8 +220,8 @@ class PersistedState implements WorkerModel {
 	public List<URI> getPermittedWorkflowURIs() {
 		String[] pw = this.permittedWorkflows;
 		if (pw == null)
-			return new ArrayList<URI>();
-		List<URI> uris = new ArrayList<URI>(pw.length);
+			return new ArrayList<>();
+		List<URI> uris = new ArrayList<>(pw.length);
 		for (String uri : pw)
 			uris.add(URI.create(uri));
 		return uris;
@@ -238,5 +243,15 @@ class PersistedState implements WorkerModel {
 	@Override
 	public void setRegistryJar(String registryJar) {
 		this.registryJar = registryJar;
+	}
+
+	@Override
+	public boolean getGenerateProvenance() {
+		return generateProvenance > 0;
+	}
+
+	@Override
+	public void setGenerateProvenance(boolean generateProvenance) {
+		this.generateProvenance = (generateProvenance ? 1 : 0);
 	}
 }

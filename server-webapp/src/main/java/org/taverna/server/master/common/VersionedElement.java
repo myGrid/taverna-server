@@ -38,24 +38,18 @@ public abstract class VersionedElement {
 	static {
 		Log log = getLog("Taverna.Server.Webapp");
 		Properties p = new Properties();
-		InputStream is = null;
 		try {
-			p.load(is = VersionedElement.class
-					.getResourceAsStream("/version.properties"));
+			try (InputStream is = VersionedElement.class
+					.getResourceAsStream("/version.properties")) {
+				p.load(is);
+			}
 		} catch (IOException e) {
 			log.warn("failed to read /version.properties", e);
-		} finally {
-			try {
-				if (is != null)
-					is.close();
-			} catch (IOException e) {
-				log.warn("failed to close channel", e);
-			}
 		}
 		VERSION = p.getProperty("tavernaserver.version", "unknownVersion");
-		REVISION = p.getProperty("tavernaserver.revision", "unknownRevision")
-				+ " (branch: " + p.getProperty("tavernaserver.branch", "trunk")
-				+ ")";
+		REVISION = String.format("%s (tag: %s)",
+				p.getProperty("tavernaserver.branch", "unknownRevision"),
+				p.getProperty("tavernaserver.revision.describe", "unknownTag"));
 		TIMESTAMP = p
 				.getProperty("tavernaserver.timestamp", "unknownTimestamp");
 	}

@@ -7,7 +7,7 @@
 	<parent>
 		<groupId>uk.org.taverna.server</groupId>
 		<artifactId>server</artifactId>
-		<version>2.5.1-SNAPSHOT</version>
+		<version>2.5.4</version>
 		<relativePath>..</relativePath>
 	</parent>
 	<scm>
@@ -15,15 +15,17 @@
 	</scm>
 
 	<properties>
-		<version.cxf>2.5.2</version.cxf>
-		<version.spring>3.0.7.RELEASE</version.spring>
-		<version.spring-security>3.0.7.RELEASE</version.spring-security>
+		<version.cxf>2.7.7</version.cxf>
+		<version.spring>3.2.5.RELEASE</version.spring>
+		<version.spring-security>3.1.4.RELEASE</version.spring-security>
 		<version.asm>3.3.1</version.asm>
 		<version.smack>3.2.1</version.smack>
-		<version.commandline>2.5-SNAPSHOT</version.commandline>
+		<version.commandline>2.5.0</version.commandline>
+		<edition.commandline>enterprise</edition.commandline>
 		<version.jdoapi>3.0.1</version.jdoapi>
 		<forker.module>server-unix-forker</forker.module>
 		<util.dir>${project.build.directory}/${project.build.finalName}/WEB-INF/classes/util</util.dir>
+		<cmdline.dir>${util.dir}/taverna-commandline-${edition.commandline}-${version.commandline}</cmdline.dir>
 	</properties>
 
 	<dependencies>
@@ -55,7 +57,6 @@
 		<dependency>
 			<groupId>commons-io</groupId>
 			<artifactId>commons-io</artifactId>
-			<version>2.1</version>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework</groupId>
@@ -85,8 +86,7 @@
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<version>4.9</version><!--$NO-MVN-MAN-VER$-->
+			<artifactId>junit</artifactId><!--$NO-MVN-MAN-VER$-->
 			<scope>test</scope>
 		</dependency>
 		<dependency>
@@ -151,30 +151,34 @@
 		<dependency>
 			<groupId>org.apache.derby</groupId>
 			<artifactId>derby</artifactId>
-			<version>10.8.1.2</version>
+			<version>10.10.1.1</version>
 			<scope>runtime</scope>
 		</dependency>
 		<dependency>
 			<groupId>commons-dbcp</groupId>
 			<artifactId>commons-dbcp</artifactId>
-			<version>1.4</version>
 		</dependency>
 		<dependency>
 			<groupId>javax.jdo</groupId>
-			<artifactId>jdo2-api</artifactId>
-			<version>2.3-eb</version>
+			<artifactId>jdo-api</artifactId>
+			<version>3.0.1</version>
 		</dependency>
 		<dependency>
 			<groupId>org.datanucleus</groupId>
 			<artifactId>datanucleus-api-jdo</artifactId>
+			<version>[3.2.0, 3.2.99)</version>
+			<scope>runtime</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.datanucleus</groupId>
 			<artifactId>datanucleus-core</artifactId>
+			<version>3.2.10</version>
 		</dependency>
 		<dependency>
 			<groupId>org.datanucleus</groupId>
 			<artifactId>datanucleus-rdbms</artifactId>
+			<version>[3.2.0, 3.2.99)</version>
+			<scope>compile</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.jdo</groupId>
@@ -188,23 +192,22 @@
 		<dependency>
 			<groupId>net.sf.mime-util</groupId>
 			<artifactId>mime-util</artifactId>
-			<version>1.2</version>
 		</dependency>
 		<dependency>
 			<groupId>org.twitter4j</groupId>
 			<artifactId>twitter4j-core</artifactId>
-			<version>2.2.4</version>
+			<version>[3.0,)</version>
 		</dependency>
 		<dependency>
 			<groupId>cglib</groupId>
 			<artifactId>cglib</artifactId>
-			<version>2.2.2</version>
-			<scope>compile</scope>
+			<version>3.0</version>
+			<scope>runtime</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.aspectj</groupId>
 			<artifactId>aspectjrt</artifactId>
-			<version>1.6.12</version>
+			<version>1.7.4</version>
 		</dependency>
 		<dependency>
 			<groupId>org.igniterealtime.smack</groupId>
@@ -220,7 +223,6 @@
 		<dependency>
 			<groupId>org.apache.httpcomponents</groupId>
 			<artifactId>httpclient</artifactId>
-			<version>4.1.3</version>
 		</dependency>
 		<dependency>
 			<groupId>javax.annotation</groupId>
@@ -234,7 +236,7 @@
 		<dependency>
 			<groupId>org.apache.abdera</groupId>
 			<artifactId>abdera-parser</artifactId>
-			<version>1.1.2</version>
+			<version>1.1.3</version>
 			<scope>runtime</scope>
 			<exclusions>
 				<exclusion>
@@ -245,8 +247,8 @@
 		</dependency>
 		<dependency>
 			<groupId>org.bouncycastle</groupId>
-			<artifactId>bcprov-jdk16</artifactId>
-			<version>1.46</version>
+			<artifactId>bcprov-jdk15on</artifactId>
+			<version>1.49</version>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework</groupId>
@@ -256,7 +258,8 @@
 		<dependency>
 			<groupId>org.aspectj</groupId>
 			<artifactId>aspectjweaver</artifactId>
-			<version>1.6.12</version>
+			<version>1.7.4</version>
+			<scope>runtime</scope>
 		</dependency>
 		<dependency>
 			<groupId>javax.mail</groupId>
@@ -275,6 +278,17 @@
 			<artifactId>velocity</artifactId>
 			<version>1.7</version>
 		</dependency>
+		<dependency>
+			<groupId>org.apache.cxf</groupId>
+			<artifactId>cxf-rt-rs-extension-providers</artifactId>
+			<version>${version.cxf}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.codehaus.jettison</groupId>
+			<artifactId>jettison</artifactId>
+			<version>1.3.4</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<dependencyManagement>
@@ -289,12 +303,12 @@
 				<groupId>asm</groupId>
 				<artifactId>asm</artifactId>
 				<version>${version.asm}</version>
-				<scope>compile</scope>
+				<scope>runtime</scope>
 			</dependency>
 			<dependency>
 				<groupId>com.sun.xml.bind</groupId>
 				<artifactId>jaxb-impl</artifactId>
-				<version>2.2.2</version>
+				<version>2.2.7</version>
 			</dependency>
 			<dependency>
 				<groupId>org.springframework</groupId>
@@ -318,38 +332,18 @@
 			</dependency>
 			<dependency>
 				<groupId>org.springframework</groupId>
-				<artifactId>spring-context</artifactId>
+				<artifactId>spring-jdbc</artifactId>
 				<version>${version.spring}</version>
 			</dependency>
 			<dependency>
-				<groupId>org.datanucleus</groupId>
-				<artifactId>datanucleus-api-jdo</artifactId>
-				<version>3.0.6</version>
+				<groupId>org.springframework</groupId>
+				<artifactId>spring-tx</artifactId>
+				<version>${version.spring}</version>
 			</dependency>
 			<dependency>
-				<groupId>org.datanucleus</groupId>
-				<artifactId>datanucleus-core</artifactId>
-				<version>3.0.8</version>
-			</dependency>
-			<dependency>
-				<groupId>org.datanucleus</groupId>
-				<artifactId>datanucleus-rdbms</artifactId>
-				<version>3.0.7</version>
-			</dependency>
-			<dependency>
-				<groupId>joda-time</groupId>
-				<artifactId>joda-time</artifactId>
-				<version>2.0</version>
-			</dependency>
-			<dependency>
-				<groupId>commons-lang</groupId>
-				<artifactId>commons-lang</artifactId>
-				<version>2.6</version>
-			</dependency>
-			<dependency>
-				<groupId>commons-codec</groupId>
-				<artifactId>commons-codec</artifactId>
-				<version>1.5</version>
+				<groupId>org.springframework</groupId>
+				<artifactId>spring-context</artifactId>
+				<version>${version.spring}</version>
 			</dependency>
 			<dependency>
 				<groupId>org.springframework</groupId>
@@ -357,25 +351,31 @@
 				<version>${version.spring}</version>
 			</dependency>
 			<dependency>
-				<groupId>commons-collections</groupId>
-				<artifactId>commons-collections</artifactId>
-				<version>3.2.1</version>
-			</dependency>
-			<dependency>
 				<groupId>org.apache.abdera</groupId>
 				<artifactId>abdera-core</artifactId>
-				<version>1.1.2</version>
+				<version>1.1.3</version>
 			</dependency>
 			<dependency>
 				<groupId>org.codehaus.woodstox</groupId>
 				<artifactId>wstx-asl</artifactId>
-				<version>3.2.9</version>
+				<version>4.0.6</version>
 			</dependency>
 			<dependency>
 				<groupId>org.apache.geronimo.specs</groupId>
 				<artifactId>geronimo-javamail_1.4_spec</artifactId>
 				<version>1.7.1</version>
 				<scope>provided</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.codehaus.woodstox</groupId>
+				<artifactId>woodstox-core-asl</artifactId>
+				<version>4.2.0</version>
+				<scope>runtime</scope>
+			</dependency>
+			<dependency>
+				<groupId>jaxen</groupId>
+				<artifactId>jaxen</artifactId>
+				<version>1.1.4</version>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
@@ -398,33 +398,35 @@
 					<artifactId>maven-compiler-plugin</artifactId>
 					<configuration>
 						<encoding>US-ASCII</encoding>
-						<source>1.6</source>
-						<target>1.6</target>
+						<source>1.7</source>
+						<target>1.7</target>
 					</configuration>
 				</plugin>
 				<plugin>
 					<groupId>org.datanucleus</groupId>
-					<artifactId>maven-datanucleus-plugin</artifactId>
-					<version>3.0.1</version>
+					<artifactId>datanucleus-maven-plugin</artifactId>
+					<version>3.3.0-release</version>
 					<configuration>
-						<jdkLogConfiguration>file:${project.basedir}/src/build/resources/datanucleus-log.properties</jdkLogConfiguration>
+						<jdkLogConfiguration>${project.basedir}/src/build/resources/datanucleus-log.properties</jdkLogConfiguration>
+						<log4jConfiguration>${project.basedir}/src/build/resources/datanucleus_log4j.properties</log4jConfiguration>
+						<verbose>true</verbose>
 					</configuration>
 					<dependencies>
 						<!-- Sucks that I have to say these explicitly -->
 						<dependency>
 							<groupId>org.datanucleus</groupId>
 							<artifactId>datanucleus-core</artifactId>
-							<version>3.0.8</version>
+							<version>3.2.10</version>
 						</dependency>
 						<dependency>
 							<groupId>org.datanucleus</groupId>
 							<artifactId>datanucleus-enhancer</artifactId>
-							<version>3.0.1</version>
+							<version>3.1.1</version>
 						</dependency>
 						<dependency>
 							<groupId>org.datanucleus</groupId>
 							<artifactId>datanucleus-api-jdo</artifactId>
-							<version>3.0.6</version>
+							<version>3.2.5</version>
 						</dependency>
 						<dependency>
 							<groupId>javax.jdo</groupId>
@@ -458,8 +460,8 @@
 								<pluginExecution>
 									<pluginExecutionFilter>
 										<groupId>org.datanucleus</groupId>
-										<artifactId>maven-datanucleus-plugin</artifactId>
-										<versionRange>[3.0.1,)</versionRange>
+										<artifactId>datanucleus-maven-plugin</artifactId>
+										<versionRange>3.3.0-release</versionRange>
 										<goals>
 											<goal>enhance</goal>
 										</goals>
@@ -484,8 +486,8 @@
 								<pluginExecution>
 									<pluginExecutionFilter>
 										<groupId>org.datanucleus</groupId>
-										<artifactId>maven-datanucleus-plugin</artifactId>
-										<versionRange>[3.0.1,)</versionRange>
+										<artifactId>datanucleus-maven-plugin</artifactId>
+										<versionRange>3.3.0-release</versionRange>
 										<goals>
 											<goal>schema-create</goal>
 										</goals>
@@ -555,10 +557,11 @@
 						<configuration>
 							<artifactItems>
 								<artifactItem>
-									<groupId>net.sf.taverna.t2</groupId>
-									<artifactId>taverna-commandline</artifactId>
+									<groupId>net.sf.taverna.t2.taverna-commandline</groupId>
+									<artifactId>taverna-commandline-${edition.commandline}</artifactId>
 									<version>${version.commandline}</version>
 									<type>zip</type>
+									<classifier>bin</classifier>
 									<outputDirectory>${util.dir}</outputDirectory>
 								</artifactItem>
 							</artifactItems>
@@ -571,7 +574,7 @@
 			</plugin>
 			<plugin>
 				<groupId>org.datanucleus</groupId>
-				<artifactId>maven-datanucleus-plugin</artifactId>
+				<artifactId>datanucleus-maven-plugin</artifactId>
 				<configuration>
 					<fork>false</fork>
 					<metadataIncludes>
@@ -611,8 +614,8 @@
 				<artifactId>maven-compiler-plugin</artifactId>
 				<configuration>
 					<encoding>US-ASCII</encoding>
-					<source>1.6</source>
-					<target>1.6</target>
+					<source>1.7</source>
+					<target>1.7</target>
 				</configuration>
 			</plugin>
 			<plugin>
@@ -717,7 +720,7 @@
 							<goal>copy-resources</goal>
 						</goals>
 						<configuration>
-							<outputDirectory>${util.dir}/taverna-commandline-${version.commandline}</outputDirectory>
+							<outputDirectory>${cmdline.dir}</outputDirectory>
 							<resources>
 								<resource>
 									<directory>src/main/replacementscripts</directory>
@@ -725,6 +728,32 @@
 								</resource>
 							</resources>
 							<overwrite>true</overwrite>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>exec-maven-plugin</artifactId>
+				<version>1.2.1</version>
+				<executions>
+					<execution>
+						<id>improve-registry-coverage</id>
+						<phase>prepare-package</phase>
+						<goals>
+							<goal>exec</goal>
+						</goals>
+						<configuration>
+							<executable>/bin/sh</executable>
+							<workingDirectory>${cmdline.dir}</workingDirectory>
+							<environmentVariables>
+								<RAVEN_APPHOME>${cmdline.dir}</RAVEN_APPHOME>
+							</environmentVariables>
+							<arguments>
+								<argument>./executeworkflow.sh</argument>
+								<argument>-help</argument>
+							</arguments>
+							<outputFile>/dev/null</outputFile>
 						</configuration>
 					</execution>
 				</executions>
