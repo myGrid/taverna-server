@@ -572,14 +572,17 @@ public class ScapeExecutor implements ScapeExecutionService {
 		return sw.toString();
 	}
 
-	private void addFileInfo(TavernaRun r, ExecutionStateChange change) {
+	private String addFileInfo(TavernaRun r, ExecutionStateChange change) {
 		if (serviceUri == null)
-			return;
+			return null;
 		UriBuilder ub = UriBuilder.fromUri(serviceUri).path(
 				"rest/runs/{id}/wd/{name}");
+		String report = null;
 		try {
 			Directory out = fileUtils.getDirectory(r, "out");
 			change.output = ub.build(r.getId(), out.getFullName()).toString();
+			File reportFile = fileUtils.getFile(r, "out/report");
+			report = new String(reportFile.getContents(0, (int)reportFile.getSize()));
 		} catch (FilesystemAccessException | NoDirectoryEntryException e) {
 			// Do nothing in this case
 		}
@@ -587,24 +590,28 @@ public class ScapeExecutor implements ScapeExecutionService {
 		if (prov.hasNext())
 			change.provenance = ub.build(r.getId(), prov.next().getFullName())
 					.toString();
+		return report;
 	}
 
 	private void notifySuccess(TavernaRun r, String planId) {
 		ExecutionStateChange change = new ExecutionStateChange();
 		try {
 			String code = support.getListener(r, "io").getProperty("exitcode");
+			String report;
 			if (code.equals("0")) {
 				change.contents = format("job %s has terminated successfully",
 						r.getId());
 				change.state = State.Success;
-				addFileInfo(r, change);
+				report = addFileInfo(r, change);
 			} else {
 				change.contents = format(
 						"job %s has terminated with catastrophic errors",
 						r.getId());
 				change.state = State.Fail;
-				addFileInfo(r, change);
+				report = addFileInfo(r, change);
 			}
+			if (report != null)
+				change.contents += "<p>" + report;
 		} catch (NoListenerException e) {
 			log.error(
 					"no such listener or property when looking for io/exitcode",

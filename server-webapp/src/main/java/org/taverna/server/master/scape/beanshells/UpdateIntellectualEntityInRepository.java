@@ -9,7 +9,7 @@ import java.util.Scanner;
 @Deprecated
 public class UpdateIntellectualEntityInRepository implements BeanshellSupport {
 	String error, written;
-	static String dst, src, repository, doWrite, sat, meta;
+	static String src, repository, doWrite, sat, meta;
 
 	@Override
 	public void shell() throws Exception {
@@ -18,7 +18,7 @@ public class UpdateIntellectualEntityInRepository implements BeanshellSupport {
 		if (!"true".equals(sat)) {
 			error = "failed quality check";
 		} else if (!"true".equals(doWrite)) {
-			written = String.format("%s;%s", src, repository);
+			written = String.format("%s;%s", new Object[]{src, repository});
 		} else {
 			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 			try {
@@ -36,8 +36,8 @@ public class UpdateIntellectualEntityInRepository implements BeanshellSupport {
 					sc.close();
 					error += "\n</pre>";
 				} else {
-					written = String.format("%s;%s", src, repository);
-					// Ignore a successful write's response
+					written = String.format("%s;%s", new Object[]{src, repository});
+					//# Ignore a successful write's response
 				}
 			} finally {
 				conn.disconnect();

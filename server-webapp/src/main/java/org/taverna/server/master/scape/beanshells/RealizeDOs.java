@@ -36,7 +36,7 @@ class RealizeDOs implements BeanshellSupport {
 			URL url = new URL(baseURL, obj);
 			resolvedObjectList.add(url.toString());
 
-			// Download file
+			//# Download file
 			InputStream is = url.openStream();
 			OutputStream os = new FileOutputStream(f);
 			files.add(f.toString());
