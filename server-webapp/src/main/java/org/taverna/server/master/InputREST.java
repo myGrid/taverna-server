@@ -106,7 +106,8 @@ class InputREST implements TavernaServerInputREST, InputBean {
 	@Nonnull
 	@CallCounted
 	@PerfLogged
-	public InDesc getInput(String name, UriInfo ui) throws BadInputPortNameException {
+	public InDesc getInput(@Nonnull String name, @Nonnull UriInfo ui)
+			throws BadInputPortNameException {
 		Input i = support.getInput(run, name);
 		if (i == null)
 			throw new BadInputPortNameException("unknown input port name");
@@ -117,8 +118,9 @@ class InputREST implements TavernaServerInputREST, InputBean {
 	@Nonnull
 	@CallCounted
 	@PerfLogged
-	public String setBaclavaFile(String filename) throws NoUpdateException,
-			BadStateChangeException, FilesystemAccessException {
+	public String setBaclavaFile(@Nonnull String filename)
+			throws NoUpdateException, BadStateChangeException,
+			FilesystemAccessException {
 		support.permitUpdate(run);
 		run.setInputBaclavaFile(filename);
 		String i = run.getInputBaclavaFile();
@@ -129,7 +131,8 @@ class InputREST implements TavernaServerInputREST, InputBean {
 	@Nonnull
 	@CallCounted
 	@PerfLogged
-	public InDesc setInput(String name, InDesc inputDescriptor, UriInfo ui)
+	public InDesc setInput(@Nonnull String name,
+			@Nonnull InDesc inputDescriptor, @Nonnull UriInfo ui)
 			throws NoUpdateException, BadStateChangeException,
 			FilesystemAccessException, BadInputPortNameException,
 			BadPropertyValueException {

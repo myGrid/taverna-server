@@ -86,6 +86,5 @@ public interface Input {
 	 *             If the run isn't in the {@link Status#Initialized
 	 *             Initialized} state.
 	 */
-	@Nullable
 	public void setDelimiter(String delimiter) throws BadStateChangeException;
 }

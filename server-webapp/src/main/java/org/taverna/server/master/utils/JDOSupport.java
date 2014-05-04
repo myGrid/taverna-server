@@ -83,6 +83,7 @@ public abstract class JDOSupport<T> {
 	 * @return The query, which should be executed to retrieve the results.
 	 */
 	@Nonnull
+	@SuppressWarnings("null")
 	protected Query query(@Nonnull String filter) {
 		return pm.newQuery(contextClass, filter);
 	}
@@ -97,6 +98,7 @@ public abstract class JDOSupport<T> {
 	 * @see javax.jdo.annotations.Query
 	 */
 	@Nonnull
+	@SuppressWarnings("null")
 	protected Query namedQuery(@Nonnull String name) {
 		return pm.newNamedQuery(contextClass, name);
 	}
@@ -109,10 +111,9 @@ public abstract class JDOSupport<T> {
 	 *            The instance to persist.
 	 * @return The persistence-coupled instance.
 	 */
-	@Nullable
-	protected T persist(@Nullable T value) {
-		if (value == null)
-			return null;
+	@Nonnull
+	@SuppressWarnings("null")
+	protected T persist(@Nonnull T value) {
 		return pm.makePersistent(value);
 	}
 
@@ -124,10 +125,9 @@ public abstract class JDOSupport<T> {
 	 *            The value to decouple.
 	 * @return The non-persistent copy.
 	 */
-	@Nullable
-	protected T detach(@Nullable T value) {
-		if (value == null)
-			return null;
+	@Nonnull
+	@SuppressWarnings("null")
+	protected T detach(@Nonnull T value) {
 		return pm.detachCopy(value);
 	}
 

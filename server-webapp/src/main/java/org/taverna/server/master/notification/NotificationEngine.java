@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -50,8 +51,9 @@ public class NotificationEngine {
 		this.universalDispatchers = dispatcherList;
 	}
 
-	private void dispatchToChosenTarget(@Nonnull TavernaRun originator, @Nonnull String scheme,
-			@Nonnull String target, @Nonnull Message message) throws Exception {
+	private void dispatchToChosenTarget(@Nonnull TavernaRun originator,
+			@Nonnull String scheme, @Nonnull String target,
+			@Nonnull Message message) throws Exception {
 		try {
 			MessageDispatcher d = dispatchers.get(scheme);
 			if (d != null && d.isAvailable())
@@ -81,8 +83,8 @@ public class NotificationEngine {
 		}
 	}
 
-	private void dispatchUniversally(TavernaRun originator, Message message)
-			throws Exception {
+	private void dispatchUniversally(@Nonnull TavernaRun originator,
+			@Nonnull Message message) throws Exception {
 		for (MessageDispatcher d : universalDispatchers)
 			try {
 				if (d.isAvailable())
@@ -111,8 +113,9 @@ public class NotificationEngine {
 	 * @throws Exception
 	 *             If anything goes wrong with the dispatch process.
 	 */
-	public void dispatchMessage(TavernaRun originator, String destination,
-			Message message) throws Exception {
+	public void dispatchMessage(@Nonnull TavernaRun originator,
+			@Nullable String destination, @Nonnull Message message)
+			throws Exception {
 		if (destination != null && !destination.trim().isEmpty()) {
 			try {
 				URI toURI = new URI(destination.trim());
@@ -140,8 +143,10 @@ public class NotificationEngine {
 	}
 
 	public interface Message {
+		@Nonnull
 		String getContent(String type);
 
+		@Nonnull
 		String getTitle(String type);
 	}
 }

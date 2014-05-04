@@ -203,16 +203,17 @@ public class RunDatabase implements RunStore, RunDBSupport {
 	@Nonnull
 	public Map<String, TavernaRun> listRuns(@Nullable UsernamePrincipal user,
 			@Nonnull Policy p) {
-		synchronized (cache) {
-			Map<String, TavernaRun> cached = new HashMap<>();
-			for (Entry<String, TavernaRun> e : cache.entrySet()) {
-				TavernaRun r = e.getValue();
-				if (p.permitAccess(user, r))
-					cached.put(e.getKey(), r);
+		if (user != null)
+			synchronized (cache) {
+				Map<String, TavernaRun> cached = new HashMap<>();
+				for (Entry<String, TavernaRun> e : cache.entrySet()) {
+					TavernaRun r = e.getValue();
+					if (p.permitAccess(user, r))
+						cached.put(e.getKey(), r);
+				}
+				if (!cached.isEmpty())
+					return cached;
 			}
-			if (!cached.isEmpty())
-				return cached;
-		}
 		return dao.listRuns(user, p);
 	}
 
@@ -281,7 +282,7 @@ public class RunDatabase implements RunStore, RunDBSupport {
 	 *             If anything goes wrong.
 	 */
 	private void notifyFinished(final String name, Listener io,
-			final RemoteRunDelegate run) throws Exception {
+			@Nonnull final RemoteRunDelegate run) throws Exception {
 		String to = io.getProperty("notificationAddress");
 		final int code;
 		try {
@@ -300,11 +301,13 @@ public class RunDatabase implements RunStore, RunDBSupport {
 			}
 
 			@Override
+			@Nonnull
 			public String getContent(String type) {
 				return getNotifier(type).makeCompletionMessage(name, run, code);
 			}
 
 			@Override
+			@Nonnull
 			public String getTitle(String type) {
 				return getNotifier(type).makeMessageSubject(name, run, code);
 			}

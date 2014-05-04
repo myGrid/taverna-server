@@ -2,6 +2,8 @@ package org.taverna.server.master.worker;
 
 import java.io.StringWriter;
 
+import javax.annotation.Nonnull;
+
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
@@ -20,6 +22,7 @@ public class VelocityCompletionNotifier implements CompletionNotifier {
 	private UriBuilderFactory ubf;
 
 	@Override
+	@Nonnull
 	public String getName() {
 		return name;
 	}
@@ -71,6 +74,7 @@ public class VelocityCompletionNotifier implements CompletionNotifier {
 	}
 
 	@Override
+	@Nonnull
 	public String makeCompletionMessage(String name, RemoteRunDelegate run,
 			int code) {
 		VelocityContext ctxt = new VelocityContext();
@@ -98,6 +102,7 @@ public class VelocityCompletionNotifier implements CompletionNotifier {
 	}
 
 	@Override
+	@Nonnull
 	public String makeMessageSubject(String name, RemoteRunDelegate run,
 			int code) {
 		return subject;

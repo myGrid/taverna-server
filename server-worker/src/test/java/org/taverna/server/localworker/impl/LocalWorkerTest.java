@@ -25,6 +25,7 @@ import java.util.Map.Entry;
 import java.util.TreeMap;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import org.junit.After;
 import org.junit.Before;
@@ -80,7 +81,8 @@ public class LocalWorkerTest {
 				}
 
 				@Override
-				public void setProperty(@Nonnull String propName, @Nonnull String value) {
+				public void setProperty(@Nonnull String propName,
+						@Nonnull String value) {
 					events.add("setProperty[");
 					events.add(propName);
 					events.add(value);
@@ -96,13 +98,17 @@ public class LocalWorkerTest {
 		}
 
 		@Override
-		public boolean initWorker(LocalWorker local,
-				String executeWorkflowCommand, String workflow,
-				File workingDir, File inputBaclava,
-				Map<String, File> inputFiles, Map<String, String> inputValues,
-				Map<String, String> delimiters, File outputBaclava, File cmdir,
-				char[] cmpass, boolean doprov, Map<String, String> env,
-				String id, List<String> conf) throws Exception {
+		public boolean initWorker(@Nonnull LocalWorker local,
+				@Nonnull String executeWorkflowCommand,
+				@Nonnull String workflow, @Nonnull File workingDir,
+				@Nullable File inputBaclava,
+				@Nonnull Map<String, File> inputFiles,
+				@Nonnull Map<String, String> inputValues,
+				@Nonnull Map<String, String> delimiters,
+				@Nullable File outputBaclava, @Nonnull File cmdir,
+				@Nonnull char[] cmpass, boolean doprov,
+				@Nonnull Map<String, String> env, @Nonnull String id,
+				@Nonnull List<String> conf) throws Exception {
 			events.add("init[");
 			events.add(executeWorkflowCommand);
 			events.add(workflow);
@@ -142,7 +148,7 @@ public class LocalWorkerTest {
 		}
 
 		@Override
-		public void setURReceiver(UsageRecordReceiver receiver) {
+		public void setURReceiver(@Nullable UsageRecordReceiver receiver) {
 			// We just ignore this
 		}
 

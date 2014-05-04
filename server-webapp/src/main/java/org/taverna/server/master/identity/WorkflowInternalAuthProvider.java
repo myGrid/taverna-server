@@ -286,7 +286,7 @@ public class WorkflowInternalAuthProvider extends
 
 		@Override
 		@PerfLogged
-		public String getUsernameForPrincipal(UsernamePrincipal user) {
+		public String getUsernameForPrincipal(@Nonnull UsernamePrincipal user) {
 			Authentication auth = SecurityContextHolder.getContext()
 					.getAuthentication();
 			if (auth == null || !auth.isAuthenticated())

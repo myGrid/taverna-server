@@ -6,6 +6,7 @@
 package org.taverna.server.master.interfaces;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * The interface supported by all notification message dispatchers.
@@ -43,5 +44,5 @@ public interface MessageDispatcher {
 	 */
 	void dispatch(@Nonnull TavernaRun originator,
 			@Nonnull String messageSubject, @Nonnull String messageContent,
-			@Nonnull String targetParameter) throws Exception;
+			@Nullable String targetParameter) throws Exception;
 }

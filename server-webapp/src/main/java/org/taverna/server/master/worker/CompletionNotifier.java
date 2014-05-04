@@ -5,6 +5,8 @@
  */
 package org.taverna.server.master.worker;
 
+import javax.annotation.Nonnull;
+
 
 /**
  * How to convert a notification about the completion of a job into a message.
@@ -15,6 +17,7 @@ public interface CompletionNotifier {
 	/**
 	 * @return The name of this notifier.
 	 */
+	@Nonnull
 	String getName();
 
 	/**
@@ -28,6 +31,7 @@ public interface CompletionNotifier {
 	 *            What the exit code was.
 	 * @return The plain-text content of the message.
 	 */
+	@Nonnull
 	String makeCompletionMessage(String name, RemoteRunDelegate run, int code);
 
 	/**
@@ -41,5 +45,6 @@ public interface CompletionNotifier {
 	 *            What the exit code was.
 	 * @return The plain-text subject of the message.
 	 */
+	@Nonnull
 	String makeMessageSubject(String name, RemoteRunDelegate run, int code);
 }

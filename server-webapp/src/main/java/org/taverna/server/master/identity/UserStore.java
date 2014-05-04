@@ -141,7 +141,10 @@ public class UserStore extends JDOSupport<User> implements UserDetailsService,
 	@PerfLogged
 	@WithinSingleTransaction
 	public User getUser(String userName) {
-		return detach(getById(userName));
+		User user = getById(userName);
+		if (user == null)
+			return null;
+		return detach(user);
 	}
 
 	/**
@@ -158,10 +161,12 @@ public class UserStore extends JDOSupport<User> implements UserDetailsService,
 	public Map<String, String> getUserInfo(String userName) {
 		User u = getById(userName);
 		Map<String, String> info = new HashMap<>();
-		info.put("name", u.getUsername());
-		info.put("admin", u.isAdmin() ? "yes" : "no");
-		info.put("enabled", u.isEnabled() ? "yes" : "no");
-		info.put("localID", u.getLocalUsername());
+		if (u != null) {
+			info.put("name", u.getUsername());
+			info.put("admin", u.isAdmin() ? "yes" : "no");
+			info.put("enabled", u.isEnabled() ? "yes" : "no");
+			info.put("localID", u.getLocalUsername());
+		}
 		return info;
 	}
 
@@ -174,8 +179,11 @@ public class UserStore extends JDOSupport<User> implements UserDetailsService,
 	@WithinSingleTransaction
 	public List<UserDetails> listUsers() {
 		ArrayList<UserDetails> result = new ArrayList<>();
-		for (String id : getUsers())
-			result.add(detach(getById(id)));
+		for (String id : getUsers()) {
+			User user = getById(id);
+			if (user != null)
+				result.add(detach(user));
+		}
 		return result;
 	}
 
@@ -307,15 +315,13 @@ public class UserStore extends JDOSupport<User> implements UserDetailsService,
 			}
 		}
 		try {
-			u = detach(getById(username));
-		} catch (NullPointerException npe) {
-			throw new UsernameNotFoundException("who are you?");
+			User user = getById(username);
+			if (user == null)
+				throw new UsernameNotFoundException("who are you?");
+			return detach(user);
 		} catch (Exception ex) {
 			throw new UsernameNotFoundException("who are you?", ex);
 		}
-		if (u != null)
-			return u;
-		throw new UsernameNotFoundException("who are you?");
 	}
 
 	int getEpoch() {

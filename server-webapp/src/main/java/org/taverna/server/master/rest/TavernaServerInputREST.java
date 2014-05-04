@@ -154,7 +154,7 @@ public interface TavernaServerInputREST {
 			+ "input.")
 	@Nonnull
 	InDesc getInput(@Nonnull @PathParam("name") String name,
-			@Context UriInfo uriInfo) throws BadInputPortNameException;
+			@Nonnull @Context UriInfo uriInfo) throws BadInputPortNameException;
 
 	/**
 	 * Set what an input uses to provide data into the workflow run.
@@ -185,9 +185,10 @@ public interface TavernaServerInputREST {
 	@Description("Sets the source for a particular input port.")
 	@Nonnull
 	InDesc setInput(@Nonnull @PathParam("name") String name,
-			@Nonnull InDesc inputDescriptor, @Context UriInfo uriInfo) throws NoUpdateException,
-			BadStateChangeException, FilesystemAccessException,
-			BadPropertyValueException, BadInputPortNameException;
+			@Nonnull InDesc inputDescriptor, @Nonnull @Context UriInfo uriInfo)
+			throws NoUpdateException, BadStateChangeException,
+			FilesystemAccessException, BadPropertyValueException,
+			BadInputPortNameException;
 
 	/** Get an outline of the operations supported. */
 	@OPTIONS
@@ -238,7 +239,7 @@ public interface TavernaServerInputREST {
 		 * @param run
 		 *            The run whose inputs are to be described.
 		 */
-		public InputsDescriptor(UriInfo ui, TavernaRun run) {
+		public InputsDescriptor(@Nonnull UriInfo ui, @Nonnull TavernaRun run) {
 			super(true);
 			expected = new Uri(ui, EXPECTED);
 			baclava = new Uri(ui, BACLAVA);

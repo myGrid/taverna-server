@@ -239,7 +239,7 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 	@CallCounted
 	@Nonnull
 	@PerfLogged
-	public ServerDescription describeService(UriInfo ui) {
+	public ServerDescription describeService(@Nonnull UriInfo ui) {
 		jaxrsUriInfo.set(new WeakReference<>(ui));
 		return new ServerDescription(ui, resolve(interactionFeed));
 	}
@@ -249,7 +249,7 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 	@Nonnull
 	@PerfLogged
 	@RolesAllowed(USER)
-	public RunList listUsersRuns(UriInfo ui) {
+	public RunList listUsersRuns(@Nonnull UriInfo ui) {
 		jaxrsUriInfo.set(new WeakReference<>(ui));
 		return new RunList(runs(), secure(ui).path("{name}"));
 	}
@@ -259,8 +259,8 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 	@Nonnull
 	@PerfLogged
 	@RolesAllowed(USER)
-	public Response submitWorkflow(Workflow workflow, UriInfo ui)
-			throws NoUpdateException {
+	public Response submitWorkflow(@Nonnull Workflow workflow,
+			@Nonnull UriInfo ui) throws NoUpdateException {
 		jaxrsUriInfo.set(new WeakReference<>(ui));
 		checkCreatePolicy(workflow);
 		String name = support.buildWorkflow(workflow);
@@ -272,8 +272,8 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 	@Nonnull
 	@PerfLogged
 	@RolesAllowed(USER)
-	public Response submitWorkflowByURL(List<URI> referenceList, UriInfo ui)
-			throws NoCreateException {
+	public Response submitWorkflowByURL(@Nonnull List<URI> referenceList,
+			@Nonnull UriInfo ui) throws NoCreateException {
 		jaxrsUriInfo.set(new WeakReference<>(ui));
 		if (referenceList == null || referenceList.size() == 0)
 			throw new NoCreateException("no workflow URI supplied");
@@ -301,8 +301,8 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 	@Nonnull
 	@PerfLogged
 	@RolesAllowed({ USER, SELF })
-	public TavernaServerRunREST getRunResource(String runName, UriInfo ui)
-			throws UnknownRunException {
+	public TavernaServerRunREST getRunResource(@Nonnull String runName,
+			@Nonnull UriInfo ui) throws UnknownRunException {
 		jaxrsUriInfo.set(new WeakReference<>(ui));
 		RunREST rr = makeRunInterface();
 		rr.setRun(support.getRun(runName));
@@ -1336,7 +1336,7 @@ class PolicyREST implements PolicyView, SupportAware {
 	@Nonnull
 	@CallCounted
 	@PerfLogged
-	public PolicyDescription getDescription(UriInfo ui) {
+	public PolicyDescription getDescription(@Nonnull UriInfo ui) {
 		return new PolicyDescription(ui);
 	}
 
@@ -1387,6 +1387,7 @@ class PolicyREST implements PolicyView, SupportAware {
 	@Override
 	@CallCounted
 	@PerfLogged
+	@Nonnull
 	public CapabilityList getCapabilities() {
 		CapabilityList cl = new CapabilityList();
 		cl.capability.addAll(support.getCapabilities());

@@ -664,14 +664,15 @@ public class TavernaServerSupport {
 	 * @param runName
 	 *            The name of the run.
 	 * @param run
-	 *            The workflow run. <i>Must</i> correspond to the name.
+	 *            The workflow run. <i>Must</i> correspond to the name if not
+	 *            <tt>null</tt>.
 	 * @throws NoDestroyException
 	 *             If the user is not permitted to destroy the workflow run.
 	 * @throws UnknownRunException
 	 *             If the run is unknown (e.g., because it is already
 	 *             destroyed).
 	 */
-	public void unregisterRun(@Nonnull String runName, @Nonnull TavernaRun run)
+	public void unregisterRun(@Nonnull String runName, @Nullable TavernaRun run)
 			throws NoDestroyException, UnknownRunException {
 		if (run == null)
 			run = getRun(runName);

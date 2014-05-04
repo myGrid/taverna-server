@@ -13,6 +13,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.jdo.annotations.PersistenceAware;
 
 import org.apache.commons.logging.Log;
@@ -75,7 +76,8 @@ public class EventDAO extends JDOSupport<Event> implements MessageDispatcher {
 		List<Event> result = new ArrayList<>();
 		for (String id : ids) {
 			Event event = getById(id);
-			result.add(detach(event));
+			if (event != null)
+				result.add(detach(event));
 		}
 		return result;
 	}
@@ -101,7 +103,10 @@ public class EventDAO extends JDOSupport<Event> implements MessageDispatcher {
 
 		if (ids.size() != 1)
 			throw new IllegalArgumentException("no such id");
-		return detach(getById(ids.get(0)));
+		Event e = getById(ids.get(0));
+		if (e == null)
+			throw new IllegalArgumentException("no such id");
+		return detach(e);
 	}
 
 	/**
@@ -142,14 +147,15 @@ public class EventDAO extends JDOSupport<Event> implements MessageDispatcher {
 	private BlockingQueue<Event> insertQueue = new ArrayBlockingQueue<>(16);
 
 	@Override
-	public void dispatch(TavernaRun originator, String messageSubject,
-			String messageContent, String targetParameter) throws Exception {
+	public void dispatch(@Nonnull TavernaRun originator,
+			@Nonnull String messageSubject, @Nonnull String messageContent,
+			@Nullable String targetParameter) throws Exception {
 		insertQueue.put(new Event("finish", ubf.getRunUriBuilder(originator)
 				.build(), originator.getSecurityContext().getOwner(),
 				messageSubject, messageContent));
 	}
 
-	public void started(TavernaRun originator, String messageSubject,
+	public void started(@Nonnull TavernaRun originator, String messageSubject,
 			String messageContent) throws InterruptedException {
 		insertQueue.put(new Event("start", ubf.getRunUriBuilder(originator)
 				.build(), originator.getSecurityContext().getOwner(),
@@ -180,7 +186,8 @@ public class EventDAO extends JDOSupport<Event> implements MessageDispatcher {
 	@WithinSingleTransaction
 	protected void storeEvents(List<Event> events) {
 		for (Event e : events)
-			persist(e);
+			if (e != null)
+				persist(e);
 		log.info("stored " + events.size() + " notification events");
 	}
 }

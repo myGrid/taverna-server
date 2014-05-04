@@ -60,7 +60,7 @@ class RunSecurityREST implements TavernaServerSecurityREST, SecurityBean {
 	@CallCounted
 	@Nonnull
 	@PerfLogged
-	public Descriptor describe(UriInfo ui) {
+	public Descriptor describe(@Nonnull UriInfo ui) {
 		return new Descriptor(secure(ui).path("{element}"), context.getOwner()
 				.getName(), context.getCredentials(), context.getTrusted());
 	}
@@ -85,7 +85,7 @@ class RunSecurityREST implements TavernaServerSecurityREST, SecurityBean {
 	@CallCounted
 	@Nonnull
 	@PerfLogged
-	public CredentialHolder getParticularCredential(String id)
+	public CredentialHolder getParticularCredential(@Nonnull String id)
 			throws NoCredentialException {
 		for (Credential c : context.getCredentials())
 			if (c.id.equals(id))
@@ -97,8 +97,8 @@ class RunSecurityREST implements TavernaServerSecurityREST, SecurityBean {
 	@CallCounted
 	@Nonnull
 	@PerfLogged
-	public CredentialHolder setParticularCredential(String id,
-			CredentialHolder cred, UriInfo ui)
+	public CredentialHolder setParticularCredential(@Nonnull String id,
+			@Nonnull CredentialHolder cred, @Nonnull UriInfo ui)
 			throws InvalidCredentialException, BadStateChangeException {
 		if (run.getStatus() != Initialized)
 			throw new BadStateChangeException();
@@ -115,7 +115,7 @@ class RunSecurityREST implements TavernaServerSecurityREST, SecurityBean {
 	@CallCounted
 	@Nonnull
 	@PerfLogged
-	public Response addCredential(CredentialHolder cred, UriInfo ui)
+	public Response addCredential(@Nonnull CredentialHolder cred, @Nonnull UriInfo ui)
 			throws InvalidCredentialException, BadStateChangeException {
 		if (run.getStatus() != Initialized)
 			throw new BadStateChangeException();
@@ -132,7 +132,7 @@ class RunSecurityREST implements TavernaServerSecurityREST, SecurityBean {
 	@CallCounted
 	@Nonnull
 	@PerfLogged
-	public Response deleteAllCredentials(UriInfo ui)
+	public Response deleteAllCredentials(@Nonnull UriInfo ui)
 			throws BadStateChangeException {
 		if (run.getStatus() != Initialized)
 			throw new BadStateChangeException();
@@ -145,7 +145,7 @@ class RunSecurityREST implements TavernaServerSecurityREST, SecurityBean {
 	@CallCounted
 	@Nonnull
 	@PerfLogged
-	public Response deleteCredential(String id, UriInfo ui)
+	public Response deleteCredential(@Nonnull String id, @Nonnull UriInfo ui)
 			throws BadStateChangeException {
 		if (run.getStatus() != Initialized)
 			throw new BadStateChangeException();
@@ -165,7 +165,7 @@ class RunSecurityREST implements TavernaServerSecurityREST, SecurityBean {
 	@CallCounted
 	@Nonnull
 	@PerfLogged
-	public Trust getParticularTrust(String id) throws NoCredentialException {
+	public Trust getParticularTrust(@Nonnull String id) throws NoCredentialException {
 		for (Trust t : context.getTrusted())
 			if (t.id.equals(id))
 				return t;
@@ -176,7 +176,7 @@ class RunSecurityREST implements TavernaServerSecurityREST, SecurityBean {
 	@CallCounted
 	@Nonnull
 	@PerfLogged
-	public Trust setParticularTrust(String id, Trust t, UriInfo ui)
+	public Trust setParticularTrust(@Nonnull String id, @Nonnull Trust t, @Nonnull UriInfo ui)
 			throws InvalidCredentialException, BadStateChangeException {
 		if (run.getStatus() != Initialized)
 			throw new BadStateChangeException();
@@ -192,7 +192,7 @@ class RunSecurityREST implements TavernaServerSecurityREST, SecurityBean {
 	@CallCounted
 	@Nonnull
 	@PerfLogged
-	public Response addTrust(Trust t, UriInfo ui)
+	public Response addTrust(@Nonnull Trust t, @Nonnull UriInfo ui)
 			throws InvalidCredentialException, BadStateChangeException {
 		if (run.getStatus() != Initialized)
 			throw new BadStateChangeException();
@@ -208,7 +208,7 @@ class RunSecurityREST implements TavernaServerSecurityREST, SecurityBean {
 	@CallCounted
 	@Nonnull
 	@PerfLogged
-	public Response deleteAllTrusts(UriInfo ui) throws BadStateChangeException {
+	public Response deleteAllTrusts(@Nonnull UriInfo ui) throws BadStateChangeException {
 		if (run.getStatus() != Initialized)
 			throw new BadStateChangeException();
 		for (Trust t : context.getTrusted())
@@ -220,7 +220,7 @@ class RunSecurityREST implements TavernaServerSecurityREST, SecurityBean {
 	@CallCounted
 	@Nonnull
 	@PerfLogged
-	public Response deleteTrust(String id, UriInfo ui)
+	public Response deleteTrust(@Nonnull String id, @Nonnull UriInfo ui)
 			throws BadStateChangeException {
 		if (run.getStatus() != Initialized)
 			throw new BadStateChangeException();
@@ -234,7 +234,7 @@ class RunSecurityREST implements TavernaServerSecurityREST, SecurityBean {
 	@Nonnull
 	@CallCounted
 	@PerfLogged
-	public PermissionsDescription describePermissions(UriInfo ui) {
+	public PermissionsDescription describePermissions(@Nonnull UriInfo ui) {
 		Map<String, Permission> perm = support.getPermissionMap(context);
 		return new PermissionsDescription(secure(ui).path("{id}"), perm);
 	}
@@ -243,7 +243,7 @@ class RunSecurityREST implements TavernaServerSecurityREST, SecurityBean {
 	@CallCounted
 	@Nonnull
 	@PerfLogged
-	public Permission describePermission(String id) {
+	public Permission describePermission(@Nonnull String id) {
 		return support.getPermission(context, id);
 	}
 
@@ -251,7 +251,7 @@ class RunSecurityREST implements TavernaServerSecurityREST, SecurityBean {
 	@CallCounted
 	@Nonnull
 	@PerfLogged
-	public Permission setPermission(String id, Permission perm) {
+	public Permission setPermission(@Nonnull String id, @Nonnull Permission perm) {
 		support.setPermission(context, id, perm);
 		return support.getPermission(context, id);
 	}
@@ -260,7 +260,7 @@ class RunSecurityREST implements TavernaServerSecurityREST, SecurityBean {
 	@CallCounted
 	@Nonnull
 	@PerfLogged
-	public Response deletePermission(String id, UriInfo ui) {
+	public Response deletePermission(@Nonnull String id, @Nonnull UriInfo ui) {
 		support.setPermission(context, id, Permission.None);
 		return noContent().build();
 	}
@@ -269,7 +269,7 @@ class RunSecurityREST implements TavernaServerSecurityREST, SecurityBean {
 	@CallCounted
 	@Nonnull
 	@PerfLogged
-	public Response makePermission(PermissionDescription desc, UriInfo ui) {
+	public Response makePermission(@Nonnull PermissionDescription desc, @Nonnull UriInfo ui) {
 		support.setPermission(context, desc.userName, desc.permission);
 		return created(secure(ui).path("{user}").build(desc.userName)).build();
 	}

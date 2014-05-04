@@ -9,6 +9,8 @@ import static org.taverna.server.master.defaults.Default.NOTIFY_MESSAGE_FORMAT;
 
 import java.text.MessageFormat;
 
+import javax.annotation.Nonnull;
+
 import org.springframework.beans.factory.annotation.Required;
 
 /**
@@ -46,18 +48,21 @@ public class SimpleFormattedCompletionNotifier implements CompletionNotifier {
 	private MessageFormat format = new MessageFormat(NOTIFY_MESSAGE_FORMAT);
 
 	@Override
+	@Nonnull
 	public String makeCompletionMessage(String name, RemoteRunDelegate run,
 			int code) {
 		return format.format(new Object[] { name, code });
 	}
 
 	@Override
+	@Nonnull
 	public String makeMessageSubject(String name, RemoteRunDelegate run,
 			int code) {
 		return subject;
 	}
 
 	@Override
+	@Nonnull
 	public String getName() {
 		return name;
 	}

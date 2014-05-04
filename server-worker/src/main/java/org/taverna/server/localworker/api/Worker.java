@@ -9,6 +9,9 @@ import java.io.File;
 import java.util.List;
 import java.util.Map;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
 import org.taverna.server.localworker.impl.LocalWorker;
 import org.taverna.server.localworker.remote.ImplementationException;
 import org.taverna.server.localworker.remote.RemoteListener;
@@ -70,13 +73,17 @@ public interface Worker {
 	 * @throws Exception
 	 *             If any of quite a large number of things goes wrong.
 	 */
-	boolean initWorker(LocalWorker local, String executeWorkflowCommand,
-			String workflow, File workingDir, File inputBaclavaFile,
-			Map<String, File> inputRealFiles, Map<String, String> inputValues,
-			Map<String, String> inputDelimiters, File outputBaclavaFile,
-			File contextDirectory, char[] keystorePassword,
-			boolean generateProvenance, Map<String, String> environment,
-			String masterToken, List<String> runtimeSettings) throws Exception;
+	boolean initWorker(@Nonnull LocalWorker local,
+			@Nonnull String executeWorkflowCommand, @Nonnull String workflow,
+			@Nonnull File workingDir, @Nullable File inputBaclavaFile,
+			@Nonnull Map<String, File> inputRealFiles,
+			@Nonnull Map<String, String> inputValues,
+			@Nonnull Map<String, String> inputDelimiters,
+			@Nullable File outputBaclavaFile, @Nonnull File contextDirectory,
+			@Nonnull char[] keystorePassword, boolean generateProvenance,
+			@Nonnull Map<String, String> environment,
+			@Nonnull String masterToken, @Nonnull List<String> runtimeSettings)
+			throws Exception;
 
 	/**
 	 * Kills off the subprocess if it exists and is alive.
@@ -122,7 +129,7 @@ public interface Worker {
 	 *            The destination where any final usage records are to be
 	 *            written in order to log them back to the server.
 	 */
-	void setURReceiver(UsageRecordReceiver receiver);
+	void setURReceiver(@Nullable UsageRecordReceiver receiver);
 
 	/**
 	 * Arrange for the deletion of any resources created during worker process

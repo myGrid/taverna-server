@@ -119,6 +119,7 @@ public class LocalWorker extends UnicastRemoteObject implements RemoteSingleRun 
 	 * The root working directory for a workflow run, or <tt>null</tt> if it has
 	 * been deleted.
 	 */
+	@Nonnull
 	private File base;
 	/**
 	 * When did this workflow start running, or <tt>null</tt> for
@@ -221,7 +222,7 @@ public class LocalWorker extends UnicastRemoteObject implements RemoteSingleRun 
 			throw new ImplementationException(
 					"problem creating run working directory", e);
 		}
-		baseDir = new DirectoryDelegate(base, null);
+		baseDir = new DirectoryDelegate(base);
 		inputFiles = new HashMap<>();
 		inputRealFiles = new HashMap<>();
 		inputValues = new HashMap<>();
@@ -602,7 +603,7 @@ public class LocalWorker extends UnicastRemoteObject implements RemoteSingleRun 
 		}
 
 		@Override
-		public void setDelimiter(String delimiter) throws RemoteException {
+		public void setDelimiter(@Nullable String delimiter) throws RemoteException {
 			if (status != Initialized)
 				throw new IllegalStateException("not initializing");
 			if (inputBaclava != null)

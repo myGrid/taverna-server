@@ -206,7 +206,7 @@ public class WorkerCore extends UnicastRemoteObject implements Worker,
 			@Nonnull final Map<String, String> inputValues,
 			@Nonnull final Map<String, String> inputDelimiters,
 			@Nullable final File outputBaclava,
-			@Nonnull final File securityDir, @Nullable final char[] password,
+			@Nonnull final File securityDir, @Nonnull final char[] password,
 			final boolean generateProvenance,
 			@Nonnull final Map<String, String> environment,
 			@Nonnull final String token, @Nonnull final List<String> runtime)
@@ -708,13 +708,14 @@ public class WorkerCore extends UnicastRemoteObject implements Worker,
 				if (subprocess == null) {
 					toReturn = newUR();
 					toReturn.setStatus(Held.toString());
-				} else if (ur == null) {
-					toReturn = newUR();
-					toReturn.setStatus(Started.toString());
-					toReturn.addStartAndEnd(start, new Date());
-					toReturn.addUser(System.getProperty("user.name"), null);
 				} else {
 					toReturn = ur;
+					if (toReturn == null) {
+						toReturn = newUR();
+						toReturn.setStatus(Started.toString());
+						toReturn.addStartAndEnd(start, new Date());
+						toReturn.addUser(System.getProperty("user.name"), null);
+					}
 				}
 				/*
 				 * Note that this record is not to be pushed to the server. That
@@ -768,7 +769,7 @@ public class WorkerCore extends UnicastRemoteObject implements Worker,
 	}
 
 	@Override
-	public void setURReceiver(@Nonnull UsageRecordReceiver receiver) {
+	public void setURReceiver(@Nullable UsageRecordReceiver receiver) {
 		urreceiver = receiver;
 	}
 

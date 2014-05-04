@@ -287,7 +287,6 @@ public interface TavernaServerREST {
 		@RolesAllowed(USER)
 		@Description("Gets the maximum number of simultaneous runs in any "
 				+ "state that the user may create.")
-		@Nonnull
 		public int getMaxSimultaneousRuns();
 
 		/**

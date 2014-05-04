@@ -65,7 +65,7 @@ class ListenerPropertyREST implements TavernaServerListenersREST.Property,
 	@Nonnull
 	@CallCounted
 	@PerfLogged
-	public String setValue(String value) throws NoUpdateException,
+	public String setValue(@Nonnull String value) throws NoUpdateException,
 			NoListenerException {
 		support.permitUpdate(run);
 		listen.setProperty(propertyName, value);

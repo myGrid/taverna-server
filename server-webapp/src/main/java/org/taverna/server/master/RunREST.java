@@ -90,7 +90,7 @@ abstract class RunREST implements TavernaServerRunREST, RunBean {
 	@Nonnull
 	@CallCounted
 	@PerfLogged
-	public RunDescription getDescription(UriInfo ui) {
+	public RunDescription getDescription(@Nonnull UriInfo ui) {
 		return new RunDescription(run, ui);
 	}
 
@@ -201,7 +201,7 @@ abstract class RunREST implements TavernaServerRunREST, RunBean {
 	@Nonnull
 	@PerfLogged
 	@RolesAllowed(USER)
-	public String setExpiryTime(String expiry) throws NoUpdateException,
+	public String setExpiryTime(@Nonnull String expiry) throws NoUpdateException,
 			IllegalArgumentException {
 		DateTime wanted = dateTimeParser().parseDateTime(expiry.trim());
 		Date achieved = support.updateExpiry(run, wanted.toDate());
@@ -213,7 +213,7 @@ abstract class RunREST implements TavernaServerRunREST, RunBean {
 	@Nonnull
 	@PerfLogged
 	@RolesAllowed(USER)
-	public Response setStatus(String status) throws NoUpdateException {
+	public Response setStatus(@Nonnull String status) throws NoUpdateException {
 		Status newStatus = Status.valueOf(status.trim());
 		support.permitUpdate(run);
 		if (newStatus == Operating && run.getStatus() == Initialized) {
@@ -233,7 +233,7 @@ abstract class RunREST implements TavernaServerRunREST, RunBean {
 	@Nonnull
 	@PerfLogged
 	@RolesAllowed(USER)
-	public TavernaServerInputREST getInputs(UriInfo ui) {
+	public TavernaServerInputREST getInputs(@Nonnull UriInfo ui) {
 		return makeInputInterface().connect(run, ui);
 	}
 
@@ -252,7 +252,7 @@ abstract class RunREST implements TavernaServerRunREST, RunBean {
 	@Nonnull
 	@PerfLogged
 	@RolesAllowed(USER)
-	public String setOutputFile(String filename) throws NoUpdateException,
+	public String setOutputFile(@Nonnull String filename) throws NoUpdateException,
 			FilesystemAccessException, BadStateChangeException {
 		support.permitUpdate(run);
 		@Nullable
@@ -269,7 +269,7 @@ abstract class RunREST implements TavernaServerRunREST, RunBean {
 	@Nonnull
 	@PerfLogged
 	@RolesAllowed(USER)
-	public OutputDescription getOutputDescription(UriInfo ui)
+	public OutputDescription getOutputDescription(@Nonnull UriInfo ui)
 			throws BadStateChangeException, FilesystemAccessException,
 			NoDirectoryEntryException {
 		if (run.getStatus() == Initialized)
@@ -291,6 +291,7 @@ abstract class RunREST implements TavernaServerRunREST, RunBean {
 	@CallCounted
 	@PerfLogged
 	@RolesAllowed(USER)
+	@Nonnull
 	public String getName() {
 		return run.getName();
 	}
@@ -299,6 +300,7 @@ abstract class RunREST implements TavernaServerRunREST, RunBean {
 	@CallCounted
 	@PerfLogged
 	@RolesAllowed(USER)
+	@Nonnull
 	public String setName(String name) throws NoUpdateException {
 		support.permitUpdate(run);
 		run.setName(name);
@@ -309,6 +311,7 @@ abstract class RunREST implements TavernaServerRunREST, RunBean {
 	@CallCounted
 	@PerfLogged
 	@RolesAllowed(USER)
+	@Nonnull
 	public String getStdout() throws NoListenerException {
 		return support.getProperty(run, "io", "stdout");
 	}
@@ -317,6 +320,7 @@ abstract class RunREST implements TavernaServerRunREST, RunBean {
 	@CallCounted
 	@PerfLogged
 	@RolesAllowed(USER)
+	@Nonnull
 	public String getStderr() throws NoListenerException {
 		return support.getProperty(run, "io", "stderr");
 	}
@@ -325,6 +329,7 @@ abstract class RunREST implements TavernaServerRunREST, RunBean {
 	@CallCounted
 	@PerfLogged
 	@RolesAllowed(USER)
+	@Nonnull
 	public Response getUsage() throws NoListenerException, JAXBException {
 		String ur = support.getProperty(run, "io", "usageRecord");
 		if (ur.isEmpty())
@@ -336,6 +341,7 @@ abstract class RunREST implements TavernaServerRunREST, RunBean {
 	@CallCounted
 	@PerfLogged
 	@RolesAllowed(USER)
+	@Nonnull
 	public Response getLogContents() {
 		FileConcatenation fc = support.getLogs(run);
 		if (fc.isEmpty())
@@ -347,10 +353,12 @@ abstract class RunREST implements TavernaServerRunREST, RunBean {
 	@CallCounted
 	@PerfLogged
 	@RolesAllowed(USER)
+	@Nonnull
 	public Response getRunBundle() {
 		FileConcatenation fc = support.getProv(run);
 		if (fc.isEmpty())
-			return Response.status(404).entity("no provenance currently available").build();
+			return Response.status(404)
+					.entity("no provenance currently available").build();
 		return Response.ok(fc, "application/vnd.wf4ever.robundle+zip").build();
 	}
 
@@ -366,7 +374,8 @@ abstract class RunREST implements TavernaServerRunREST, RunBean {
 	@CallCounted
 	@PerfLogged
 	@RolesAllowed(USER)
-	public boolean setGenerateProvenance(boolean newValue) throws NoUpdateException {
+	public boolean setGenerateProvenance(boolean newValue)
+			throws NoUpdateException {
 		support.permitUpdate(run);
 		run.setGenerateProvenance(newValue);
 		return run.getGenerateProvenance();

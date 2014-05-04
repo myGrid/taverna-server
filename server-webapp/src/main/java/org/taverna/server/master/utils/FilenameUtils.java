@@ -46,7 +46,7 @@ public class FilenameUtils {
 	 * @throws FilesystemAccessException
 	 *             If the directory isn't specified or isn't readable.
 	 */
-	@Nullable
+	@Nonnull
 	public DirectoryEntry getDirEntry(@Nonnull TavernaRun run,
 			@Nonnull String name) throws FilesystemAccessException,
 			NoDirectoryEntryException {
@@ -87,7 +87,7 @@ public class FilenameUtils {
 	 * @throws FilesystemAccessException
 	 *             If the directory isn't specified or isn't readable.
 	 */
-	@Nullable
+	@Nonnull
 	public DirectoryEntry getDirEntry(@Nonnull TavernaRun run,
 			@Nonnull List<PathSegment> d) throws FilesystemAccessException,
 			NoDirectoryEntryException {

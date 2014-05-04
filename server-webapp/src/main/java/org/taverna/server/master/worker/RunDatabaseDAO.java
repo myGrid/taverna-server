@@ -149,19 +149,21 @@ public class RunDatabaseDAO extends JDOSupport<RunConnection> {
 	 * Get the runs that a user can read things from.
 	 * 
 	 * @param user
-	 *            Who is asking?
+	 *            Who is asking? <tt>null</tt> for "the system".
 	 * @param p
 	 *            The policy that determines what they can see.
 	 * @return A mapping from run IDs to run handles.
 	 */
 	@Nonnull
 	@WithinSingleTransaction
-	public Map<String, TavernaRun> listRuns(UsernamePrincipal user, Policy p) {
+	public Map<String, TavernaRun> listRuns(@Nullable UsernamePrincipal user,
+			Policy p) {
 		Map<String, TavernaRun> result = new HashMap<>();
 		for (String id : nameRuns())
 			try {
+				@SuppressWarnings("null")
 				RemoteRunDelegate rrd = pickRun(id).fromDBform(facade);
-				if (p.permitAccess(user, rrd))
+				if (user == null || p.permitAccess(user, rrd))
 					result.put(id, rrd);
 			} catch (Exception e) {
 				continue;
@@ -237,7 +239,9 @@ public class RunDatabaseDAO extends JDOSupport<RunConnection> {
 	 */
 	@WithinSingleTransaction
 	public void flushToDisk(@Nonnull RemoteRunDelegate run) throws IOException {
-		getById(run.id).makeChanges(run);
+		RunConnection conn = getById(run.id);
+		if (conn != null)
+			conn.makeChanges(run);
 	}
 
 	/**
@@ -256,6 +260,8 @@ public class RunDatabaseDAO extends JDOSupport<RunConnection> {
 			log.debug("found " + toDelete.size() + " runs to delete");
 		for (String id : toDelete) {
 			RunConnection rc = getById(id);
+			if (rc == null)
+				continue;
 			try {
 				rc.fromDBform(facade).run.destroy();
 			} catch (Exception e) {
@@ -280,7 +286,8 @@ public class RunDatabaseDAO extends JDOSupport<RunConnection> {
 		for (String id : unterminatedRuns())
 			try {
 				RunConnection rc = getById(id);
-				toNotify.add(rc.fromDBform(facade));
+				if (rc != null)
+					toNotify.add(rc.fromDBform(facade));
 			} catch (Exception e) {
 				log.warn("failed to fetch connection token"
 						+ "for notification of completion check", e);

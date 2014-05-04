@@ -55,7 +55,7 @@ abstract class SingleListenerREST implements TavernaServerListenerREST,
 	@Nonnull
 	@CallCounted
 	@PerfLogged
-	public ListenerDescription getDescription(UriInfo ui) {
+	public ListenerDescription getDescription(@Nonnull UriInfo ui) {
 		return new ListenerDescription(listen, secure(ui));
 	}
 
@@ -63,7 +63,7 @@ abstract class SingleListenerREST implements TavernaServerListenerREST,
 	@Nonnull
 	@CallCounted
 	@PerfLogged
-	public TavernaServerListenersREST.Properties getProperties(UriInfo ui) {
+	public TavernaServerListenersREST.Properties getProperties(@Nonnull UriInfo ui) {
 		return new TavernaServerListenersREST.Properties(secure(ui).path(
 				"{prop}"), listen.listProperties());
 	}

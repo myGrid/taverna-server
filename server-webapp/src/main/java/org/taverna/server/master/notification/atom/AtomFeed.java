@@ -106,7 +106,7 @@ public class AtomFeed implements EventFeed, UriBuilderFactory,
 	@Nonnull
 	@CallCounted
 	@RolesAllowed(USER)
-	public Entry getEvent(String id) {
+	public Entry getEvent(@Nonnull String id) {
 		return eventSource.getEvent(support.getPrincipal(), id).getEntry(
 				abdera, feedLanguage);
 	}

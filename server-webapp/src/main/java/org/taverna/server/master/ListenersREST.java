@@ -54,8 +54,8 @@ abstract class ListenersREST implements TavernaServerListenersREST,
 	@Nonnull
 	@CallCounted
 	@PerfLogged
-	public Response addListener(ListenerDefinition typeAndConfiguration,
-			UriInfo ui) throws NoUpdateException, NoListenerException {
+	public Response addListener(@Nonnull ListenerDefinition typeAndConfiguration,
+			@Nonnull UriInfo ui) throws NoUpdateException, NoListenerException {
 		String name = support.makeListener(run, typeAndConfiguration.type,
 				typeAndConfiguration.configuration).getName();
 		return created(secure(ui).path("{listenerName}").build(name)).build();
@@ -65,7 +65,7 @@ abstract class ListenersREST implements TavernaServerListenersREST,
 	@Nonnull
 	@CallCounted
 	@PerfLogged
-	public TavernaServerListenerREST getListener(String name)
+	public TavernaServerListenerREST getListener(@Nonnull String name)
 			throws NoListenerException {
 		Listener l = support.getListener(run, name);
 		if (l == null)
@@ -80,7 +80,7 @@ abstract class ListenersREST implements TavernaServerListenersREST,
 	@Nonnull
 	@CallCounted
 	@PerfLogged
-	public Listeners getDescription(UriInfo ui) {
+	public Listeners getDescription(@Nonnull UriInfo ui) {
 		List<ListenerDescription> result = new ArrayList<>();
 		UriBuilder ub = secure(ui).path("{name}");
 		for (Listener l : run.getListeners())

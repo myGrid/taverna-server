@@ -57,6 +57,19 @@ public class DirectoryDelegate extends UnicastRemoteObject implements
 		this.parent = parent;
 	}
 
+	/**
+	 * Create the reference to the root of a working directory structure.
+	 * @param dir
+	 * @throws RemoteException
+	 *             If registration of the directory fails.
+	 */
+	public DirectoryDelegate(@Nonnull File dir) throws RemoteException {
+		super();
+		this.localCache = new ReferenceMap();
+		this.dir = dir;
+		this.parent = null;
+	}
+
 	@Override
 	@Nonnull
 	public Collection<RemoteDirectoryEntry> getContents()

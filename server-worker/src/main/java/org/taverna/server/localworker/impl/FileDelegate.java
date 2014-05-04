@@ -82,14 +82,14 @@ public class FileDelegate extends UnicastRemoteObject implements RemoteFile {
 	}
 
 	@Override
-	public void setContents(byte[] data) throws IOException {
+	public void setContents(@Nonnull byte[] data) throws IOException {
 		try (FileOutputStream fos = new FileOutputStream(file)) {
 			fos.write(data);
 		}
 	}
 
 	@Override
-	public void appendContents(byte[] data) throws IOException {
+	public void appendContents(@Nonnull byte[] data) throws IOException {
 		try (FileOutputStream fos = new FileOutputStream(file, true)) {
 			fos.write(data);
 		}

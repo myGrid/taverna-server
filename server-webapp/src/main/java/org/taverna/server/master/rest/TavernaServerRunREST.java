@@ -164,7 +164,6 @@ public interface TavernaServerRunREST {
 	@Path(NAME)
 	@Description("Produces the description of the operations on the run's "
 			+ "descriptive name.")
-	@Nonnull
 	Response nameOptions();
 
 	/**
@@ -529,7 +528,6 @@ public interface TavernaServerRunREST {
 	@Path(GENERATE_PROVENANCE)
 	@Description("Whether to create the run bundle for the workflow run.")
 	@Produces(TEXT)
-	@Nonnull
 	boolean getGenerateProvenance();
 
 	/**
@@ -537,15 +535,15 @@ public interface TavernaServerRunREST {
 	 *            Whether to create the run bundle for the workflow run. Only
 	 *            usefully set-able before the start of the run.
 	 * @return What it was actually set to.
-	 * @throws NoUpdateException 
+	 * @throws NoUpdateException
 	 */
 	@PUT
 	@Path(GENERATE_PROVENANCE)
 	@Description("Whether to create the run bundle for the workflow run.")
 	@Consumes(TEXT)
 	@Produces(TEXT)
-	@Nonnull
-	boolean setGenerateProvenance(boolean provenanceFlag) throws NoUpdateException;
+	boolean setGenerateProvenance(boolean provenanceFlag)
+			throws NoUpdateException;
 
 	/** Get an outline of the operations supported. */
 	@OPTIONS
@@ -661,7 +659,8 @@ public interface TavernaServerRunREST {
 
 			private static DateTimeFormatter dtf;
 
-			Expiry(TavernaRun r, UriInfo ui, String path, String... parts) {
+			Expiry(@Nonnull TavernaRun r, @Nonnull UriInfo ui,
+					@Nonnull String path, String... parts) {
 				ref = fromUri(new Uri(ui, true, path, parts).ref).build();
 				if (dtf == null)
 					dtf = basicDateTime();
@@ -694,7 +693,7 @@ public interface TavernaServerRunREST {
 			 * @param ub
 			 *            Uri factory; must've been secured
 			 */
-			private ListenerList(TavernaRun r, UriBuilder ub) {
+			private ListenerList(@Nonnull TavernaRun r, @Nonnull UriBuilder ub) {
 				super(ub);
 				listener = new ArrayList<>(r.getListeners().size());
 				UriBuilder pathUB = ub.clone().path("{name}");
@@ -712,8 +711,8 @@ public interface TavernaServerRunREST {
 			 * @param parts
 			 *            Anything required to fill out the path.
 			 */
-			ListenerList(TavernaRun run, UriInfo ui, String path,
-					String... parts) {
+			ListenerList(@Nonnull TavernaRun run, @Nonnull UriInfo ui,
+					@Nonnull String path, String... parts) {
 				this(run, secure(fromUri(new Uri(ui, path, parts).ref)));
 			}
 		}
@@ -732,7 +731,7 @@ public interface TavernaServerRunREST {
 		 * @param ui
 		 *            The factory for URIs.
 		 */
-		public RunDescription(TavernaRun run, UriInfo ui) {
+		public RunDescription(TavernaRun run, @Nonnull UriInfo ui) {
 			super(true);
 			creationWorkflow = new Uri(ui, WF);
 			expiry = new Expiry(run, ui, T_EXPIRE);
