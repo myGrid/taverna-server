@@ -5,10 +5,10 @@
  */
 package org.taverna.server.master.identity;
 
+import javax.annotation.Nonnull;
+
 import org.taverna.server.master.interfaces.LocalIdentityMapper;
 import org.taverna.server.master.utils.UsernamePrincipal;
-
-import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
  * A trivial principal to user mapper that always uses the same ID.
@@ -23,12 +23,12 @@ public class ConstantIDMapper implements LocalIdentityMapper {
 	 * @param id
 	 *            The local user ID.
 	 */
-	public void setConstantId(@NonNull String id) {
+	public void setConstantId(@Nonnull String id) {
 		this.id = id;
 	}
 
 	@Override
-	public String getUsernameForPrincipal(@NonNull UsernamePrincipal user) {
+	public String getUsernameForPrincipal(@Nonnull UsernamePrincipal user) {
 		return id;
 	}
 }

@@ -216,7 +216,6 @@ public class WorkflowInternalAuthProvider extends
 						new WorkflowSelfAuthority(wfid)));
 	}
 
-	@SuppressWarnings("null")
 	@Override
 	@PerfLogged
 	protected final void additionalAuthenticationChecks(UserDetails userRecord,
@@ -233,7 +232,6 @@ public class WorkflowInternalAuthProvider extends
 		}
 	}
 
-	@SuppressWarnings("null")
 	@Override
 	@Nonnull
 	@PerfLogged
@@ -256,7 +254,6 @@ public class WorkflowInternalAuthProvider extends
 			super(wfid);
 		}
 
-		@SuppressWarnings("null")
 		public @Nonnull String getWorkflowID() {
 			return getAuthority();
 		}

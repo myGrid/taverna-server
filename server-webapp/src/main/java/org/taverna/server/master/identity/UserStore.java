@@ -56,8 +56,6 @@ public class UserStore extends JDOSupport<User> implements UserDetailsService,
 		super(User.class);
 	}
 
-	private UserStore self;
-
 	@PreDestroy
 	void closeLog() {
 		log = null;
@@ -77,11 +75,6 @@ public class UserStore extends JDOSupport<User> implements UserDetailsService,
 	 */
 	public void setEncoder(PasswordEncoder encoder) {
 		this.encoder = encoder;
-	}
-
-	@Required
-	void setSelf(UserStore me) {
-		this.self = me;
 	}
 
 	public void setBaselineUserProperties(Properties props) {

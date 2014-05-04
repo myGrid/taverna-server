@@ -8,10 +8,10 @@ package org.taverna.server.master.utils;
 import java.io.Serializable;
 import java.security.Principal;
 
+import javax.annotation.Nonnull;
+
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
-
-import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
  * A simple serializable principal that just records the name.
@@ -21,20 +21,19 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 public class UsernamePrincipal implements Principal, Serializable {
 	private static final long serialVersionUID = 2703493248562435L;
 
-	public UsernamePrincipal(@NonNull String username) {
+	public UsernamePrincipal(@Nonnull String username) {
 		this.name = username;
 	}
 
-	public UsernamePrincipal(@NonNull Principal other) {
+	public UsernamePrincipal(@Nonnull Principal other) {
 		this.name = other.getName();
 	}
 
-	@SuppressWarnings("null")
-	public UsernamePrincipal(@NonNull Authentication auth) {
+	public UsernamePrincipal(@Nonnull Authentication auth) {
 		this(auth.getPrincipal());
 	}
 
-	public UsernamePrincipal(@NonNull Object principal) {
+	public UsernamePrincipal(@Nonnull Object principal) {
 		if (principal instanceof Principal)
 			this.name = ((Principal) principal).getName();
 		else if (principal instanceof String)
@@ -45,17 +44,17 @@ public class UsernamePrincipal implements Principal, Serializable {
 			this.name = principal.toString();
 	}
 
-	@NonNull
+	@Nonnull
 	private String name;
 
 	@Override
-	@NonNull
+	@Nonnull
 	public String getName() {
 		return name;
 	}
 
 	@Override
-	@NonNull
+	@Nonnull
 	public String toString() {
 		return "Principal<" + name + ">";
 	}

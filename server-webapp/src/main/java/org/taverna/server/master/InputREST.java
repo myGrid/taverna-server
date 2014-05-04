@@ -45,7 +45,6 @@ import org.taverna.server.port_description.InputDescription;
  * 
  * @author Donal Fellows
  */
-@SuppressWarnings("null")
 class InputREST implements TavernaServerInputREST, InputBean {
 	private UriInfo ui;
 	private TavernaServerSupport support;
@@ -222,7 +221,6 @@ class InputREST implements TavernaServerInputREST, InputBean {
  * 
  * @author Donal Fellows
  */
-@SuppressWarnings("null")
 class SyntheticDirectoryEntry implements DirectoryEntry {
 	public static DirEntryReference make(@Nonnull String path) {
 		return DirEntryReference.newInstance(new SyntheticDirectoryEntry(path));

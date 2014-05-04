@@ -10,14 +10,14 @@ import static org.apache.commons.logging.LogFactory.getLog;
 import java.util.List;
 import java.util.Map.Entry;
 
+import javax.annotation.Nonnull;
+
 import org.apache.commons.logging.Log;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.taverna.server.master.interfaces.LocalIdentityMapper;
 import org.taverna.server.master.utils.UsernamePrincipal;
-
-import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
  * An identity mapper that composes the results from other mappers, using the
@@ -46,7 +46,7 @@ public class CompositeIDMapper implements LocalIdentityMapper,
 	}
 
 	@Override
-	public String getUsernameForPrincipal(@NonNull UsernamePrincipal user) {
+	public String getUsernameForPrincipal(@Nonnull UsernamePrincipal user) {
 		if (mappers == null)
 			return null;
 		for (LocalIdentityMapper m : mappers) {

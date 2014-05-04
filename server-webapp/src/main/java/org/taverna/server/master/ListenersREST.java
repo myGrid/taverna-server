@@ -61,7 +61,6 @@ abstract class ListenersREST implements TavernaServerListenersREST,
 		return created(secure(ui).path("{listenerName}").build(name)).build();
 	}
 
-	@SuppressWarnings("unused")
 	@Override
 	@Nonnull
 	@CallCounted

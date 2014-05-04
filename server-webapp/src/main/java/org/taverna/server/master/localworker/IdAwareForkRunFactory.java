@@ -115,7 +115,6 @@ public class IdAwareForkRunFactory extends AbstractRemoteRunFactory implements
 	/**
 	 * @return The mapping of user names to RMI factory IDs.
 	 */
-	@SuppressWarnings("null")
 	@Override
 	@Nonnull
 	@ManagedAttribute(description = "The mapping of user names to RMI factory IDs.", currencyTimeLimit = 60)

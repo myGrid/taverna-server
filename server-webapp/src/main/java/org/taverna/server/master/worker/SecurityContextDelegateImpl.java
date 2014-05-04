@@ -23,6 +23,7 @@ import java.security.cert.X509Certificate;
 import java.util.List;
 import java.util.Map;
 
+import javax.annotation.Nonnull;
 import javax.crypto.spec.SecretKeySpec;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MultivaluedMap;
@@ -35,8 +36,6 @@ import org.taverna.server.master.common.Credential;
 import org.taverna.server.master.exceptions.InvalidCredentialException;
 import org.taverna.server.master.utils.UsernamePrincipal;
 import org.taverna.server.master.utils.X500Utils;
-
-import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
  * Factoring out of the part of the security context handling that actually
@@ -69,7 +68,7 @@ class SecurityContextDelegateImpl extends SecurityContextDelegate {
 	}
 
 	@Override
-	public void validateCredential(@NonNull Credential c)
+	public void validateCredential(@Nonnull Credential c)
 			throws InvalidCredentialException {
 		try {
 			if (c instanceof Credential.Password)
@@ -86,7 +85,7 @@ class SecurityContextDelegateImpl extends SecurityContextDelegate {
 	}
 
 	@Override
-	public void addCredentialToKeystore(@NonNull Credential c)
+	public void addCredentialToKeystore(@Nonnull Credential c)
 			throws KeyStoreException {
 		try {
 			if (c instanceof Credential.Password)
@@ -116,7 +115,7 @@ class SecurityContextDelegateImpl extends SecurityContextDelegate {
 	 *             That's legal (if unwise).
 	 */
 	protected void validatePasswordCredential(
-			@NonNull Credential.Password passwordDescriptor)
+			@Nonnull Credential.Password passwordDescriptor)
 			throws InvalidCredentialException {
 		if (passwordDescriptor.username == null
 				|| passwordDescriptor.username.trim().isEmpty())
@@ -129,8 +128,8 @@ class SecurityContextDelegateImpl extends SecurityContextDelegate {
 		passwordDescriptor.loadedTrustChain = null;
 	}
 
-	@NonNull
-	private static Key encodeKey(@NonNull String key) {
+	@Nonnull
+	private static Key encodeKey(@Nonnull String key) {
 		return new SecretKeySpec(key.getBytes(UTF8),
 				USERNAME_PASSWORD_KEY_ALGORITHM);
 	}
@@ -143,7 +142,7 @@ class SecurityContextDelegateImpl extends SecurityContextDelegate {
 	 * @throws KeyStoreException
 	 */
 	protected void addUserPassToKeystore(
-			@NonNull Credential.Password userpassCredential)
+			@Nonnull Credential.Password userpassCredential)
 			throws KeyStoreException {
 		String alias = format("password#%s",
 				userpassCredential.serviceURI.toASCIIString());
@@ -176,7 +175,7 @@ class SecurityContextDelegateImpl extends SecurityContextDelegate {
 	 *             absent)
 	 */
 	protected void validateKeyCredential(
-			@NonNull Credential.KeyPair keypairDescriptor)
+			@Nonnull Credential.KeyPair keypairDescriptor)
 			throws InvalidCredentialException, KeyStoreException,
 			NoSuchAlgorithmException, CertificateException, IOException,
 			UnrecoverableKeyException {
@@ -233,7 +232,7 @@ class SecurityContextDelegateImpl extends SecurityContextDelegate {
 	 *            The key-pair.
 	 * @throws KeyStoreException
 	 */
-	protected void addKeypairToKeystore(@NonNull Credential.KeyPair c)
+	protected void addKeypairToKeystore(@Nonnull Credential.KeyPair c)
 			throws KeyStoreException {
 		X509Certificate subjectCert = (X509Certificate) c.loadedTrustChain[0];
 		String alias = format("keypair#%s#%s#%s",
@@ -272,7 +271,7 @@ class HelioSecurityContextDelegateImpl extends SecurityContextDelegateImpl {
 
 	@Override
 	public void initializeSecurityFromSOAPContext(
-			@NonNull MessageContext context) {
+			@Nonnull MessageContext context) {
 		// does nothing
 		@SuppressWarnings("unchecked")
 		Map<String, List<String>> headers = (Map<String, List<String>>) context
@@ -282,7 +281,7 @@ class HelioSecurityContextDelegateImpl extends SecurityContextDelegateImpl {
 	}
 
 	@Override
-	public void initializeSecurityFromRESTContext(@NonNull HttpHeaders context) {
+	public void initializeSecurityFromRESTContext(@Nonnull HttpHeaders context) {
 		// does nothing
 		MultivaluedMap<String, String> headers = context.getRequestHeaders();
 		if (factory.supportHelioToken && headers.containsKey(HELIO_CIS_TOKEN))

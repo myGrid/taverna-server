@@ -29,6 +29,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Resource;
 import javax.xml.bind.JAXBException;
 
@@ -57,9 +58,6 @@ import org.taverna.server.master.utils.UsernamePrincipal;
 import org.taverna.server.master.worker.FactoryBean;
 import org.taverna.server.master.worker.RemoteRunDelegate;
 import org.taverna.server.master.worker.RunFactoryConfiguration;
-
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 
 /**
  * Bridge to remote runs via RMI.
@@ -308,7 +306,7 @@ public abstract class AbstractRemoteRunFactory extends RunFactoryConfiguration
 	}
 
 	@Override
-	@NonNull
+	@Nonnull
 	public List<String> getSupportedListenerTypes() {
 		try {
 			RemoteRunDelegate rrd = runDB.pickArbitraryRun();
@@ -322,9 +320,9 @@ public abstract class AbstractRemoteRunFactory extends RunFactoryConfiguration
 	}
 
 	@Override
-	@NonNull
-	public Listener makeListener(@NonNull TavernaRun run,
-			@NonNull String listenerType, @NonNull String configuration)
+	@Nonnull
+	public Listener makeListener(@Nonnull TavernaRun run,
+			@Nonnull String listenerType, @Nonnull String configuration)
 			throws NoListenerException {
 		if (run instanceof RemoteRunDelegate)
 			return ((RemoteRunDelegate) run).makeListener(listenerType,
@@ -333,9 +331,9 @@ public abstract class AbstractRemoteRunFactory extends RunFactoryConfiguration
 	}
 
 	@Override
-	@NonNull
-	public TavernaRun create(@NonNull UsernamePrincipal creator,
-			@NonNull Workflow workflow) throws NoCreateException {
+	@Nonnull
+	public TavernaRun create(@Nonnull UsernamePrincipal creator,
+			@Nonnull Workflow workflow) throws NoCreateException {
 		try {
 			Date now = new Date();
 			UUID id = randomUUID();
@@ -372,7 +370,7 @@ public abstract class AbstractRemoteRunFactory extends RunFactoryConfiguration
 	 *             Just about anything can go wrong...
 	 */
 	protected abstract RemoteSingleRun getRealRun(
-			@NonNull UsernamePrincipal creator, @NonNull Workflow workflow, @NonNull UUID id)
+			@Nonnull UsernamePrincipal creator, @Nonnull Workflow workflow, @Nonnull UUID id)
 			throws Exception;
 
 	/**
@@ -384,9 +382,8 @@ public abstract class AbstractRemoteRunFactory extends RunFactoryConfiguration
 	 * @throws JAXBException
 	 *             If serialization fails.
 	 */
-	@SuppressWarnings("null")
-	@NonNull
-	protected String serializeWorkflow(@NonNull Workflow workflow)
+	@Nonnull
+	protected String serializeWorkflow(@Nonnull Workflow workflow)
 			throws JAXBException {
 		return workflow.marshal();
 	}

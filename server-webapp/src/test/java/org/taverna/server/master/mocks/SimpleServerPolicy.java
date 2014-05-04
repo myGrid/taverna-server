@@ -3,6 +3,9 @@ package org.taverna.server.master.mocks;
 import java.net.URI;
 import java.util.List;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
 import org.taverna.server.master.common.Workflow;
 import org.taverna.server.master.exceptions.NoCreateException;
 import org.taverna.server.master.exceptions.NoDestroyException;
@@ -10,9 +13,6 @@ import org.taverna.server.master.exceptions.NoUpdateException;
 import org.taverna.server.master.interfaces.Policy;
 import org.taverna.server.master.interfaces.TavernaRun;
 import org.taverna.server.master.utils.UsernamePrincipal;
-
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 
 /**
  * A very simple (and unsafe) security model. The number of runs is configurable
@@ -41,7 +41,7 @@ public class SimpleServerPolicy implements Policy {
 	}
 
 	@Override
-	public Integer getMaxRuns(@NonNull UsernamePrincipal p) {
+	public Integer getMaxRuns(@Nonnull UsernamePrincipal p) {
 		return null; // No per-user limits
 	}
 
@@ -62,15 +62,15 @@ public class SimpleServerPolicy implements Policy {
 	}
 
 	@Override
-	public boolean permitAccess(@NonNull UsernamePrincipal p,
-			@NonNull TavernaRun run) {
+	public boolean permitAccess(@Nonnull UsernamePrincipal p,
+			@Nonnull TavernaRun run) {
 		// No secrets here!
 		return true;
 	}
 
 	@Override
-	public void permitCreate(@NonNull UsernamePrincipal p,
-			@NonNull Workflow workflow) throws NoCreateException {
+	public void permitCreate(@Nonnull UsernamePrincipal p,
+			@Nonnull Workflow workflow) throws NoCreateException {
 		// Only identified users may create
 		if (p == null)
 			throw new NoCreateException();
@@ -81,16 +81,16 @@ public class SimpleServerPolicy implements Policy {
 	}
 
 	@Override
-	public void permitDestroy(@NonNull UsernamePrincipal p,
-			@NonNull TavernaRun run) throws NoDestroyException {
+	public void permitDestroy(@Nonnull UsernamePrincipal p,
+			@Nonnull TavernaRun run) throws NoDestroyException {
 		// Only the creator may destroy
 		if (p == null || !p.equals(run.getSecurityContext().getOwner()))
 			throw new NoDestroyException();
 	}
 
 	@Override
-	public void permitUpdate(@NonNull UsernamePrincipal p,
-			@NonNull TavernaRun run) throws NoUpdateException {
+	public void permitUpdate(@Nonnull UsernamePrincipal p,
+			@Nonnull TavernaRun run) throws NoUpdateException {
 		// Only the creator may change
 		if (p == null || !p.equals(run.getSecurityContext().getOwner()))
 			throw new NoUpdateException();

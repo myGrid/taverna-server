@@ -6,6 +6,8 @@
 
 package org.taverna.server.master.notification;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
@@ -19,9 +21,6 @@ import org.jivesoftware.smack.packet.Message;
 import org.taverna.server.master.interfaces.MessageDispatcher;
 import org.taverna.server.master.interfaces.TavernaRun;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
-
 /**
  * Send notifications by Jabber/XMPP.
  * 
@@ -29,7 +28,7 @@ import edu.umd.cs.findbugs.annotations.Nullable;
  */
 public class JabberDispatcher implements MessageDispatcher {
 	@Override
-	@NonNull
+	@Nonnull
 	public String getName() {
 		return "xmpp";
 	}
@@ -120,8 +119,8 @@ public class JabberDispatcher implements MessageDispatcher {
 	}
 
 	@Override
-	public void dispatch(@NonNull TavernaRun ignored,
-			@NonNull String messageSubject, @NonNull String messageContent,
+	public void dispatch(@Nonnull TavernaRun ignored,
+			@Nonnull String messageSubject, @Nonnull String messageContent,
 			@Nullable String targetParameter) throws Exception {
 		Chat chat = conn.getChatManager().createChat(targetParameter,
 				new DroppingListener());

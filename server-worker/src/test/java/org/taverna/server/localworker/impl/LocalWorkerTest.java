@@ -217,6 +217,7 @@ public class LocalWorkerTest {
 	}
 
 	@Test
+	@SuppressWarnings("null")
 	public void testAddListener() {
 		Throwable t = null;
 		try {
@@ -421,6 +422,7 @@ public class LocalWorkerTest {
 	}
 
 	@Test
+	@SuppressWarnings("null")
 	public void testMakeListener() {
 		Throwable t = null;
 		try {

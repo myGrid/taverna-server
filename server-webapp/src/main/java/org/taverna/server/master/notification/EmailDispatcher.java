@@ -7,6 +7,7 @@ package org.taverna.server.master.notification;
 
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
 
+import javax.annotation.Nonnull;
 import javax.annotation.PostConstruct;
 
 import org.springframework.beans.factory.annotation.Required;
@@ -14,15 +15,14 @@ import org.springframework.mail.MailSender;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
-
 /**
  * How to send a plain text message by email to someone.
  * 
  * @author Donal Fellows
  */
 public class EmailDispatcher extends RateLimitedDispatcher {
-	@Override@NonNull
+	@Override
+	@Nonnull
 	public String getName() {
 		return "mailto";
 	}

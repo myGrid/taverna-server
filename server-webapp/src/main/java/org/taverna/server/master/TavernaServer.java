@@ -254,7 +254,6 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 		return new RunList(runs(), secure(ui).path("{name}"));
 	}
 
-	@java.lang.SuppressWarnings("null")
 	@Override
 	@CallCounted
 	@Nonnull
@@ -268,7 +267,6 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 		return created(secure(ui).path("{uuid}").build(name)).build();
 	}
 
-	@java.lang.SuppressWarnings("null")
 	@Override
 	@CallCounted
 	@Nonnull
@@ -1227,7 +1225,6 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 		}
 	}
 
-	@java.lang.SuppressWarnings("null")
 	@Override
 	public boolean initObsoleteRESTSecurity(@Nonnull TavernaSecurityContext c) {
 		if (jaxrsHeaders == null)
@@ -1242,13 +1239,11 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 	 * @return A URI builder configured so that it takes a path parameter that
 	 *         corresponds to the run ID (but with no such ID applied).
 	 */
-	@SuppressWarnings("null")
 	@Nonnull
 	UriBuilder getRunUriBuilder() {
 		return getBaseUriBuilder().path("runs/{uuid}");
 	}
 
-	@SuppressWarnings("null")
 	@Override
 	@Nonnull
 	public UriBuilder getRunUriBuilder(@Nonnull TavernaRun run) {
@@ -1286,7 +1281,6 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 		return URI.create("http://" + getHostLocation() + pathInfo);
 	}
 
-	@SuppressWarnings("null")
 	@Override
 	@Nonnull
 	public UriBuilder getBaseUriBuilder() {
@@ -1301,7 +1295,6 @@ public abstract class TavernaServer implements TavernaServerSOAP,
 		return secure(getPossiblyInsecureBaseUri(), uri).toString();
 	}
 
-	@SuppressWarnings("null")
 	@Nonnull
 	private Map<String, TavernaRun> runs() {
 		return runStore.listRuns(support.getPrincipal(), policy);

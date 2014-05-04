@@ -5,10 +5,9 @@
  */
 package org.taverna.server.master.utils;
 
+import javax.annotation.Nonnull;
 import javax.ws.rs.OPTIONS;
 import javax.ws.rs.core.Response;
-
-import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
  * Utilities that make it easier to write REST services.
@@ -24,8 +23,7 @@ public class RestUtils {
 	 * @return the required response
 	 * @see OPTIONS
 	 */
-	@SuppressWarnings("null")
-	@NonNull
+	@Nonnull
 	public static Response opt(String... methods) {
 		StringBuilder sb = new StringBuilder("GET,");
 		for (String m : methods)

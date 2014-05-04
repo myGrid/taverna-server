@@ -5,12 +5,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.annotation.Nonnull;
+
 import org.taverna.server.master.exceptions.NoListenerException;
 import org.taverna.server.master.factories.ListenerFactory;
 import org.taverna.server.master.interfaces.Listener;
 import org.taverna.server.master.interfaces.TavernaRun;
-
-import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
  * A factory for event listener. The factory is configured using Spring.
@@ -25,20 +25,20 @@ public class SimpleListenerFactory implements ListenerFactory {
 	}
 
 	@Override
-	@NonNull
+	@Nonnull
 	public List<String> getSupportedListenerTypes() {
 		return new ArrayList<>(builders.keySet());
 	}
 
 	@Override
-	@NonNull
-	public Listener makeListener(@NonNull TavernaRun run,
-			@NonNull String listenerType, @NonNull String configuration)
+	@Nonnull
+	public Listener makeListener(@Nonnull TavernaRun run,
+			@Nonnull String listenerType, @Nonnull String configuration)
 			throws NoListenerException {
 		Builder b = builders.get(listenerType);
 		if (b == null)
 			throw new NoListenerException("no such listener type");
-		@NonNull
+		@Nonnull
 		Listener l = b.build(run, configuration);
 		run.addListener(l);
 		return l;
@@ -64,8 +64,8 @@ public class SimpleListenerFactory implements ListenerFactory {
 		 *             If the listener construction failed or the
 		 *             <b>configuration</b> document was bad in some way.
 		 */
-		@NonNull
-		public Listener build(@NonNull TavernaRun run,
-				@NonNull String configuration) throws NoListenerException;
+		@Nonnull
+		public Listener build(@Nonnull TavernaRun run,
+				@Nonnull String configuration) throws NoListenerException;
 	}
 }

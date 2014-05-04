@@ -61,7 +61,6 @@ import org.taverna.server.master.utils.InvocationCounter.CallCounted;
  * 
  * @author Donal Fellows
  */
-@SuppressWarnings("null")
 class DirectoryREST implements TavernaServerDirectoryREST, DirectoryBean {
 	private TavernaServerSupport support;
 	private TavernaRun run;

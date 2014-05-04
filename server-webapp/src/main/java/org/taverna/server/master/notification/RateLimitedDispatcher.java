@@ -8,14 +8,14 @@ package org.taverna.server.master.notification;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.joda.time.DateTime;
 import org.taverna.server.master.interfaces.MessageDispatcher;
 import org.taverna.server.master.interfaces.TavernaRun;
-
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 
 /**
  * Rate-limiting support. Some message fabrics simply should not be used to send
@@ -69,8 +69,8 @@ public abstract class RateLimitedDispatcher implements MessageDispatcher {
 	}
 
 	@Override
-	public void dispatch(@NonNull TavernaRun ignored,
-			@NonNull String messageSubject, @NonNull String messageContent,
+	public void dispatch(@Nonnull TavernaRun ignored,
+			@Nonnull String messageSubject, @Nonnull String messageContent,
 			@Nullable String target) throws Exception {
 		if (isSendAllowed(target))
 			dispatch(messageSubject, messageContent, target);

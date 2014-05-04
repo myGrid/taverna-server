@@ -15,6 +15,7 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.annotation.Nonnull;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
@@ -28,8 +29,6 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.message.BasicNameValuePair;
 import org.springframework.beans.factory.annotation.Required;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
-
 /**
  * Dispatch termination messages via SMS.
  * 
@@ -37,7 +36,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
  */
 public class SMSDispatcher extends RateLimitedDispatcher {
 	@Override
-	@NonNull
+	@Nonnull
 	public String getName() {
 		return "sms";
 	}

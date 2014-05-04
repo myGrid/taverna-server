@@ -7,14 +7,14 @@ package org.taverna.server.master.identity;
 
 import static org.taverna.server.master.defaults.Default.AUTHORITY_PREFIX;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.taverna.server.master.interfaces.LocalIdentityMapper;
 import org.taverna.server.master.utils.UsernamePrincipal;
-
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 
 /**
  * Extracts the local user id from the set of Spring Security authorities
@@ -25,19 +25,19 @@ import edu.umd.cs.findbugs.annotations.Nullable;
  * @author Donal Fellows
  */
 public class AuthorityDerivedIDMapper implements LocalIdentityMapper {
-	@NonNull
+	@Nonnull
 	private String prefix = AUTHORITY_PREFIX;
 
 	public String getPrefix() {
 		return prefix;
 	}
 
-	public void setPrefix(@NonNull String prefix) {
+	public void setPrefix(@Nonnull String prefix) {
 		this.prefix = prefix;
 	}
 
 	@Override
-	public String getUsernameForPrincipal(@NonNull UsernamePrincipal user) {
+	public String getUsernameForPrincipal(@Nonnull UsernamePrincipal user) {
 		@Nullable
 		Authentication auth = SecurityContextHolder.getContext()
 				.getAuthentication();

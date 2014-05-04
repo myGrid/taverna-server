@@ -7,13 +7,13 @@ package org.taverna.server.master.notification;
 
 import java.util.Properties;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 
 import twitter4j.Twitter;
 import twitter4j.TwitterFactory;
+import twitter4j.auth.AuthorizationFactory;
 import twitter4j.conf.Configuration;
 import twitter4j.conf.PropertyConfiguration;
-import twitter4j.auth.AuthorizationFactory;
 
 /**
  * Super simple-minded twitter dispatcher. You need to tell it your consumer key
@@ -25,7 +25,7 @@ import twitter4j.auth.AuthorizationFactory;
  */
 public class TwitterDispatcher extends RateLimitedDispatcher {
 	@Override
-	@NonNull
+	@Nonnull
 	public String getName() {
 		return "twitter";
 	}
@@ -44,7 +44,7 @@ public class TwitterDispatcher extends RateLimitedDispatcher {
 		this.secret = valid(secret, "");
 	}
 
-	@NonNull
+	@Nonnull
 	private Properties getConfig() throws NotConfiguredException {
 		if (token.isEmpty() || secret.isEmpty())
 			throw new NotConfiguredException();
@@ -57,7 +57,7 @@ public class TwitterDispatcher extends RateLimitedDispatcher {
 	public static final String ACCESS_TOKEN_PROP = "oauth.accessToken";
 	public static final String ACCESS_SECRET_PROP = "oauth.accessTokenSecret";
 
-	@NonNull
+	@Nonnull
 	private Twitter getTwitter(String key, String secret) throws Exception {
 		if (key.isEmpty() || secret.isEmpty())
 			throw new NoCredentialsException();

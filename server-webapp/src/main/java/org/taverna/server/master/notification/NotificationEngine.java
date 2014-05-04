@@ -12,13 +12,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.annotation.Nonnull;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Required;
 import org.taverna.server.master.interfaces.MessageDispatcher;
 import org.taverna.server.master.interfaces.TavernaRun;
-
-import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
  * A common object for handling dispatch of event-driven messages.
@@ -50,8 +50,8 @@ public class NotificationEngine {
 		this.universalDispatchers = dispatcherList;
 	}
 
-	private void dispatchToChosenTarget(@NonNull TavernaRun originator, @NonNull String scheme,
-			@NonNull String target, @NonNull Message message) throws Exception {
+	private void dispatchToChosenTarget(@Nonnull TavernaRun originator, @Nonnull String scheme,
+			@Nonnull String target, @Nonnull Message message) throws Exception {
 		try {
 			MessageDispatcher d = dispatchers.get(scheme);
 			if (d != null && d.isAvailable())
