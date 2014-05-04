@@ -10,15 +10,15 @@
 	xmlns:cxf="http://cxf.apache.org/core"
 	xmlns:security="http://www.springframework.org/schema/security"
 	xmlns:util="http://www.springframework.org/schema/util"
-	xsi:schemaLocation="http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-3.0.xsd
+	xsi:schemaLocation="http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-3.1.xsd
 		http://cxf.apache.org/configuration/security http://cxf.apache.org/schemas/configuration/security.xsd
 		http://cxf.apache.org/core http://cxf.apache.org/schemas/core.xsd
-		http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security-3.0.3.xsd
-		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
-		http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.0.xsd
+		http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security-3.1.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+		http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.1.xsd
 		http://cxf.apache.org/jaxws http://cxf.apache.org/schemas/jaxws.xsd
 		http://cxf.apache.org/jaxrs http://cxf.apache.org/schemas/jaxrs.xsd
-		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd">
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.1.xsd">
 
 	<description>
 		The Taverna Server bean, plus supporting configuration.
@@ -30,9 +30,9 @@
 	<context:annotation-config />
 	<context:component-scan base-package="org.taverna.server" />
 	<bean id="servletContextPropertyConfigurer"
-		class="org.springframework.web.context.support.ServletContextPropertyPlaceholderConfigurer">
+		class="org.springframework.context.support.PropertySourcesPlaceholderConfigurer">
 		<property name="ignoreUnresolvablePlaceholders" value="true" />
-		<property name="contextOverride" value="true" />
+		<property name="localOverride" value="true" />
 		<property name="order" value="0" />
 		<property name="location" value="/WEB-INF/tavernaserver.properties" />
 	</bean>
@@ -87,14 +87,15 @@
 			<ref bean="ExceptionProvider.Overloaded" />
 			<ref bean="ExceptionProvider.UnknownRun" />
 			<ref bean="MessagingProvider.File" />
+			<ref bean="MessagingProvider.FileConcatenation" />
 			<ref bean="MessagingProvider.FileSegment" />
 			<ref bean="MessagingProvider.InputStream" />
 			<ref bean="MessagingProvider.T2flow" />
 			<ref bean="MessagingProvider.Permission" />
 			<ref bean="MessagingProvider.ZipStream"/>
 			<ref bean="jsonProvider" />
-			<ref bean="interactionEntryHandler" />
-			<ref bean="interactionFeedHandler" />
+			<ref bean="atomEntryHandler" />
+			<ref bean="atomFeedHandler" />
 		</jaxrs:providers>
 		<jaxrs:outInterceptors>
 			<ref bean="Interceptor.FlushThreadLocalCache" />
@@ -109,7 +110,8 @@
 			<entry key="org.apache.cxf.endpoint.private" value="true" />
 		</jaxrs:properties>
 		<jaxrs:providers>
-			<ref bean="MessagingProvider.Atom" />
+			<ref bean="atomEntryHandler" />
+			<ref bean="atomFeedHandler" />
 		</jaxrs:providers>
 	</jaxrs:server>
 
@@ -123,7 +125,7 @@
 		</jaxrs:providers>
 	</jaxrs:server>
 
-	<bean id="jsonProvider" class="org.apache.cxf.jaxrs.provider.JSONProvider">
+	<bean id="jsonProvider" class="org.apache.cxf.jaxrs.provider.json.JSONProvider">
 		<property name="ignoreNamespaces" value="true" />
 		<property name="namespaceMap" ref="jsonNamespaceMap" />
 	</bean>
@@ -143,10 +145,57 @@
 
 	<bean id="root_facade" class="org.taverna.server.master.facade.Facade">
 		<property name="file" value="/welcome.html" />
-		<property name="pattern" value="SERVICE_URI/" />
+		<property name="contextualizer" ref="contextualizer" />
 	</bean>
+
+	<bean class="org.taverna.server.master.common.Uri.Rewriter"
+		autowire="byType" id="URI-Rewriter-Thunk">
+		<property name="suppressSecurity" value="${suppressRewriteEngine}" />
+		<property name="rewriteTarget" value="${default.webapp}" />
+	</bean>
+	<security:authentication-manager>
+		<security:authentication-provider ref="workflowInternalAuthProvder" />
+		<security:authentication-provider ref="authProvider" />
+	</security:authentication-manager>
 
 	<aop:aspectj-autoproxy proxy-target-class="true" />
 	<security:global-method-security
 		jsr250-annotations="enabled" />
+
+	<security:http realm="${http.realmName}" create-session="never"
+		use-expressions="true">
+		<security:http-basic />
+		<security:intercept-url pattern="/"
+			requires-channel="any" access="permitAll" />
+		<security:intercept-url pattern="/rest"
+			requires-channel="${requiredChannel}" access="permitAll" />
+		<security:intercept-url pattern="/rest/"
+			requires-channel="${requiredChannel}" access="permitAll" />
+		<security:intercept-url pattern="/rest/policy"
+			requires-channel="${requiredChannel}" access="permitAll" />
+		<security:intercept-url pattern="/rest/policy/"
+			requires-channel="${requiredChannel}" access="permitAll" />
+		<security:intercept-url pattern="/services/**"
+			requires-channel="${requiredChannel}" access="permitAll" />
+		<security:intercept-url pattern="/soap/**" method="GET"
+			requires-channel="${requiredChannel}" access="permitAll" />
+		<security:intercept-url pattern="/soap/**" method="POST"
+			requires-channel="${requiredChannel}"
+			access="hasRole('ROLE_tavernauser')" />
+		<security:intercept-url pattern="/admin"
+			requires-channel="${requiredChannel}"
+			access="hasRole('ROLE_tavernasuperuser')" />
+		<security:intercept-url pattern="/admin/**"
+			requires-channel="${requiredChannel}"
+			access="hasRole('ROLE_tavernasuperuser')" />
+		<security:intercept-url pattern="/rest/**"
+			requires-channel="${requiredChannel}"
+			access="hasAnyRole('ROLE_tavernauser','ROLE_tavernaworkflow')" />
+		<security:intercept-url pattern="/feed"
+			requires-channel="${requiredChannel}"
+			access="hasRole('ROLE_tavernauser')" />
+		<security:intercept-url pattern="/feed/**"
+			requires-channel="${requiredChannel}"
+			access="hasRole('ROLE_tavernauser')" />
+	</security:http>
 </beans>

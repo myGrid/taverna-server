@@ -24,6 +24,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 
+import javax.annotation.Nonnull;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -37,10 +39,6 @@ import org.taverna.server.localworker.remote.RemoteListener;
 import org.taverna.server.localworker.remote.RemoteStatus;
 import org.taverna.server.localworker.server.UsageRecordReceiver;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.SuppressWarnings;
-
-@SuppressWarnings
 public class LocalWorkerTest {
 	LocalWorker lw;
 	static List<String> events;
@@ -52,37 +50,37 @@ public class LocalWorkerTest {
 		public RemoteListener getDefaultListener() {
 			return new RemoteListener() {
 				@Override
-				@NonNull
+				@Nonnull
 				public String getConfiguration() {
 					return "RLCONFIG";
 				}
 
 				@Override
-				@NonNull
+				@Nonnull
 				public String getName() {
 					return "RLNAME";
 				}
 
 				@Override
-				@NonNull
-				public String getProperty(@NonNull String propName) {
+				@Nonnull
+				public String getProperty(@Nonnull String propName) {
 					return "RLPROP[" + propName + "]";
 				}
 
 				@Override
-				@NonNull
+				@Nonnull
 				public String getType() {
 					return "RLTYPE";
 				}
 
 				@Override
-				@NonNull
+				@Nonnull
 				public String[] listProperties() {
 					return new String[] { "RLP1", "RLP2" };
 				}
 
 				@Override
-				public void setProperty(@NonNull String propName,@NonNull  String value) {
+				public void setProperty(@Nonnull String propName, @Nonnull String value) {
 					events.add("setProperty[");
 					events.add(propName);
 					events.add(value);
@@ -102,9 +100,9 @@ public class LocalWorkerTest {
 				String executeWorkflowCommand, String workflow,
 				File workingDir, File inputBaclava,
 				Map<String, File> inputFiles, Map<String, String> inputValues,
-				File outputBaclava, File cmdir, char[] cmpass,
-				Map<String, String> env, String id, List<String> conf)
-				throws Exception {
+				Map<String, String> delimiters, File outputBaclava, File cmdir,
+				char[] cmpass, boolean doprov, Map<String, String> env,
+				String id, List<String> conf) throws Exception {
 			events.add("init[");
 			events.add(executeWorkflowCommand);
 			events.add(workflow);
@@ -112,17 +110,18 @@ public class LocalWorkerTest {
 			events.add(Integer.toString(dirLen));
 			events.add(inputBaclava == null ? "<null>" : inputBaclava
 					.toString().substring(dirLen));
-			Map<String, String> in = new TreeMap<String, String>();
-			for (Entry<String, File> name : inputFiles.entrySet()) {
+			Map<String, String> in = new TreeMap<>();
+			for (Entry<String, File> name : inputFiles.entrySet())
 				in.put(name.getKey(), name.getValue() == null ? "<null>" : name
 						.getValue().getName());
-			}
 			events.add(in.toString());
-			events.add(new TreeMap<String, String>(inputValues).toString());
+			events.add(new TreeMap<>(inputValues).toString());
 			events.add(outputBaclava == null ? "<null>" : outputBaclava
 					.getName());
 			// TODO: check cmdir and cmpass
+			// TODO: check doprov
 			// TODO: log env
+			// TODO: check delimiters
 			events.add("]");
 			return true;
 		}
@@ -164,7 +163,7 @@ public class LocalWorkerTest {
 	public void setUp() throws Exception {
 		lw = new LocalWorker("XWC", "WF", null, randomUUID(),
 				new HashMap<String, String>(), new ArrayList<String>(), factory);
-		events = new ArrayList<String>();
+		events = new ArrayList<>();
 		returnThisStatus = RemoteStatus.Operating;
 	}
 

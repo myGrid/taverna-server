@@ -5,8 +5,7 @@
  */
 package org.taverna.server.master.interfaces;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
+import javax.annotation.Nonnull;
 
 /**
  * The interface supported by all notification message dispatchers.
@@ -25,7 +24,7 @@ public interface MessageDispatcher {
 	 *         supported by it (for a non-universal dispatcher) and the name of
 	 *         the message generator used to produce the message.
 	 */
-	@NonNull
+	@Nonnull
 	String getName();
 
 	/**
@@ -42,7 +41,7 @@ public interface MessageDispatcher {
 	 * @throws Exception
 	 *             If anything goes wrong.
 	 */
-	void dispatch(@NonNull TavernaRun originator,
-			@NonNull String messageSubject, @NonNull String messageContent,
-			@Nullable String targetParameter) throws Exception;
+	void dispatch(@Nonnull TavernaRun originator,
+			@Nonnull String messageSubject, @Nonnull String messageContent,
+			@Nonnull String targetParameter) throws Exception;
 }

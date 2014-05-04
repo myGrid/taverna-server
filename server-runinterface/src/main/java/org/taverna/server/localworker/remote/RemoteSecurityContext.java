@@ -8,9 +8,9 @@ package org.taverna.server.localworker.remote;
 import java.net.URI;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
-import java.util.HashMap;
+import java.util.Map;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 
 /**
  * Outline of the security context for a workflow run.
@@ -24,7 +24,8 @@ public interface RemoteSecurityContext extends Remote {
 	 * @throws RemoteException If anything goes wrong with the communications.
 	 * @throws ImplementationException If anything goes wrong with the operation.
 	 */
-	void setKeystore(@NonNull byte[] keystore) throws RemoteException, ImplementationException;
+	void setKeystore(@Nonnull byte[] keystore) throws RemoteException,
+			ImplementationException;
 
 	/**
 	 * Sets the password to use to unlock the keystore for a run's security configuration.
@@ -32,7 +33,8 @@ public interface RemoteSecurityContext extends Remote {
 	 * @throws RemoteException If anything goes wrong with the communications.
 	 * @throws ImplementationException If anything goes wrong with the operation.
 	 */
-	void setPassword(@NonNull char[] password) throws RemoteException, ImplementationException;
+	void setPassword(@Nonnull char[] password) throws RemoteException,
+			ImplementationException;
 
 	/**
 	 * Sets the content of the truststore for a run's security configuration.
@@ -40,7 +42,8 @@ public interface RemoteSecurityContext extends Remote {
 	 * @throws RemoteException If anything goes wrong with the communications.
 	 * @throws ImplementationException If anything goes wrong with the operation.
 	 */
-	void setTruststore(@NonNull byte[] truststore) throws RemoteException, ImplementationException;
+	void setTruststore(@Nonnull byte[] truststore) throws RemoteException,
+			ImplementationException;
 
 	/**
 	 * Sets the mapping from URIs to string aliases to use. <i>Probably not used.</i>
@@ -48,9 +51,9 @@ public interface RemoteSecurityContext extends Remote {
 	 * @throws RemoteException If anything goes wrong with the communications.
 	 * @throws ImplementationException If anything goes wrong with the operation.
 	 */
-	void setUriToAliasMap(@NonNull HashMap<URI, String> uriToAliasMap)
-			throws RemoteException;
+	void setUriToAliasMap(@Nonnull Map<URI, String> uriToAliasMap)
+			throws RemoteException, ImplementationException;
 
 	// Undocumented hack
-	void setHelioToken(@NonNull String helioToken) throws RemoteException;
+	void setHelioToken(@Nonnull String helioToken) throws RemoteException;
 }

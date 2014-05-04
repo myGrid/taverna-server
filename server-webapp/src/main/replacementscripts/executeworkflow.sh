@@ -20,7 +20,7 @@ do
 	*) post="$post \"$arg\"" ;;
     esac
 done
-if test "xx" == "x${post}x"; then
+if test "xx" = "x${post}x"; then
     echo "Missing arguments! Bug in argument processing?" >&2
     exit 1
 fi
@@ -56,14 +56,16 @@ if test x != "x$INTERACTION_HOST"; then
     INTERACTION_PROPS="$INTERACTION_PROPS -Dtaverna.interaction.feed_path=$INTERACTION_FEED"
 fi
 
+MainClass=net.sf.taverna.t2.commandline.CommandLineLauncher
+
 echo "pid:$$"
 exec "$javabin" $memlimit $permsize \
   "-Draven.profile=file://$taverna_home/conf/current-profile.xml" \
   "-Dtaverna.startup=$taverna_home" $RAVEN_APPHOME_PROP $RUNID_PROP \
   $INTERACTION_PROPS $pre \
   -Djava.system.class.loader=net.sf.taverna.raven.prelauncher.BootstrapClassLoader \
-  -Draven.launcher.app.main=net.sf.taverna.t2.commandline.CommandLineLauncher \
+  -Draven.launcher.app.main=$MainClass \
   -Draven.launcher.show_splashscreen=false \
-  -Djava.awt.headless=true \
+  -Djava.awt.headless=true -Dtaverna.interaction.ignore_requests=true \
   -jar "$taverna_home/lib/"prelauncher-*.jar \
   "$@"

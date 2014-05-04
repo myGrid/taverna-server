@@ -8,6 +8,7 @@ package org.taverna.server.master;
 import static org.taverna.server.master.TavernaServer.log;
 import static org.taverna.server.master.utils.RestUtils.opt;
 
+import javax.annotation.Nonnull;
 import javax.ws.rs.core.Response;
 
 import org.taverna.server.master.api.ListenerPropertyBean;
@@ -16,16 +17,14 @@ import org.taverna.server.master.exceptions.NoUpdateException;
 import org.taverna.server.master.interfaces.Listener;
 import org.taverna.server.master.interfaces.TavernaRun;
 import org.taverna.server.master.rest.TavernaServerListenersREST;
+import org.taverna.server.master.utils.CallTimeLogger.PerfLogged;
 import org.taverna.server.master.utils.InvocationCounter.CallCounted;
-
-import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
  * RESTful interface to a single property of a workflow run.
  * 
  * @author Donal Fellows
  */
-@SuppressWarnings("null")
 class ListenerPropertyREST implements TavernaServerListenersREST.Property,
 		ListenerPropertyBean {
 	private TavernaServerSupport support;
@@ -39,9 +38,9 @@ class ListenerPropertyREST implements TavernaServerListenersREST.Property,
 	}
 
 	@Override
-	@NonNull
-	public ListenerPropertyREST connect(@NonNull Listener listen, @NonNull TavernaRun run,
-			@NonNull String propertyName) {
+	@Nonnull
+	public ListenerPropertyREST connect(@Nonnull Listener listen, @Nonnull TavernaRun run,
+			@Nonnull String propertyName) {
 		this.listen = listen;
 		this.propertyName = propertyName;
 		this.run = run;
@@ -49,8 +48,9 @@ class ListenerPropertyREST implements TavernaServerListenersREST.Property,
 	}
 
 	@Override
-	@NonNull
+	@Nonnull
 	@CallCounted
+	@PerfLogged
 	public String getValue() {
 		try {
 			return listen.getProperty(propertyName);
@@ -62,9 +62,10 @@ class ListenerPropertyREST implements TavernaServerListenersREST.Property,
 	}
 
 	@Override
-	@NonNull
+	@Nonnull
 	@CallCounted
-	public String setValue(@NonNull String value) throws NoUpdateException,
+	@PerfLogged
+	public String setValue(String value) throws NoUpdateException,
 			NoListenerException {
 		support.permitUpdate(run);
 		listen.setProperty(propertyName, value);

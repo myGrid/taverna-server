@@ -21,6 +21,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import javax.annotation.Nonnull;
 import javax.ws.rs.core.HttpHeaders;
 import javax.xml.ws.handler.MessageContext;
 
@@ -33,6 +34,7 @@ import org.taverna.server.master.exceptions.BadStateChangeException;
 import org.taverna.server.master.exceptions.FilesystemAccessException;
 import org.taverna.server.master.exceptions.InvalidCredentialException;
 import org.taverna.server.master.exceptions.NoListenerException;
+import org.taverna.server.master.exceptions.UnknownRunException;
 import org.taverna.server.master.factories.RunFactory;
 import org.taverna.server.master.interfaces.Directory;
 import org.taverna.server.master.interfaces.Input;
@@ -42,11 +44,7 @@ import org.taverna.server.master.interfaces.TavernaRun;
 import org.taverna.server.master.interfaces.TavernaSecurityContext;
 import org.taverna.server.master.utils.UsernamePrincipal;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.SuppressWarnings;
-
-@SuppressWarnings
-@java.lang.SuppressWarnings("serial")
+@SuppressWarnings("serial")
 public class ExampleRun implements TavernaRun, TavernaSecurityContext {
 	String id;
 	List<Listener> listeners;
@@ -62,12 +60,12 @@ public class ExampleRun implements TavernaRun, TavernaSecurityContext {
 
 	public ExampleRun(UsernamePrincipal creator, Workflow workflow, Date expiry) {
 		this.id = randomUUID().toString();
-		this.listeners = new ArrayList<Listener>();
+		this.listeners = new ArrayList<>();
 		this.status = Initialized;
 		this.owner = creator;
 		this.workflow = workflow;
 		this.expiry = expiry;
-		this.inputs = new ArrayList<Input>();
+		this.inputs = new ArrayList<>();
 		listeners.add(new DefaultListener());
 	}
 
@@ -125,7 +123,7 @@ public class ExampleRun implements TavernaRun, TavernaSecurityContext {
 	}
 
 	@Override
-	@NonNull
+	@Nonnull
 	public UsernamePrincipal getOwner() {
 		return owner;
 	}
@@ -138,9 +136,9 @@ public class ExampleRun implements TavernaRun, TavernaSecurityContext {
 		}
 
 		@Override
-		@NonNull
-		public TavernaRun create(@NonNull UsernamePrincipal creator,
-				@NonNull Workflow workflow) {
+		@Nonnull
+		public TavernaRun create(@Nonnull UsernamePrincipal creator,
+				@Nonnull Workflow workflow) {
 			Calendar c = GregorianCalendar.getInstance();
 			c.add(MINUTE, lifetime);
 			return new ExampleRun(creator, workflow, c.getTime());
@@ -156,38 +154,38 @@ public class ExampleRun implements TavernaRun, TavernaSecurityContext {
 
 	class DefaultListener implements Listener {
 		@Override
-		@NonNull
+		@Nonnull
 		public String getConfiguration() {
 			return "";
 		}
 
 		@Override
-		@NonNull
+		@Nonnull
 		public String getName() {
 			return "default";
 		}
 
 		@Override
-		@NonNull
+		@Nonnull
 		public String getType() {
 			return "default";
 		}
 
 		@Override
-		@NonNull
+		@Nonnull
 		public String[] listProperties() {
 			return emptyArray;
 		}
 
 		@Override
-		@NonNull
-		public String getProperty(@NonNull String propName)
+		@Nonnull
+		public String getProperty(@Nonnull String propName)
 				throws NoListenerException {
 			throw new NoListenerException("no such property");
 		}
 
 		@Override
-		public void setProperty(@NonNull String propName, @NonNull String value)
+		public void setProperty(@Nonnull String propName, @Nonnull String value)
 				throws NoListenerException {
 			throw new NoListenerException("no such property");
 		}
@@ -212,6 +210,7 @@ public class ExampleRun implements TavernaRun, TavernaSecurityContext {
 		public String name;
 		public String file;
 		public String value;
+		public String delim;
 
 		public ExampleInput(String name) {
 			this.name = name;
@@ -223,7 +222,7 @@ public class ExampleRun implements TavernaRun, TavernaSecurityContext {
 		}
 
 		@Override
-		@NonNull
+		@Nonnull
 		public String getName() {
 			return name;
 		}
@@ -234,7 +233,7 @@ public class ExampleRun implements TavernaRun, TavernaSecurityContext {
 		}
 
 		@Override
-		public void setFile(@NonNull String file)
+		public void setFile(@Nonnull String file)
 				throws FilesystemAccessException, BadStateChangeException {
 			if (status != Status.Initialized)
 				throw new BadStateChangeException();
@@ -245,7 +244,7 @@ public class ExampleRun implements TavernaRun, TavernaSecurityContext {
 		}
 
 		@Override
-		public void setValue(@NonNull String value)
+		public void setValue(@Nonnull String value)
 				throws BadStateChangeException {
 			if (status != Status.Initialized)
 				throw new BadStateChangeException();
@@ -257,6 +256,22 @@ public class ExampleRun implements TavernaRun, TavernaSecurityContext {
 		void reset() {
 			this.file = null;
 			this.value = null;
+		}
+
+		@Override
+		public String getDelimiter() {
+			return delim;
+		}
+
+		@Override
+		public void setDelimiter(String delimiter)
+				throws BadStateChangeException {
+			if (status != Status.Initialized)
+				throw new BadStateChangeException();
+			if (delimiter == null)
+				delim = null;
+			else
+				delim = delimiter.substring(0, 1);
 		}
 	}
 
@@ -316,18 +331,18 @@ public class ExampleRun implements TavernaRun, TavernaSecurityContext {
 	}
 
 	@Override
-	@NonNull
+	@Nonnull
 	public Credential[] getCredentials() {
 		return new Credential[0];
 	}
 
 	@Override
-	public void addCredential(@NonNull Credential toAdd) {
+	public void addCredential(@Nonnull Credential toAdd) {
 		// Do nothing
 	}
 
 	@Override
-	public void deleteCredential(@NonNull Credential toDelete) {
+	public void deleteCredential(@Nonnull Credential toDelete) {
 		// Do nothing
 	}
 
@@ -337,35 +352,35 @@ public class ExampleRun implements TavernaRun, TavernaSecurityContext {
 	}
 
 	@Override
-	public void addTrusted(@NonNull Trust toAdd) {
+	public void addTrusted(@Nonnull Trust toAdd) {
 		// Do nothing
 	}
 
 	@Override
-	public void deleteTrusted(@NonNull Trust toDelete) {
+	public void deleteTrusted(@Nonnull Trust toDelete) {
 		// Do nothing
 	}
 
 	@Override
-	public void validateCredential(@NonNull Credential c)
+	public void validateCredential(@Nonnull Credential c)
 			throws InvalidCredentialException {
 		// Do nothing
 	}
 
 	@Override
-	public void validateTrusted(@NonNull Trust t)
+	public void validateTrusted(@Nonnull Trust t)
 			throws InvalidCredentialException {
 		// Do nothing
 	}
 
 	@Override
 	public void initializeSecurityFromSOAPContext(
-			@NonNull MessageContext context) {
+			@Nonnull MessageContext context) {
 		// Do nothing
 	}
 
 	@Override
-	public void initializeSecurityFromRESTContext(@NonNull HttpHeaders headers) {
+	public void initializeSecurityFromRESTContext(@Nonnull HttpHeaders headers) {
 		// Do nothing
 	}
 
@@ -375,58 +390,58 @@ public class ExampleRun implements TavernaRun, TavernaSecurityContext {
 	}
 
 	@Override
-	@NonNull
+	@Nonnull
 	public SecurityContextFactory getFactory() {
 		return new SecurityContextFactory() {
 			@Override
-			@NonNull
-			public TavernaSecurityContext create(@NonNull TavernaRun run,
-					@NonNull UsernamePrincipal owner) throws Exception {
+			@Nonnull
+			public TavernaSecurityContext create(@Nonnull TavernaRun run,
+					@Nonnull UsernamePrincipal owner) throws Exception {
 				throw new Exception("no");
 			}
 		};
 	}
 
-	@NonNull
+	@Nonnull
 	private Set<String> destroyers = new HashSet<String>();
-	@NonNull
+	@Nonnull
 	private Set<String> updaters = new HashSet<String>();
-	@NonNull
+	@Nonnull
 	private Set<String> readers = new HashSet<String>();
 	@Override
-	@NonNull
+	@Nonnull
 	public Set<String> getPermittedDestroyers() {
 		return destroyers;
 	}
 
 	@Override
-	public void setPermittedDestroyers(@NonNull Set<String> destroyers) {
+	public void setPermittedDestroyers(@Nonnull Set<String> destroyers) {
 		this.destroyers = destroyers;
 		updaters.addAll(destroyers);
 		readers.addAll(destroyers);
 	}
 
 	@Override
-	@NonNull
+	@Nonnull
 	public Set<String> getPermittedUpdaters() {
 		return updaters;
 	}
 
 	@Override
-	public void setPermittedUpdaters(@NonNull Set<String> updaters) {
+	public void setPermittedUpdaters(@Nonnull Set<String> updaters) {
 		this.updaters = updaters;
 		this.updaters.addAll(destroyers);
 		readers.addAll(updaters);
 	}
 
 	@Override
-	@NonNull
+	@Nonnull
 	public Set<String> getPermittedReaders() {
 		return readers;
 	}
 
 	@Override
-	public void setPermittedReaders(@NonNull Set<String> readers) {
+	public void setPermittedReaders(@Nonnull Set<String> readers) {
 		this.readers = readers;
 		this.readers.addAll(destroyers);
 		this.readers.addAll(updaters);
@@ -439,7 +454,7 @@ public class ExampleRun implements TavernaRun, TavernaSecurityContext {
 
 	@Override
 	public void initializeSecurityFromContext(
-			@NonNull SecurityContext securityContext) throws Exception {
+			@Nonnull SecurityContext securityContext) throws Exception {
 		// Do nothing
 	}
 
@@ -449,7 +464,24 @@ public class ExampleRun implements TavernaRun, TavernaSecurityContext {
 	}
 
 	@Override
-	public void setName(@NonNull String name) {
+	public void setName(@Nonnull String name) {
 		this.name = (name.length() > 5 ? name.substring(0, 5) : name);
+	}
+
+	@Override
+	public void ping() throws UnknownRunException {
+		// Do nothing
+	}
+
+	@Override
+	public boolean getGenerateProvenance() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public void setGenerateProvenance(boolean generateProvenance) {
+		// TODO Auto-generated method stub
+		
 	}
 }

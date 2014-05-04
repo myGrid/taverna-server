@@ -17,15 +17,16 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.List;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import org.apache.commons.collections.MapIterator;
 import org.apache.commons.collections.map.ReferenceMap;
 import org.taverna.server.localworker.remote.RemoteDirectory;
 import org.taverna.server.localworker.remote.RemoteDirectoryEntry;
 import org.taverna.server.localworker.remote.RemoteFile;
-
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 
 /**
  * This class acts as a remote-aware delegate for the workflow run's working
@@ -34,7 +35,6 @@ import edu.umd.cs.findbugs.annotations.Nullable;
  * @author Donal Fellows
  * @see FileDelegate
  */
-@edu.umd.cs.findbugs.annotations.SuppressWarnings("SE_NO_SERIALVERSIONID")
 @SuppressWarnings("serial")
 public class DirectoryDelegate extends UnicastRemoteObject implements
 		RemoteDirectory {
@@ -49,8 +49,8 @@ public class DirectoryDelegate extends UnicastRemoteObject implements
 	 * @throws RemoteException
 	 *             If registration of the directory fails.
 	 */
-	public DirectoryDelegate(@NonNull File dir,
-			@Nullable DirectoryDelegate parent) throws RemoteException {
+	public DirectoryDelegate(@Nonnull File dir,
+			@Nonnull DirectoryDelegate parent) throws RemoteException {
 		super();
 		this.localCache = new ReferenceMap();
 		this.dir = dir;
@@ -58,10 +58,10 @@ public class DirectoryDelegate extends UnicastRemoteObject implements
 	}
 
 	@Override
-	@NonNull
+	@Nonnull
 	public Collection<RemoteDirectoryEntry> getContents()
 			throws RemoteException {
-		ArrayList<RemoteDirectoryEntry> result = new ArrayList<RemoteDirectoryEntry>();
+		List<RemoteDirectoryEntry> result = new ArrayList<>();
 		for (String s : dir.list()) {
 			if (s.equals(".") || s.equals(".."))
 				continue;
@@ -90,8 +90,8 @@ public class DirectoryDelegate extends UnicastRemoteObject implements
 	}
 
 	@Override
-	@NonNull
-	public RemoteFile makeEmptyFile(@NonNull String name) throws IOException {
+	@Nonnull
+	public RemoteFile makeEmptyFile(@Nonnull String name) throws IOException {
 		File f = getValidatedNewFile(dir, name);
 		touch(f);
 		FileDelegate delegate = new FileDelegate(f, this);
@@ -102,8 +102,8 @@ public class DirectoryDelegate extends UnicastRemoteObject implements
 	}
 
 	@Override
-	@NonNull
-	public RemoteDirectory makeSubdirectory(@NonNull String name)
+	@Nonnull
+	public RemoteDirectory makeSubdirectory(@Nonnull String name)
 			throws IOException {
 		File f = getValidatedNewFile(dir, name);
 		forceMkdir(f);
@@ -121,7 +121,7 @@ public class DirectoryDelegate extends UnicastRemoteObject implements
 			throw new IOException("tried to destroy main job working directory");
 		Collection<RemoteDirectoryEntry> values;
 		synchronized (localCache) {
-			values = new ArrayList<RemoteDirectoryEntry>(localCache.values());
+			values = new ArrayList<>(localCache.values());
 		}
 		for (RemoteDirectoryEntry obj : values) {
 			if (obj == null)
@@ -140,7 +140,7 @@ public class DirectoryDelegate extends UnicastRemoteObject implements
 		return parent;
 	}
 
-	void forgetEntry(@NonNull RemoteDirectoryEntry entry) {
+	void forgetEntry(@Nonnull RemoteDirectoryEntry entry) {
 		synchronized (localCache) {
 			MapIterator i = localCache.mapIterator();
 			while (i.hasNext()) {
@@ -154,7 +154,7 @@ public class DirectoryDelegate extends UnicastRemoteObject implements
 	}
 
 	@Override
-	@NonNull
+	@Nonnull
 	public String getName() {
 		if (parent == null)
 			return "";
@@ -162,7 +162,7 @@ public class DirectoryDelegate extends UnicastRemoteObject implements
 	}
 
 	@Override
-	@NonNull
+	@Nonnull
 	public Date getModificationDate() throws RemoteException {
 		return new Date(dir.lastModified());
 	}

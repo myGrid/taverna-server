@@ -7,9 +7,9 @@ package org.taverna.server.master.interfaces;
 
 import java.io.Serializable;
 
-import org.taverna.server.master.utils.UsernamePrincipal;
+import javax.annotation.Nonnull;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
+import org.taverna.server.master.utils.UsernamePrincipal;
 
 /**
  * How to create instances of a security context.
@@ -29,7 +29,7 @@ public interface SecurityContextFactory extends Serializable {
 	 * @throws Exception
 	 *             If anything goes wrong.
 	 */
-	@NonNull
-	TavernaSecurityContext create(@NonNull TavernaRun run,
-			@NonNull UsernamePrincipal owner) throws Exception;
+	@Nonnull
+	TavernaSecurityContext create(@Nonnull TavernaRun run,
+			@Nonnull UsernamePrincipal owner) throws Exception;
 }

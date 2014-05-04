@@ -36,7 +36,7 @@ public class NotificationEngine {
 	 */
 	@Required
 	public void setDispatchers(List<MessageDispatcher> dispatchers) {
-		this.dispatchers = new HashMap<String, MessageDispatcher>();
+		this.dispatchers = new HashMap<>();
 		for (MessageDispatcher d : dispatchers)
 			this.dispatchers.put(d.getName(), d);
 	}
@@ -71,8 +71,9 @@ public class NotificationEngine {
 						return;
 					}
 				} catch (Exception ex) {
-					log.debug("failed in pseudo-directed dispatch of " + scheme
-							+ ":" + target, ex);
+					if (log.isDebugEnabled())
+						log.debug("failed in pseudo-directed dispatch of "
+								+ scheme + ":" + target, ex);
 					e2 = ex;
 				}
 			if (e2 != null)
@@ -80,7 +81,8 @@ public class NotificationEngine {
 		}
 	}
 
-	private void dispatchUniversally(TavernaRun originator, Message message) throws Exception {
+	private void dispatchUniversally(TavernaRun originator, Message message)
+			throws Exception {
 		for (MessageDispatcher d : universalDispatchers)
 			try {
 				if (d.isAvailable())
@@ -109,13 +111,14 @@ public class NotificationEngine {
 	 * @throws Exception
 	 *             If anything goes wrong with the dispatch process.
 	 */
-	public void dispatchMessage(TavernaRun originator, String destination, Message message) throws Exception {
+	public void dispatchMessage(TavernaRun originator, String destination,
+			Message message) throws Exception {
 		if (destination != null && !destination.trim().isEmpty()) {
 			try {
 				URI toURI = new URI(destination.trim());
 				dispatchToChosenTarget(originator, toURI.getScheme(),
 						toURI.getSchemeSpecificPart(), message);
-			} catch (java.net.URISyntaxException e) {
+			} catch (URISyntaxException e) {
 				// Ignore
 			}
 		}
@@ -127,7 +130,7 @@ public class NotificationEngine {
 	 *         disabled by configuration somewhere).
 	 */
 	public List<String> listAvailableDispatchers() {
-		ArrayList<String> result = new ArrayList<String>();
+		ArrayList<String> result = new ArrayList<>();
 		for (Map.Entry<String, MessageDispatcher> entry : dispatchers
 				.entrySet()) {
 			if (entry.getValue().isAvailable())
@@ -138,6 +141,7 @@ public class NotificationEngine {
 
 	public interface Message {
 		String getContent(String type);
+
 		String getTitle(String type);
 	}
 }

@@ -5,6 +5,8 @@ import static java.util.Collections.singletonMap;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+import javax.annotation.Nonnull;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.taverna.server.master.api.ManagementModel;
@@ -20,10 +22,6 @@ import org.taverna.server.master.mocks.MockPolicy;
 import org.taverna.server.master.mocks.SimpleListenerFactory;
 import org.taverna.server.master.mocks.SimpleNonpersistentRunStore;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.SuppressWarnings;
-
-@SuppressWarnings
 public class TavernaServerImplTest {
 	private TavernaServer server;
 	private MockPolicy policy;
@@ -41,39 +39,39 @@ public class TavernaServerImplTest {
 		lrunconf = config;
 		return new Listener() {
 			@Override
-			@NonNull
+			@Nonnull
 			public String getConfiguration() {
 				return config;
 			}
 
 			@Override
-			@NonNull
+			@Nonnull
 			public String getName() {
 				return "bar";
 			}
 
 			@Override
-			@NonNull
-			public String getProperty(@NonNull String propName)
+			@Nonnull
+			public String getProperty(@Nonnull String propName)
 					throws NoListenerException {
 				throw new NoListenerException();
 			}
 
 			@Override
-			@NonNull
+			@Nonnull
 			public String getType() {
 				return "foo";
 			}
 
 			@Override
-			@NonNull
+			@Nonnull
 			public String[] listProperties() {
 				return new String[0];
 			}
 
 			@Override
-			public void setProperty(@NonNull String propName,
-					@NonNull String value) throws NoListenerException,
+			public void setProperty(@Nonnull String propName,
+					@Nonnull String value) throws NoListenerException,
 					BadPropertyValueException {
 				throw new NoListenerException();
 			}
@@ -81,7 +79,6 @@ public class TavernaServerImplTest {
 	}
 
 	@Before
-	@SuppressWarnings
 	public void wireup() throws Exception {
 		// Wire everything up; ought to be done with Spring, but this works...
 		server = new TavernaServer() {
@@ -92,7 +89,7 @@ public class TavernaServerImplTest {
 					protected ListenersREST makeListenersInterface() {
 						return new ListenersREST() {
 							@Override
-							@NonNull
+							@Nonnull
 							protected SingleListenerREST makeListenerInterface() {
 								return new SingleListenerREST() {
 									@Override
@@ -131,7 +128,7 @@ public class TavernaServerImplTest {
 			}
 
 			@Override
-			@NonNull
+			@Nonnull
 			public PolicyView getPolicyDescription() {
 				return new PolicyREST();
 			}
@@ -188,9 +185,9 @@ public class TavernaServerImplTest {
 				"foo",
 				(SimpleListenerFactory.Builder) new SimpleListenerFactory.Builder() {
 					@Override
-					@NonNull
-					public Listener build(@NonNull TavernaRun run,
-							@NonNull String configuration)
+					@Nonnull
+					public Listener build(@Nonnull TavernaRun run,
+							@Nonnull String configuration)
 							throws NoListenerException {
 						return makeListener(run, configuration);
 					}
@@ -204,12 +201,12 @@ public class TavernaServerImplTest {
 
 	@Test
 	public void defaults2() {
-		assertEquals(10, server.getMaxSimultaneousRuns());
+		assertEquals(10, server.getServerMaxRuns());
 	}
 
 	@Test
 	public void defaults3() {
-		assertEquals(1, server.getAllowedListeners().length);
+		assertEquals(1, server.getServerListeners().length);
 	}
 
 	@Test
@@ -222,7 +219,7 @@ public class TavernaServerImplTest {
 		int oldmax = policy.maxruns;
 		try {
 			policy.maxruns = 1;
-			assertEquals(1, server.getMaxSimultaneousRuns());
+			assertEquals(1, server.getServerMaxRuns());
 		} finally {
 			policy.maxruns = oldmax;
 		}
@@ -241,7 +238,7 @@ public class TavernaServerImplTest {
 		RunReference run = server.submitWorkflow(null);
 		try {
 			lrunname = lrunconf = null;
-			assertEquals(asList("foo"), asList(server.getAllowedListeners()));
+			assertEquals(asList("foo"), asList(server.getServerListeners()));
 			String l = server.addRunListener(run.name, "foo", "foobar");
 			assertEquals("bar", l);
 			assertEquals("foobar", lrunconf);

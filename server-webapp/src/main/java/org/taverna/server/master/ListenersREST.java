@@ -13,6 +13,7 @@ import static org.taverna.server.master.utils.RestUtils.opt;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.annotation.Nonnull;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
@@ -24,16 +25,14 @@ import org.taverna.server.master.interfaces.Listener;
 import org.taverna.server.master.interfaces.TavernaRun;
 import org.taverna.server.master.rest.ListenerDefinition;
 import org.taverna.server.master.rest.TavernaServerListenersREST;
+import org.taverna.server.master.utils.CallTimeLogger.PerfLogged;
 import org.taverna.server.master.utils.InvocationCounter.CallCounted;
-
-import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
  * RESTful interface to a single workflow run's event listeners.
  * 
  * @author Donal Fellows
  */
-@SuppressWarnings("null")
 abstract class ListenersREST implements TavernaServerListenersREST,
 		ListenersBean {
 	private TavernaRun run;
@@ -45,18 +44,18 @@ abstract class ListenersREST implements TavernaServerListenersREST,
 	}
 
 	@Override
-	@NonNull
-	public ListenersREST connect(@NonNull TavernaRun run) {
+	@Nonnull
+	public ListenersREST connect(@Nonnull TavernaRun run) {
 		this.run = run;
 		return this;
 	}
 
 	@Override
-	@NonNull
+	@Nonnull
 	@CallCounted
-	public Response addListener(
-			@NonNull ListenerDefinition typeAndConfiguration,
-			@NonNull UriInfo ui) throws NoUpdateException, NoListenerException {
+	@PerfLogged
+	public Response addListener(ListenerDefinition typeAndConfiguration,
+			UriInfo ui) throws NoUpdateException, NoListenerException {
 		String name = support.makeListener(run, typeAndConfiguration.type,
 				typeAndConfiguration.configuration).getName();
 		return created(secure(ui).path("{listenerName}").build(name)).build();
@@ -64,9 +63,10 @@ abstract class ListenersREST implements TavernaServerListenersREST,
 
 	@SuppressWarnings("unused")
 	@Override
-	@NonNull
+	@Nonnull
 	@CallCounted
-	public TavernaServerListenerREST getListener(@NonNull String name)
+	@PerfLogged
+	public TavernaServerListenerREST getListener(String name)
 			throws NoListenerException {
 		Listener l = support.getListener(run, name);
 		if (l == null)
@@ -74,14 +74,15 @@ abstract class ListenersREST implements TavernaServerListenersREST,
 		return makeListenerInterface().connect(l, run);
 	}
 
-	@NonNull
+	@Nonnull
 	protected abstract SingleListenerREST makeListenerInterface();
 
 	@Override
-	@NonNull
+	@Nonnull
 	@CallCounted
-	public Listeners getDescription(@NonNull UriInfo ui) {
-		List<ListenerDescription> result = new ArrayList<ListenerDescription>();
+	@PerfLogged
+	public Listeners getDescription(UriInfo ui) {
+		List<ListenerDescription> result = new ArrayList<>();
 		UriBuilder ub = secure(ui).path("{name}");
 		for (Listener l : run.getListeners())
 			result.add(new ListenerDescription(l,
@@ -90,7 +91,7 @@ abstract class ListenersREST implements TavernaServerListenersREST,
 	}
 
 	@Override
-	@NonNull
+	@Nonnull
 	@CallCounted
 	public Response listenersOptions() {
 		return opt();

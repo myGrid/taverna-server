@@ -5,10 +5,10 @@
  */
 package org.taverna.server.master.interfaces;
 
-import org.taverna.server.master.utils.UsernamePrincipal;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
+import org.taverna.server.master.utils.UsernamePrincipal;
 
 /**
  * This interface describes how to map from the identity understood by the
@@ -30,5 +30,5 @@ public interface LocalIdentityMapper {
 	 *         to supply a mapping.
 	 */
 	@Nullable
-	String getUsernameForPrincipal(@NonNull UsernamePrincipal user);
+	String getUsernameForPrincipal(@Nonnull UsernamePrincipal user);
 }

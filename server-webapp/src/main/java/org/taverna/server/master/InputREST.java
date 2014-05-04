@@ -10,6 +10,7 @@ import static org.taverna.server.master.utils.RestUtils.opt;
 
 import java.util.Date;
 
+import javax.annotation.Nonnull;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
@@ -35,10 +36,9 @@ import org.taverna.server.master.rest.TavernaServerInputREST;
 import org.taverna.server.master.rest.TavernaServerInputREST.InDesc.AbstractContents;
 import org.taverna.server.master.rest.TavernaServerInputREST.InDesc.Reference;
 import org.taverna.server.master.utils.FilenameUtils;
+import org.taverna.server.master.utils.CallTimeLogger.PerfLogged;
 import org.taverna.server.master.utils.InvocationCounter.CallCounted;
 import org.taverna.server.port_description.InputDescription;
-
-import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
  * RESTful interface to the input descriptor of a single workflow run.
@@ -71,52 +71,55 @@ class InputREST implements TavernaServerInputREST, InputBean {
 	}
 
 	@Override
-	@NonNull
-	public InputREST connect(@NonNull TavernaRun run, @NonNull UriInfo ui) {
+	@Nonnull
+	public InputREST connect(@Nonnull TavernaRun run, @Nonnull UriInfo ui) {
 		this.run = run;
 		this.ui = ui;
 		return this;
 	}
 
 	@Override
-	@NonNull
+	@Nonnull
 	@CallCounted
+	@PerfLogged
 	public InputsDescriptor get() {
 		return new InputsDescriptor(ui, run);
 	}
 
 	@Override
-	@NonNull
+	@Nonnull
 	@CallCounted
+	@PerfLogged
 	public InputDescription getExpected() {
 		return cdBuilder.makeInputDescriptor(run, ui);
 	}
 
 	@Override
-	@NonNull
+	@Nonnull
 	@CallCounted
+	@PerfLogged
 	public String getBaclavaFile() {
 		String i = run.getInputBaclavaFile();
 		return i == null ? "" : i;
 	}
 
 	@Override
-	@NonNull
+	@Nonnull
 	@CallCounted
-	public InDesc getInput(@NonNull String name)
-			throws BadInputPortNameException {
+	@PerfLogged
+	public InDesc getInput(String name, UriInfo ui) throws BadInputPortNameException {
 		Input i = support.getInput(run, name);
 		if (i == null)
 			throw new BadInputPortNameException("unknown input port name");
-		return new InDesc(i);
+		return new InDesc(i, ui);
 	}
 
 	@Override
-	@NonNull
+	@Nonnull
 	@CallCounted
-	public String setBaclavaFile(@NonNull String filename)
-			throws NoUpdateException, BadStateChangeException,
-			FilesystemAccessException {
+	@PerfLogged
+	public String setBaclavaFile(String filename) throws NoUpdateException,
+			BadStateChangeException, FilesystemAccessException {
 		support.permitUpdate(run);
 		run.setInputBaclavaFile(filename);
 		String i = run.getInputBaclavaFile();
@@ -124,19 +127,25 @@ class InputREST implements TavernaServerInputREST, InputBean {
 	}
 
 	@Override
-	@NonNull
+	@Nonnull
 	@CallCounted
-	public InDesc setInput(@NonNull String name, @NonNull InDesc inputDescriptor)
+	@PerfLogged
+	public InDesc setInput(String name, InDesc inputDescriptor, UriInfo ui)
 			throws NoUpdateException, BadStateChangeException,
 			FilesystemAccessException, BadInputPortNameException,
 			BadPropertyValueException {
+		inputDescriptor.descriptorRef = null;
 		AbstractContents ac = inputDescriptor.assignment;
 		if (name == null || name.isEmpty())
 			throw new BadInputPortNameException("bad input name");
 		if (ac == null)
 			throw new BadPropertyValueException("no content!");
+		if (inputDescriptor.delimiter != null
+				&& inputDescriptor.delimiter.isEmpty())
+			inputDescriptor.delimiter = null;
 		if (ac instanceof InDesc.Reference)
-			return setRemoteInput(name, (InDesc.Reference) ac);
+			return setRemoteInput(name, (InDesc.Reference) ac,
+					inputDescriptor.delimiter, ui);
 		if (!(ac instanceof InDesc.File || ac instanceof InDesc.Value))
 			throw new BadPropertyValueException("unknown content type");
 		support.permitUpdate(run);
@@ -147,16 +156,16 @@ class InputREST implements TavernaServerInputREST, InputBean {
 			i.setFile(ac.contents);
 		else
 			i.setValue(ac.contents);
-		return new InDesc(i);
+		i.setDelimiter(inputDescriptor.delimiter);
+		return new InDesc(i, ui);
 	}
 
-	@NonNull
-	private InDesc setRemoteInput(@NonNull String name, Reference ref)
-			throws BadStateChangeException, BadPropertyValueException,
-			FilesystemAccessException {
+	private InDesc setRemoteInput(String name, Reference ref, String delimiter,
+			UriInfo ui) throws BadStateChangeException,
+			BadPropertyValueException, FilesystemAccessException {
 		URITemplate tmpl = new URITemplate(ui.getBaseUri()
 				+ "/runs/{runName}/wd/{path:.+}");
-		MultivaluedMap<String, String> mvm = new MetadataMap<String, String>();
+		MultivaluedMap<String, String> mvm = new MetadataMap<>();
 		if (!tmpl.match(ref.contents, mvm)) {
 			throw new BadPropertyValueException(
 					"URI in reference does not refer to local disk resource");
@@ -174,7 +183,8 @@ class InputREST implements TavernaServerInputREST, InputBean {
 			if (i == null)
 				i = run.makeInput(name);
 			i.setFile(to.getFullName());
-			return new InDesc(i);
+			i.setDelimiter(delimiter);
+			return new InDesc(i, ui);
 		} catch (UnknownRunException e) {
 			throw new BadStateChangeException("may not copy from that run", e);
 		} catch (NoDirectoryEntryException e) {
@@ -214,28 +224,28 @@ class InputREST implements TavernaServerInputREST, InputBean {
  */
 @SuppressWarnings("null")
 class SyntheticDirectoryEntry implements DirectoryEntry {
-	public static DirEntryReference make(@NonNull String path) {
+	public static DirEntryReference make(@Nonnull String path) {
 		return DirEntryReference.newInstance(new SyntheticDirectoryEntry(path));
 	}
 
-	private SyntheticDirectoryEntry(@NonNull String p) {
+	private SyntheticDirectoryEntry(@Nonnull String p) {
 		this.p = p;
 		this.d = new Date();
 	}
 
-	@NonNull
+	@Nonnull
 	private final String p;
-	@NonNull
+	@Nonnull
 	private final Date d;
 
 	@Override
-	@NonNull
+	@Nonnull
 	public String getName() {
 		return "";
 	}
 
 	@Override
-	@NonNull
+	@Nonnull
 	public String getFullName() {
 		return p;
 	}
@@ -250,7 +260,7 @@ class SyntheticDirectoryEntry implements DirectoryEntry {
 	}
 
 	@Override
-	@NonNull
+	@Nonnull
 	public Date getModificationDate() {
 		return d;
 	}

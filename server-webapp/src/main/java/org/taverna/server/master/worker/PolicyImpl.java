@@ -10,6 +10,9 @@ import static org.taverna.server.master.identity.WorkflowInternalAuthProvider.PR
 import java.net.URI;
 import java.util.List;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Required;
@@ -26,10 +29,6 @@ import org.taverna.server.master.interfaces.TavernaRun;
 import org.taverna.server.master.interfaces.TavernaSecurityContext;
 import org.taverna.server.master.utils.UsernamePrincipal;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
-import edu.umd.cs.findbugs.annotations.SuppressWarnings;
-
 /**
  * Basic policy implementation that allows any workflow to be instantiated by
  * any user, but which does not permit users to access each others workflow
@@ -37,7 +36,6 @@ import edu.umd.cs.findbugs.annotations.SuppressWarnings;
  * 
  * @author Donal Fellows
  */
-@SuppressWarnings("IS2_INCONSISTENT_SYNC")
 class PolicyImpl implements Policy {
 	Log log = LogFactory.getLog("Taverna.Server.Worker.Policy");
 	private PolicyLimits limits;
@@ -59,7 +57,7 @@ class PolicyImpl implements Policy {
 	}
 
 	@Override
-	public Integer getMaxRuns(@NonNull UsernamePrincipal user) {
+	public Integer getMaxRuns(@Nonnull UsernamePrincipal user) {
 		return null;
 	}
 
@@ -93,8 +91,8 @@ class PolicyImpl implements Policy {
 	}
 
 	@Override
-	public boolean permitAccess(@NonNull UsernamePrincipal user,
-			@NonNull TavernaRun run) {
+	public boolean permitAccess(@Nonnull UsernamePrincipal user,
+			@Nonnull TavernaRun run) {
 		String username = user.getName();
 		TavernaSecurityContext context = run.getSecurityContext();
 		if (context.getOwner().getName().equals(username)) {
@@ -114,10 +112,9 @@ class PolicyImpl implements Policy {
 		return context.getPermittedReaders().contains(username);
 	}
 
-	@java.lang.SuppressWarnings("unused")
 	@Override
-	public void permitCreate(@NonNull UsernamePrincipal user,
-			@NonNull Workflow workflow) throws NoCreateException {
+	public void permitCreate(@Nonnull UsernamePrincipal user,
+			@Nonnull Workflow workflow) throws NoCreateException {
 		if (user == null)
 			throw new NoCreateException(
 					"anonymous workflow creation not allowed");
@@ -125,10 +122,9 @@ class PolicyImpl implements Policy {
 			throw new NoCreateException("server load exceeded; please wait");
 	}
 
-	@java.lang.SuppressWarnings("unused")
 	@Override
-	public synchronized void permitDestroy(@NonNull UsernamePrincipal user,
-			@NonNull TavernaRun run) throws NoDestroyException {
+	public synchronized void permitDestroy(@Nonnull UsernamePrincipal user,
+			@Nonnull TavernaRun run) throws NoDestroyException {
 		if (user == null)
 			throw new NoDestroyException();
 		String username = user.getName();
@@ -140,10 +136,9 @@ class PolicyImpl implements Policy {
 			throw new NoDestroyException();
 	}
 
-	@java.lang.SuppressWarnings("unused")
 	@Override
-	public void permitUpdate(@NonNull UsernamePrincipal user,
-			@NonNull TavernaRun run) throws NoUpdateException {
+	public void permitUpdate(@Nonnull UsernamePrincipal user,
+			@Nonnull TavernaRun run) throws NoUpdateException {
 		if (user == null)
 			throw new NoUpdateException(
 					"workflow run not owned by you and you're not granted access");

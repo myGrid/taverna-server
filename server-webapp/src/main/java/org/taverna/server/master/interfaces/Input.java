@@ -5,12 +5,12 @@
  */
 package org.taverna.server.master.interfaces;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
 import org.taverna.server.master.common.Status;
 import org.taverna.server.master.exceptions.BadStateChangeException;
 import org.taverna.server.master.exceptions.FilesystemAccessException;
-
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 
 /**
  * This represents the assignment of inputs to input ports of the workflow. Note
@@ -30,7 +30,7 @@ public interface Input {
 	/**
 	 * @return The name of this input port. This may not be changed.
 	 */
-	@NonNull
+	@Nonnull
 	String getName();
 
 	/**
@@ -39,6 +39,13 @@ public interface Input {
 	 */
 	@Nullable
 	String getValue();
+
+	/**
+	 * @return The delimiter for the input port, or <tt>null</tt> if the value
+	 *         is not to be split.
+	 */
+	@Nullable
+	String getDelimiter();
 
 	/**
 	 * Sets the file to use for this input. This overrides the use of the
@@ -54,7 +61,7 @@ public interface Input {
 	 *             If the run isn't in the {@link Status#Initialized
 	 *             Initialized} state.
 	 */
-	void setFile(@NonNull String file) throws FilesystemAccessException,
+	void setFile(@Nonnull String file) throws FilesystemAccessException,
 			BadStateChangeException;
 
 	/**
@@ -67,5 +74,18 @@ public interface Input {
 	 *             If the run isn't in the {@link Status#Initialized
 	 *             Initialized} state.
 	 */
-	void setValue(@NonNull String value) throws BadStateChangeException;
+	void setValue(@Nonnull String value) throws BadStateChangeException;
+
+	/**
+	 * Sets (or clears) the delimiter for the input port.
+	 * 
+	 * @param delimiter
+	 *            The delimiter character, or <tt>null</tt> if the value is not
+	 *            to be split.
+	 * @throws BadStateChangeException
+	 *             If the run isn't in the {@link Status#Initialized
+	 *             Initialized} state.
+	 */
+	@Nullable
+	public void setDelimiter(String delimiter) throws BadStateChangeException;
 }

@@ -6,7 +6,6 @@
 package org.taverna.server.master.localworker;
 
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,11 +21,14 @@ import org.taverna.server.master.worker.WorkerModel;
  * 
  * @author Donal Fellows
  */
-// WARNING! If you change the name of this class, update persistence.xml as
-// well!
+/*
+ * WARNING! If you change the name of this class, update persistence.xml as
+ * well!
+ */
 @PersistenceCapable(table = PersistedState.TABLE)
 class PersistedState implements WorkerModel {
 	static final String TABLE = "LOCALWORKERSTATE__PERSISTEDSTATE";
+
 	static PersistedState makeInstance() {
 		PersistedState o = new PersistedState();
 		o.ID = KEY;
@@ -71,6 +73,8 @@ class PersistedState implements WorkerModel {
 	@Persistent(defaultFetchGroup = "true")
 	@Join(table = TABLE + "_PERMWFURI", column = "ID")
 	private String[] permittedWorkflows;
+	@Persistent
+	private int generateProvenance;
 
 	@Override
 	public void setDefaultLifetime(int defaultLifetime) {
@@ -214,22 +218,21 @@ class PersistedState implements WorkerModel {
 
 	@Override
 	public List<URI> getPermittedWorkflowURIs() {
-		List<URI> uris = new ArrayList<URI>();
-		if (permittedWorkflows != null)
-			for (String uri : permittedWorkflows)
-				try {
-					uris.add(new URI(uri));
-				} catch (URISyntaxException e) {
-					// Ignore; should be impossible at this point
-				}
+		String[] pw = this.permittedWorkflows;
+		if (pw == null)
+			return new ArrayList<>();
+		List<URI> uris = new ArrayList<>(pw.length);
+		for (String uri : pw)
+			uris.add(URI.create(uri));
 		return uris;
 	}
 
 	@Override
 	public void setPermittedWorkflowURIs(List<URI> permittedWorkflows) {
-		this.permittedWorkflows = new String[permittedWorkflows.size()];
-		for (int i = 0 ; i<this.permittedWorkflows.length ; i++)
-			this.permittedWorkflows[i] = permittedWorkflows.get(i).toString();
+		String[] pw = new String[permittedWorkflows.size()];
+		for (int i = 0; i < pw.length; i++)
+			pw[i] = permittedWorkflows.get(i).toString();
+		this.permittedWorkflows = pw;
 	}
 
 	@Override
@@ -240,5 +243,15 @@ class PersistedState implements WorkerModel {
 	@Override
 	public void setRegistryJar(String registryJar) {
 		this.registryJar = registryJar;
+	}
+
+	@Override
+	public boolean getGenerateProvenance() {
+		return generateProvenance > 0;
+	}
+
+	@Override
+	public void setGenerateProvenance(boolean generateProvenance) {
+		this.generateProvenance = (generateProvenance ? 1 : 0);
 	}
 }

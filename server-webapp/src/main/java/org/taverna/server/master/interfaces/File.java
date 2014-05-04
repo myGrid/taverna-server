@@ -5,10 +5,10 @@
  */
 package org.taverna.server.master.interfaces;
 
-import org.taverna.server.master.exceptions.FilesystemAccessException;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
+import org.taverna.server.master.exceptions.FilesystemAccessException;
 
 /**
  * Represents a file in the working directory of a workflow instance run, or in
@@ -22,7 +22,8 @@ public interface File extends DirectoryEntry {
 	 * @param offset
 	 *            Where in the file to start reading.
 	 * @param length
-	 *            The length of file to read.
+	 *            The length of file to read, or -1 to read to the end of the
+	 *            file.
 	 * @return The literal byte contents of the section of the file, or null if
 	 *         the section doesn't exist.
 	 * @throws FilesystemAccessException
@@ -39,7 +40,7 @@ public interface File extends DirectoryEntry {
 	 * @throws FilesystemAccessException
 	 *             If the write to the file goes wrong.
 	 */
-	void setContents(@NonNull byte[] data) throws FilesystemAccessException;
+	void setContents(@Nonnull byte[] data) throws FilesystemAccessException;
 
 	/**
 	 * Append the data to the file.
@@ -50,7 +51,7 @@ public interface File extends DirectoryEntry {
 	 * @throws FilesystemAccessException
 	 *             If the write to the file goes wrong.
 	 */
-	void appendContents(@NonNull byte[] data) throws FilesystemAccessException;
+	void appendContents(@Nonnull byte[] data) throws FilesystemAccessException;
 
 	/**
 	 * @return The length of the file, in bytes.
@@ -67,5 +68,5 @@ public interface File extends DirectoryEntry {
 	 * @throws FilesystemAccessException
 	 *             If anything goes wrong.
 	 */
-	void copy(@NonNull File from) throws FilesystemAccessException;
+	void copy(@Nonnull File from) throws FilesystemAccessException;
 }

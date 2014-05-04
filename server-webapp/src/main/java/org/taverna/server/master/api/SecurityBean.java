@@ -1,10 +1,10 @@
 package org.taverna.server.master.api;
 
+import javax.annotation.Nonnull;
+
 import org.taverna.server.master.interfaces.TavernaRun;
 import org.taverna.server.master.interfaces.TavernaSecurityContext;
 import org.taverna.server.master.rest.TavernaServerSecurityREST;
-
-import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
  * Description of properties supported by {@link RunSecurityREST}.
@@ -12,7 +12,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
  * @author Donal Fellows
  */
 public interface SecurityBean extends SupportAware {
-	@NonNull
-	TavernaServerSecurityREST connect(@NonNull TavernaSecurityContext context,
-			@NonNull TavernaRun run);
+	@Nonnull
+	TavernaServerSecurityREST connect(@Nonnull TavernaSecurityContext context,
+			@Nonnull TavernaRun run);
 }

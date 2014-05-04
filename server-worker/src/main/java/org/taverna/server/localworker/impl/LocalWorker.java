@@ -46,6 +46,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
 import org.taverna.server.localworker.api.Worker;
 import org.taverna.server.localworker.api.WorkerFactory;
 import org.taverna.server.localworker.remote.IllegalStateTransitionException;
@@ -59,10 +62,6 @@ import org.taverna.server.localworker.remote.RemoteStatus;
 import org.taverna.server.localworker.remote.StillWorkingOnItException;
 import org.taverna.server.localworker.server.UsageRecordReceiver;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
-import edu.umd.cs.findbugs.annotations.SuppressWarnings;
-
 /**
  * This class implements one side of the connection between the Taverna Server
  * master server and this process. It delegates to a {@link Worker} instance the
@@ -73,8 +72,7 @@ import edu.umd.cs.findbugs.annotations.SuppressWarnings;
  * @see FileDelegate
  * @see WorkerCore
  */
-@SuppressWarnings({ "SE_BAD_FIELD", "SE_NO_SERIALVERSIONID" })
-@java.lang.SuppressWarnings("serial")
+@SuppressWarnings("serial")
 public class LocalWorker extends UnicastRemoteObject implements RemoteSingleRun {
 	// ----------------------- CONSTANTS -----------------------
 
@@ -111,6 +109,8 @@ public class LocalWorker extends UnicastRemoteObject implements RemoteSingleRun 
 	final Map<String, File> inputRealFiles;
 	/** What inputs to pass as direct values. */
 	final Map<String, String> inputValues;
+	/** What delimiters to use. */
+	final Map<String, String> inputDelimiters;
 	/** The interface to the workflow engine subprocess. */
 	private final Worker core;
 	/** Our descriptor token (UUID). */
@@ -164,11 +164,12 @@ public class LocalWorker extends UnicastRemoteObject implements RemoteSingleRun 
 	 */
 	char[] keystorePassword = KEYSTORE_PASSWORD;
 	/** Additional server-specified environment settings. */
-	Map<String, String> environment = new HashMap<String, String>();
+	Map<String, String> environment = new HashMap<>();
 	/** Additional server-specified java runtime settings. */
-	List<String> runtimeSettings = new ArrayList<String>();
+	List<String> runtimeSettings = new ArrayList<>();
 	URL interactionFeedURL;
 	URL webdavURL;
+	private boolean doProvenance = true;
 
 	// ----------------------- METHODS -----------------------
 
@@ -221,9 +222,10 @@ public class LocalWorker extends UnicastRemoteObject implements RemoteSingleRun 
 					"problem creating run working directory", e);
 		}
 		baseDir = new DirectoryDelegate(base, null);
-		inputFiles = new HashMap<String, String>();
-		inputRealFiles = new HashMap<String, File>();
-		inputValues = new HashMap<String, String>();
+		inputFiles = new HashMap<>();
+		inputRealFiles = new HashMap<>();
+		inputValues = new HashMap<>();
+		inputDelimiters = new HashMap<>();
 		environment.putAll(seedEnvironment);
 		runtimeSettings.addAll(javaParams);
 		try {
@@ -329,22 +331,22 @@ public class LocalWorker extends UnicastRemoteObject implements RemoteSingleRun 
 	}
 
 	@Override
-	@NonNull
+	@Nonnull
 	public List<RemoteInput> getInputs() throws RemoteException {
-		ArrayList<RemoteInput> result = new ArrayList<RemoteInput>();
+		ArrayList<RemoteInput> result = new ArrayList<>();
 		for (String name : inputFiles.keySet())
 			result.add(new InputDelegate(name));
 		return result;
 	}
 
 	@Override
-	@NonNull
+	@Nonnull
 	public List<String> getListenerTypes() {
 		return emptyList();
 	}
 
 	@Override
-	@NonNull
+	@Nonnull
 	public List<RemoteListener> getListeners() {
 		return singletonList(core.getDefaultListener());
 	}
@@ -354,7 +356,6 @@ public class LocalWorker extends UnicastRemoteObject implements RemoteSingleRun 
 		return outputBaclava;
 	}
 
-	@SuppressWarnings("SE_INNER_CLASS")
 	class SecurityDelegate extends UnicastRemoteObject implements
 			RemoteSecurityContext {
 		private void setPrivatePerms(File dir) {
@@ -445,7 +446,7 @@ public class LocalWorker extends UnicastRemoteObject implements RemoteSingleRun 
 		}
 
 		@Override
-		public void setKeystore(@NonNull byte[] keystore)
+		public void setKeystore(@Nonnull byte[] keystore)
 				throws RemoteException, ImplementationException {
 			if (status != Initialized)
 				throw new RemoteException("not initializing");
@@ -455,7 +456,7 @@ public class LocalWorker extends UnicastRemoteObject implements RemoteSingleRun 
 		}
 
 		@Override
-		public void setPassword(@NonNull char[] password)
+		public void setPassword(@Nonnull char[] password)
 				throws RemoteException {
 			if (status != Initialized)
 				throw new RemoteException("not initializing");
@@ -465,7 +466,7 @@ public class LocalWorker extends UnicastRemoteObject implements RemoteSingleRun 
 		}
 
 		@Override
-		public void setTruststore(@NonNull byte[] truststore)
+		public void setTruststore(@Nonnull byte[] truststore)
 				throws RemoteException, ImplementationException {
 			if (status != Initialized)
 				throw new RemoteException("not initializing");
@@ -475,20 +476,20 @@ public class LocalWorker extends UnicastRemoteObject implements RemoteSingleRun 
 		}
 
 		@Override
-		public void setUriToAliasMap(@NonNull HashMap<URI, String> uriToAliasMap)
+		public void setUriToAliasMap(@Nonnull Map<URI, String> uriToAliasMap)
 				throws RemoteException {
 			if (status != Initialized)
 				throw new RemoteException("not initializing");
 			if (uriToAliasMap == null)
 				return;
-			ArrayList<String> lines = new ArrayList<String>();
+			ArrayList<String> lines = new ArrayList<>();
 			for (Entry<URI, String> site : uriToAliasMap.entrySet())
 				lines.add(site.getKey().toASCIIString() + " " + site.getValue());
 			// write(URI_ALIAS_MAP, lines);
 		}
 
 		@Override
-		public void setHelioToken(@NonNull String helioToken)
+		public void setHelioToken(@Nonnull String helioToken)
 				throws RemoteException {
 			if (status != Initialized)
 				throw new RemoteException("not initializing");
@@ -498,7 +499,7 @@ public class LocalWorker extends UnicastRemoteObject implements RemoteSingleRun 
 	}
 
 	@Override
-	@NonNull
+	@Nonnull
 	public RemoteSecurityContext getSecurityContext() throws RemoteException,
 			ImplementationException {
 		try {
@@ -515,7 +516,7 @@ public class LocalWorker extends UnicastRemoteObject implements RemoteSingleRun 
 	}
 
 	@Override
-	@NonNull
+	@Nonnull
 	public RemoteStatus getStatus() {
 		// only state that can spontaneously change to another
 		if (status == Operating) {
@@ -527,7 +528,7 @@ public class LocalWorker extends UnicastRemoteObject implements RemoteSingleRun 
 	}
 
 	@Override
-	@NonNull
+	@Nonnull
 	public RemoteDirectory getWorkingDirectory() {
 		return baseDir;
 	}
@@ -542,12 +543,11 @@ public class LocalWorker extends UnicastRemoteObject implements RemoteSingleRun 
 		}
 	}
 
-	@SuppressWarnings("SE_INNER_CLASS")
 	class InputDelegate extends UnicastRemoteObject implements RemoteInput {
-		@NonNull
+		@Nonnull
 		private String name;
 
-		InputDelegate(@NonNull String name) throws RemoteException {
+		InputDelegate(@Nonnull String name) throws RemoteException {
 			super();
 			this.name = name;
 			if (!inputFiles.containsKey(name)) {
@@ -556,6 +556,7 @@ public class LocalWorker extends UnicastRemoteObject implements RemoteSingleRun 
 				inputFiles.put(name, null);
 				inputRealFiles.put(name, null);
 				inputValues.put(name, null);
+				inputDelimiters.put(name, null);
 			}
 		}
 
@@ -565,7 +566,7 @@ public class LocalWorker extends UnicastRemoteObject implements RemoteSingleRun 
 		}
 
 		@Override
-		@NonNull
+		@Nonnull
 		public String getName() {
 			return name;
 		}
@@ -576,7 +577,12 @@ public class LocalWorker extends UnicastRemoteObject implements RemoteSingleRun 
 		}
 
 		@Override
-		public void setFile(@NonNull String file) throws RemoteException {
+		public String getDelimiter() throws RemoteException {
+			return inputDelimiters.get(name);
+		}
+
+		@Override
+		public void setFile(@Nonnull String file) throws RemoteException {
 			if (status != Initialized)
 				throw new IllegalStateException("not initializing");
 			inputRealFiles.put(name, validateFilename(file));
@@ -586,7 +592,7 @@ public class LocalWorker extends UnicastRemoteObject implements RemoteSingleRun 
 		}
 
 		@Override
-		public void setValue(@NonNull String value) throws RemoteException {
+		public void setValue(@Nonnull String value) throws RemoteException {
 			if (status != Initialized)
 				throw new IllegalStateException("not initializing");
 			inputValues.put(name, value);
@@ -594,23 +600,43 @@ public class LocalWorker extends UnicastRemoteObject implements RemoteSingleRun 
 			inputRealFiles.put(name, null);
 			inputBaclava = null;
 		}
+
+		@Override
+		public void setDelimiter(String delimiter) throws RemoteException {
+			if (status != Initialized)
+				throw new IllegalStateException("not initializing");
+			if (inputBaclava != null)
+				throw new IllegalStateException("input baclava file set");
+			if (delimiter != null) {
+				if (delimiter.length() > 1)
+					throw new IllegalStateException(
+							"multi-character delimiter not permitted");
+				if (delimiter.charAt(0) == 0)
+					throw new IllegalStateException(
+							"may not use NUL for splitting");
+				if (delimiter.charAt(0) > 127)
+					throw new IllegalStateException(
+							"only ASCII characters supported for splitting");
+			}
+			inputDelimiters.put(name, delimiter);
+		}
 	}
 
 	@Override
-	@NonNull
-	public RemoteInput makeInput(@NonNull String name) throws RemoteException {
+	@Nonnull
+	public RemoteInput makeInput(@Nonnull String name) throws RemoteException {
 		return new InputDelegate(name);
 	}
 
 	@Override
-	@NonNull
-	public RemoteListener makeListener(@NonNull String type,
-			@NonNull String configuration) throws RemoteException {
+	@Nonnull
+	public RemoteListener makeListener(@Nonnull String type,
+			@Nonnull String configuration) throws RemoteException {
 		throw new RemoteException("listener manufacturing unsupported");
 	}
 
 	@Override
-	public void setInputBaclavaFile(@NonNull String filename)
+	public void setInputBaclavaFile(@Nonnull String filename)
 			throws RemoteException {
 		if (status != Initialized)
 			throw new IllegalStateException("not initializing");
@@ -636,7 +662,12 @@ public class LocalWorker extends UnicastRemoteObject implements RemoteSingleRun 
 	}
 
 	@Override
-	public void setStatus(@NonNull RemoteStatus newStatus)
+	public void setGenerateProvenance(boolean prov) {
+		doProvenance = prov;
+	}
+
+	@Override
+	public void setStatus(@Nonnull RemoteStatus newStatus)
 			throws IllegalStateTransitionException, RemoteException,
 			ImplementationException, StillWorkingOnItException {
 		if (status == newStatus)
@@ -725,9 +756,9 @@ public class LocalWorker extends UnicastRemoteObject implements RemoteSingleRun 
 		 * clear it after use.
 		 */
 		return core.initWorker(this, executeWorkflowCommand, workflow, base,
-				inputBaclavaFile, inputRealFiles, inputValues,
-				outputBaclavaFile, securityDirectory, pw, environment,
-				masterToken, runtimeSettings);
+				inputBaclavaFile, inputRealFiles, inputValues, inputDelimiters,
+				outputBaclavaFile, securityDirectory, pw, doProvenance,
+				environment, masterToken, runtimeSettings);
 	}
 
 	@Override
@@ -741,9 +772,14 @@ public class LocalWorker extends UnicastRemoteObject implements RemoteSingleRun 
 	}
 
 	@Override
-	public void setInteractionServiceDetails(@NonNull URL feed,
-			@NonNull URL webdav) {
+	public void setInteractionServiceDetails(@Nonnull URL feed,
+			@Nonnull URL webdav) {
 		interactionFeedURL = feed;
 		webdavURL = webdav;
+	}
+
+	@Override
+	public void ping() {
+		// Do nothing here; this *should* be empty
 	}
 }

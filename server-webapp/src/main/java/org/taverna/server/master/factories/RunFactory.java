@@ -5,12 +5,12 @@
  */
 package org.taverna.server.master.factories;
 
+import javax.annotation.Nonnull;
+
 import org.taverna.server.master.common.Workflow;
 import org.taverna.server.master.exceptions.NoCreateException;
 import org.taverna.server.master.interfaces.TavernaRun;
 import org.taverna.server.master.utils.UsernamePrincipal;
-
-import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
  * How to construct a Taverna Server Workflow Run.
@@ -30,9 +30,9 @@ public interface RunFactory {
 	 * @throws NoCreateException
 	 *             On failure.
 	 */
-	@NonNull
-	TavernaRun create(@NonNull UsernamePrincipal creator,
-			@NonNull Workflow workflow) throws NoCreateException;
+	@Nonnull
+	TavernaRun create(@Nonnull UsernamePrincipal creator,
+			@Nonnull Workflow workflow) throws NoCreateException;
 
 	/**
 	 * Check whether the factory is permitting runs to actually start operating.

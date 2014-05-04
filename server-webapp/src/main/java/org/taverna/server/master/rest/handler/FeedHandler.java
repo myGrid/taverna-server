@@ -1,9 +1,10 @@
-package org.taverna.server.master.interaction;
+package org.taverna.server.master.rest.handler;
 
 import static java.util.Collections.singletonMap;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 
@@ -24,6 +25,7 @@ import org.springframework.beans.factory.annotation.Required;
 public class FeedHandler implements MessageBodyWriter<Feed> {
 	private static final MediaType FEED = new MediaType("application",
 			"atom+xml", singletonMap("type", "feed"));
+	private static final String ENC = "UTF-8";
 
 	@Required
 	public void setAbdera(Abdera abdera) {
@@ -57,7 +59,8 @@ public class FeedHandler implements MessageBodyWriter<Feed> {
 			MultivaluedMap<String, Object> httpHeaders,
 			OutputStream entityStream) throws IOException,
 			WebApplicationException {
-		httpHeaders.putSingle("Content-Type", FEED.toString());
-		writer.writeTo(t, entityStream);
+		httpHeaders.putSingle("Content-Type", FEED.toString() + ";charset="
+				+ ENC);
+		writer.writeTo(t, new OutputStreamWriter(entityStream, ENC));
 	}
 }

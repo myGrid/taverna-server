@@ -8,6 +8,9 @@ import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
 import org.taverna.server.master.exceptions.NoDestroyException;
 import org.taverna.server.master.exceptions.UnknownRunException;
 import org.taverna.server.master.interfaces.Policy;
@@ -15,16 +18,13 @@ import org.taverna.server.master.interfaces.RunStore;
 import org.taverna.server.master.interfaces.TavernaRun;
 import org.taverna.server.master.utils.UsernamePrincipal;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
-
 /**
  * Example of a store for Taverna Workflow Runs.
  * 
  * @author Donal Fellows
  */
 public class SimpleNonpersistentRunStore implements RunStore {
-	private Map<String, TavernaRun> store = new HashMap<String, TavernaRun>();
+	private Map<String, TavernaRun> store = new HashMap<>();
 	private Object lock = new Object();
 
 	Timer timer;
@@ -88,9 +88,9 @@ public class SimpleNonpersistentRunStore implements RunStore {
 	}
 
 	@Override
-	@NonNull
-	public TavernaRun getRun(@NonNull UsernamePrincipal user,
-			@NonNull Policy p, @NonNull String uuid) throws UnknownRunException {
+	@Nonnull
+	public TavernaRun getRun(@Nonnull UsernamePrincipal user,
+			@Nonnull Policy p, @Nonnull String uuid) throws UnknownRunException {
 		synchronized (lock) {
 			TavernaRun w = store.get(uuid);
 			if (w == null || !p.permitAccess(user, w))
@@ -100,8 +100,8 @@ public class SimpleNonpersistentRunStore implements RunStore {
 	}
 
 	@Override
-	@NonNull
-	public TavernaRun getRun(@NonNull String uuid) throws UnknownRunException {
+	@Nonnull
+	public TavernaRun getRun(@Nonnull String uuid) throws UnknownRunException {
 		synchronized (lock) {
 			TavernaRun w = store.get(uuid);
 			if (w == null)
@@ -111,22 +111,21 @@ public class SimpleNonpersistentRunStore implements RunStore {
 	}
 
 	@Override
-	@NonNull
+	@Nonnull
 	public Map<String, TavernaRun> listRuns(@Nullable UsernamePrincipal user,
-			@NonNull Policy p) {
-		HashMap<String, TavernaRun> filtered = new HashMap<String, TavernaRun>();
+			@Nonnull Policy p) {
+		Map<String, TavernaRun> filtered = new HashMap<>();
 		synchronized (lock) {
-			for (Map.Entry<String, TavernaRun> entry : store.entrySet()) {
+			for (Map.Entry<String, TavernaRun> entry : store.entrySet())
 				if (user != null && p.permitAccess(user, entry.getValue()))
 					filtered.put(entry.getKey(), entry.getValue());
-			}
 		}
 		return filtered;
 	}
 
 	@Override
-	@NonNull
-	public String registerRun(@NonNull TavernaRun run) {
+	@Nonnull
+	public String registerRun(@Nonnull TavernaRun run) {
 		synchronized (lock) {
 			store.put(run.getId(), run);
 			return run.getId();
@@ -134,7 +133,7 @@ public class SimpleNonpersistentRunStore implements RunStore {
 	}
 
 	@Override
-	public void unregisterRun(@NonNull String uuid) {
+	public void unregisterRun(@Nonnull String uuid) {
 		synchronized (lock) {
 			store.remove(uuid);
 		}
@@ -145,7 +144,7 @@ class CleanerTask extends TimerTask {
 	WeakReference<SimpleNonpersistentRunStore> store;
 
 	CleanerTask(SimpleNonpersistentRunStore store, int interval) {
-		this.store = new WeakReference<SimpleNonpersistentRunStore>(store);
+		this.store = new WeakReference<>(store);
 		int tms = interval * 1000;
 		store.timer.scheduleAtFixedRate(this, tms, tms);
 	}

@@ -31,6 +31,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
@@ -49,10 +51,6 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
-import edu.umd.cs.findbugs.annotations.SuppressWarnings;
-
 /**
  * The registered factory for runs, this class is responsible for constructing
  * runs that are suitable for particular users. It is also the entry point for
@@ -61,8 +59,7 @@ import edu.umd.cs.findbugs.annotations.SuppressWarnings;
  * @author Donal Fellows
  * @see LocalWorker
  */
-@SuppressWarnings({ "SE_BAD_FIELD", "SE_NO_SERIALVERSIONID" })
-@java.lang.SuppressWarnings("serial")
+@SuppressWarnings("serial")
 public class TavernaRunManager extends UnicastRemoteObject implements
 		RemoteRunFactory, RunAccounting, WorkerFactory {
 	DocumentBuilderFactory dbf;
@@ -73,8 +70,8 @@ public class TavernaRunManager extends UnicastRemoteObject implements
 	public static String interactionPort;
 	public static String interactionWebdavPath;
 	public static String interactionFeedPath;
-	Map<String, String> seedEnvironment = new HashMap<String, String>();
-	List<String> javaInitParams = new ArrayList<String>();
+	Map<String, String> seedEnvironment = new HashMap<>();
+	List<String> javaInitParams = new ArrayList<>();
 	private int activeRuns = 0;
 
 	/**
@@ -120,10 +117,9 @@ public class TavernaRunManager extends UnicastRemoteObject implements
 	 * @throws RemoteException
 	 *             If anything goes wrong.
 	 */
-	@SuppressWarnings("REC_CATCH_EXCEPTION")
-	@NonNull
-	private String unwrapWorkflow(@NonNull String workflow,
-			@NonNull Holder<String> wfid) throws RemoteException {
+	@Nonnull
+	private String unwrapWorkflow(@Nonnull String workflow, @Nonnull Holder<String> wfid)
+			throws RemoteException {
 		StringReader sr = new StringReader(workflow);
 		StringWriter sw = new StringWriter();
 		try {
@@ -145,14 +141,14 @@ public class TavernaRunManager extends UnicastRemoteObject implements
 	}
 
 	@Override
-	@NonNull
-	public RemoteSingleRun make(@NonNull String workflow,
-			@NonNull String creator, @Nullable UsageRecordReceiver urReceiver,
+	@Nonnull
+	public RemoteSingleRun make(@Nonnull String workflow,
+			@Nonnull String creator, @Nullable UsageRecordReceiver urReceiver,
 			@Nullable UUID id) throws RemoteException {
 		if (creator == null)
 			throw new RemoteException("no creator");
 		try {
-			Holder<String> wfid = new Holder<String>("???");
+			Holder<String> wfid = new Holder<>("???");
 			workflow = unwrapWorkflow(workflow, wfid);
 			out.println("Creating run from workflow <" + wfid.value + "> for <"
 					+ creator + ">");
@@ -189,7 +185,6 @@ public class TavernaRunManager extends UnicastRemoteObject implements
 
 	static class DelayedDeath implements Runnable {
 		@Override
-		@SuppressWarnings("DM_EXIT")
 		public void run() {
 			try {
 				Thread.sleep(DEATH_DELAY);
@@ -198,6 +193,29 @@ public class TavernaRunManager extends UnicastRemoteObject implements
 				exit(0);
 			}
 		}
+	}
+
+	private void addArgument(String arg) {
+		if (arg.startsWith("-E")) {
+			String trimmed = arg.substring(2);
+			int idx = trimmed.indexOf('=');
+			if (idx > 0) {
+				addEnvironmentDefinition(trimmed.substring(0, idx),
+						trimmed.substring(idx + 1));
+				return;
+			}
+		} else if (arg.startsWith("-D")) {
+			if (arg.indexOf('=') > 0) {
+				addJavaParameter(arg);
+				return;
+			}
+		} else if (arg.startsWith("-J")) {
+			addJavaParameter(arg.substring(2));
+			return;
+		}
+		throw new IllegalArgumentException("argument \"" + arg
+				+ "\" must start with -D, -E or -J; "
+				+ "-D and -E must contain a \"=\"");
 	}
 
 	/**
@@ -217,33 +235,11 @@ public class TavernaRunManager extends UnicastRemoteObject implements
 			setProperty(RMI_HOST_PROP, LOCALHOST);
 		}
 		setSecurityManager(new RMISecurityManager());
-		String command = args[0];
 		factoryName = args[args.length - 1];
-		registry = getRegistry();
-		TavernaRunManager man = new TavernaRunManager(command);
-		for (int i = 1; i < args.length - 1; i++) {
-			if (args[i].startsWith("-E")) {
-				String arg = args[i].substring(2);
-				int idx = arg.indexOf('=');
-				if (idx > 0) {
-					man.addEnvironmentDefinition(arg.substring(0, idx),
-							arg.substring(idx + 1));
-					continue;
-				}
-			} else if (args[i].startsWith("-D")) {
-				if (args[i].indexOf('=') > 0) {
-					man.addJavaParameter(args[i]);
-					continue;
-				}
-			} else if (args[i].startsWith("-J")) {
-				man.addJavaParameter(args[i].substring(2));
-				continue;
-			}
-			throw new IllegalArgumentException(
-					"argument \""
-							+ args[i]
-							+ "\" must start with -D, -E or -J; -D and -E must contain a \"=\"");
-		}
+		TavernaRunManager man = new TavernaRunManager(args[0]);
+		for (int i = 1; i < args.length - 1; i++)
+			man.addArgument(args[i]);
+		registry = getRegistry(LOCALHOST);
 		registry.bind(factoryName, man);
 		getRuntime().addShutdownHook(new Thread() {
 			@Override
@@ -263,9 +259,9 @@ public class TavernaRunManager extends UnicastRemoteObject implements
 	}
 
 	@Override
-	public void setInteractionServiceDetails(@NonNull String host,
-			@NonNull String port, @NonNull String webdavPath,
-			@NonNull String feedPath) throws RemoteException {
+	public void setInteractionServiceDetails(@Nonnull String host,
+			@Nonnull String port, @Nonnull String webdavPath,
+			@Nonnull String feedPath) throws RemoteException {
 		if (host == null || port == null || webdavPath == null
 				|| feedPath == null)
 			throw new IllegalArgumentException("all params must be non-null");

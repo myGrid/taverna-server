@@ -13,6 +13,7 @@ import java.lang.reflect.Method;
 import java.net.URI;
 import java.util.Map;
 
+import javax.annotation.Nonnull;
 import javax.annotation.PreDestroy;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriBuilderException;
@@ -23,11 +24,7 @@ import javax.xml.bind.annotation.XmlType;
 
 import org.apache.commons.logging.Log;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Required;
 import org.springframework.security.web.PortMapper;
-
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.SuppressWarnings;
 
 /**
  * A class that makes it simpler to work with an element with a {@link URI} in
@@ -57,7 +54,7 @@ public class Uri {
 	 * @param ref
 	 *            Where to point to.
 	 */
-	public Uri(@NonNull URI ref) {
+	public Uri(@Nonnull URI ref) {
 		this.ref = secure(ref);
 	}
 
@@ -69,7 +66,7 @@ public class Uri {
 	 * @param strings
 	 *            The parameters to the factory.
 	 */
-	public Uri(@NonNull UriBuilder ub, String... strings) {
+	public Uri(@Nonnull UriBuilder ub, String... strings) {
 		ref = secure(ub).build((Object[]) strings);
 	}
 
@@ -83,7 +80,7 @@ public class Uri {
 	 * @param strings
 	 *            The parameters to the factory.
 	 */
-	public Uri(@NonNull UriInfo ui, @NonNull String path, String... strings) {
+	public Uri(@Nonnull UriInfo ui, @Nonnull String path, String... strings) {
 		this(ui, true, path, strings);
 	}
 
@@ -99,10 +96,9 @@ public class Uri {
 	 * @param strings
 	 *            The parameters to the factory.
 	 */
-	public Uri(@NonNull UriInfo ui, boolean secure, @NonNull String path,
+	public Uri(@Nonnull UriInfo ui, boolean secure, @Nonnull String path,
 			String... strings) {
-		@java.lang.SuppressWarnings("null")
-		@NonNull
+		@Nonnull
 		UriBuilder ub = ui.getAbsolutePathBuilder();
 		if (secure) {
 			ub = secure(ub);
@@ -110,30 +106,29 @@ public class Uri {
 		ref = ub.path(path).build((Object[]) strings);
 	}
 
-	@NonNull
-	public static UriBuilder secure(@NonNull UriBuilder ub) {
+	@Nonnull
+	public static UriBuilder secure(@Nonnull UriBuilder ub) {
 		return Rewriter.getInstance().getSecuredUriBuilder(ub);
 	}
 
-	@java.lang.SuppressWarnings("null")
-	@NonNull
+	@Nonnull
 	public static UriBuilder secure(UriInfo ui) {
 		return secure(ui.getAbsolutePathBuilder());
 	}
 
-	@java.lang.SuppressWarnings("null")
-	@NonNull
+	@Nonnull
 	public static URI secure(URI uri) {
 		URI newURI = secure(fromUri(uri)).build();
-		log.debug("rewrote " + uri + " to " + newURI);
+		if (log.isDebugEnabled())
+			log.debug("rewrote " + uri + " to " + newURI);
 		return newURI;
 	}
 
-	@java.lang.SuppressWarnings("null")
-	@NonNull
+	@Nonnull
 	public static URI secure(URI base, String uri) {
 		URI newURI = secure(fromUri(base.resolve(uri))).build();
-		log.debug("rewrote " + uri + " to " + newURI);
+		if (log.isDebugEnabled())
+			log.debug("rewrote " + uri + " to " + newURI);
 		return newURI;
 	}
 
@@ -157,7 +152,6 @@ public class Uri {
 		}
 
 		@Autowired
-		@Required
 		public void setPortMapper(PortMapper portMapper) {
 			this.portMapper = portMapper;
 		}
@@ -199,29 +193,25 @@ public class Uri {
 			return null;
 		}
 
-		@SuppressWarnings
 		public Rewriter() {
 			instance = this;
 		}
 
 		@PreDestroy
-		@SuppressWarnings
 		public void done() {
 			instance = null;
 			Uri.log = null;
 		}
 
-		@java.lang.SuppressWarnings("null")
-		@NonNull
-		URI rewrite(@NonNull String url) {
+		@Nonnull
+		URI rewrite(@Nonnull String url) {
 			if (rewriteTarget != null)
 				url = url.replaceFirst(rewriteRE, rewriteTarget);
 			return URI.create(url);
 		}
 
-		@java.lang.SuppressWarnings("null")
-		@NonNull
-		public UriBuilder getSecuredUriBuilder(@NonNull UriBuilder uribuilder) {
+		@Nonnull
+		public UriBuilder getSecuredUriBuilder(@Nonnull UriBuilder uribuilder) {
 			if (suppress)
 				return uribuilder.clone();
 			UriBuilder ub = new RewritingUriBuilder(uribuilder);
@@ -255,9 +245,8 @@ public class Uri {
 				wrapped = builder.clone();
 			}
 
-			@NonNull
-			@java.lang.SuppressWarnings("null")
-			private URI rewrite(@NonNull URI uri) {
+			@Nonnull
+			private URI rewrite(@Nonnull URI uri) {
 				return Rewriter.this.rewrite(uri.toString());
 			}
 
@@ -266,28 +255,30 @@ public class Uri {
 				return new RewritingUriBuilder(wrapped);
 			}
 
-			@java.lang.SuppressWarnings("null")
 			@Override
-			public URI buildFromMap(Map<String, ? extends Object> values)
+			public URI buildFromMap(Map<String, ?> values)
 					throws IllegalArgumentException, UriBuilderException {
 				return rewrite(wrapped.buildFromMap(values));
 			}
 
-			@java.lang.SuppressWarnings("null")
 			@Override
 			public URI buildFromEncodedMap(Map<String, ? extends Object> values)
 					throws IllegalArgumentException, UriBuilderException {
 				return rewrite(wrapped.buildFromEncodedMap(values));
 			}
 
-			@java.lang.SuppressWarnings("null")
 			@Override
 			public URI build(Object... values) throws IllegalArgumentException,
 					UriBuilderException {
 				return rewrite(wrapped.build(values));
 			}
 
-			@java.lang.SuppressWarnings("null")
+			@Override
+			public URI build(Object[] values, boolean encodeSlashInPath)
+					throws IllegalArgumentException, UriBuilderException {
+				return rewrite(wrapped.build(values, encodeSlashInPath));
+			}
+
 			@Override
 			public URI buildFromEncoded(Object... values)
 					throws IllegalArgumentException, UriBuilderException {
@@ -295,9 +286,29 @@ public class Uri {
 			}
 
 			@Override
+			public URI buildFromMap(Map<String, ?> values,
+					boolean encodeSlashInPath) throws IllegalArgumentException,
+					UriBuilderException {
+				return rewrite(wrapped.buildFromEncoded(values,
+						encodeSlashInPath));
+			}
+
+			@Override
 			public UriBuilder uri(URI uri) throws IllegalArgumentException {
 				wrapped.uri(uri);
 				return this;
+			}
+
+			@Override
+			public UriBuilder uri(String uriTemplate)
+					throws IllegalArgumentException {
+				wrapped.uri(uriTemplate);
+				return this;
+			}
+
+			@Override
+			public String toTemplate() {
+				return wrapped.toTemplate();
 			}
 
 			@Override

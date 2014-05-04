@@ -13,6 +13,7 @@ import static org.bouncycastle.jce.provider.BouncyCastleProvider.PROVIDER_NAME;
 
 import java.io.Serializable;
 
+import javax.annotation.Nonnull;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
@@ -27,9 +28,6 @@ import org.taverna.server.master.utils.FilenameUtils;
 import org.taverna.server.master.utils.UsernamePrincipal;
 import org.taverna.server.master.utils.X500Utils;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.SuppressWarnings;
-
 /**
  * Singleton factory. Really is a singleton (and is also very trivial); the
  * singleton-ness is just about limiting the number of instances of this around
@@ -38,7 +36,6 @@ import edu.umd.cs.findbugs.annotations.SuppressWarnings;
  * @see Serializable
  * @author Donal Fellows
  */
-@SuppressWarnings("NM_SAME_SIMPLE_NAME_AS_INTERFACE")
 public class SecurityContextFactory implements
 		org.taverna.server.master.interfaces.SecurityContextFactory {
 	private static final long serialVersionUID = 12345678987654321L;
@@ -49,6 +46,7 @@ public class SecurityContextFactory implements
 	transient UriBuilderFactory uriSource;
 	transient CertificateChainFetcher certFetcher;
 	transient String httpRealm;
+	private transient PasswordIssuer passwordIssuer;
 	private transient BouncyCastleProvider provider;
 
 	/**
@@ -67,7 +65,6 @@ public class SecurityContextFactory implements
 		return getLog("Taverna.Server.Worker.Security");
 	}
 
-	@SuppressWarnings("ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD")
 	private void installAsInstance(SecurityContextFactory handle) {
 		instance = handle;
 	}
@@ -88,7 +85,7 @@ public class SecurityContextFactory implements
 	@PostConstruct
 	void setAsSingleton() {
 		installAsInstance(this);
-		if (getProvider(PROVIDER_NAME) == null) {
+		if (getProvider(PROVIDER_NAME) == null)
 			try {
 				provider = new BouncyCastleProvider();
 				if (addProvider(provider) == -1)
@@ -99,7 +96,6 @@ public class SecurityContextFactory implements
 								+ "might be OK if already configured", e);
 				provider = null;
 			}
-		}
 	}
 
 	@Required
@@ -132,11 +128,18 @@ public class SecurityContextFactory implements
 		this.httpRealm = realm; // ${http.realmName}
 	}
 
+	@Required
+	public void setPasswordIssuer(PasswordIssuer issuer) {
+		this.passwordIssuer = issuer;
+	}
+
 	@Override
-	@NonNull
-	public SecurityContextDelegate create(@NonNull TavernaRun run,
-			@NonNull UsernamePrincipal owner) throws Exception {
-		log().debug("constructing security context delegate for " + owner);
+	@Nonnull
+	public SecurityContextDelegate create(@Nonnull TavernaRun run,
+			@Nonnull UsernamePrincipal owner) throws Exception {
+		Log log = log();
+		if (log.isDebugEnabled())
+			log.debug("constructing security context delegate for " + owner);
 		RemoteRunDelegate rrd = (RemoteRunDelegate) run;
 		return new HelioSecurityContextDelegateImpl(rrd, owner, this);
 	}
@@ -145,5 +148,9 @@ public class SecurityContextFactory implements
 		if (instance == null)
 			installAsInstance(this);
 		return instance;
+	}
+
+	public String issueNewPassword() {
+		return passwordIssuer.issue();
 	}
 }

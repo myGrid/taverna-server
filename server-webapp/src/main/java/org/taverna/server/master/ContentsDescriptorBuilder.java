@@ -19,7 +19,10 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import javax.xml.xpath.XPath;
@@ -49,9 +52,6 @@ import org.taverna.server.port_description.OutputDescription;
 import org.taverna.server.port_description.OutputDescription.OutputPort;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
-
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 
 /**
  * A class that is used to build descriptions of the contents of a workflow
@@ -92,7 +92,7 @@ public class ContentsDescriptorBuilder {
 
 	private List<Element> inputPorts(Element dataflow)
 			throws XPathExpressionException {
-		List<Element> result = new ArrayList<Element>();
+		List<Element> result = new ArrayList<>();
 		if (dataflow == null)
 			return result;
 		NodeList nl = (NodeList) inputPorts.evaluate(dataflow, NODESET);
@@ -104,7 +104,7 @@ public class ContentsDescriptorBuilder {
 
 	private List<Element> outputPorts(Element dataflow)
 			throws XPathExpressionException {
-		List<Element> result = new ArrayList<Element>();
+		List<Element> result = new ArrayList<>();
 		if (dataflow == null)
 			return result;
 		NodeList nl = (NodeList) outputPorts.evaluate(dataflow, NODESET);
@@ -167,10 +167,7 @@ public class ContentsDescriptorBuilder {
 		Collection<DirectoryEntry> outs = null;
 		try {
 			outs = fileUtils.getDirectory(run, "out").getContents();
-		} catch (FilesystemAccessException e) {
-			log.warn("unexpected failure in construction of output descriptor",
-					e);
-		} catch (NoDirectoryEntryException e) {
+		} catch (FilesystemAccessException | NoDirectoryEntryException e) {
 			log.warn("unexpected failure in construction of output descriptor",
 					e);
 		}
@@ -261,8 +258,7 @@ public class ContentsDescriptorBuilder {
 			throws FilesystemAccessException {
 		ListValue v = new ListValue();
 		v.length = 0;
-		HashSet<DirectoryEntry> contents = new HashSet<DirectoryEntry>(
-				dir.getContents());
+		Set<DirectoryEntry> contents = new HashSet<>(dir.getContents());
 		Iterator<DirectoryEntry> it = contents.iterator();
 		while (it.hasNext())
 			if (!it.next().getName().matches("^[0-9]+([.].*)?$"))
@@ -314,7 +310,8 @@ public class ContentsDescriptorBuilder {
 				av = constructLeafValue((File) entry);
 			else
 				av = constructListValue((Directory) entry, ub);
-			av.href = ub.build(entry.getFullName().replaceFirst("^/", ""));
+			String fullPath = entry.getFullName().replaceFirst("^/", "");
+			av.href = ub.clone().path(fullPath).build();
 			return av;
 		}
 		return new AbsentValue();
@@ -341,15 +338,15 @@ public class ContentsDescriptorBuilder {
 			Element dataflow = fillInFromWorkflow(run, ub, descriptor);
 			if (dataflow == null || run.getOutputBaclavaFile() != null)
 				return descriptor;
-			constructPorts(run, dataflow, ub.path("wd/{path}"), descriptor);
+			constructPorts(run, dataflow, ub.path("wd"), descriptor);
 		} catch (XPathExpressionException e) {
 			log.info("failure in XPath evaluation", e);
 		}
 		return descriptor;
 	}
 
-	@NonNull
-	private UriBuilder getRunUriBuilder(@NonNull TavernaRun run,
+	@Nonnull
+	private UriBuilder getRunUriBuilder(@Nonnull TavernaRun run,
 			@Nullable UriInfo ui) {
 		if (ui == null)
 			return secure(uriBuilderFactory.getRunUriBuilder(run));
@@ -367,8 +364,8 @@ public class ContentsDescriptorBuilder {
 	 *            The mechanism for building URIs.
 	 * @return The description of the <i>expected</i> inputs of the run.
 	 */
-	@NonNull
-	public InputDescription makeInputDescriptor(@NonNull TavernaRun run,
+	@Nonnull
+	public InputDescription makeInputDescriptor(@Nonnull TavernaRun run,
 			@Nullable UriInfo ui) {
 		InputDescription desc = new InputDescription();
 		try {

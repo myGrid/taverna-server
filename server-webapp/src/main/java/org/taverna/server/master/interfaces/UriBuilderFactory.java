@@ -7,10 +7,9 @@ package org.taverna.server.master.interfaces;
 
 import java.net.URI;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.ws.rs.core.UriBuilder;
-
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 
 /**
  * How to manufacture URIs to workflow runs.
@@ -26,14 +25,14 @@ public interface UriBuilderFactory {
 	 *            The run in question.
 	 * @return The {@link URI} factory.
 	 */
-	@NonNull
-	UriBuilder getRunUriBuilder(@NonNull TavernaRun run);
+	@Nonnull
+	UriBuilder getRunUriBuilder(@Nonnull TavernaRun run);
 
 	/**
 	 * @return a URI factory that is preconfigured to point to the base of the
 	 *         webapp.
 	 */
-	@NonNull
+	@Nonnull
 	UriBuilder getBaseUriBuilder();
 
 	/**

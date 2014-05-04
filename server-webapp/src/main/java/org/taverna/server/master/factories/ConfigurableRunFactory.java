@@ -5,8 +5,8 @@
  */
 package org.taverna.server.master.factories;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * Interface to run factories for the purpose of configuration.
@@ -15,11 +15,11 @@ import edu.umd.cs.findbugs.annotations.Nullable;
  */
 public interface ConfigurableRunFactory extends RunFactory {
 	/** Where is the registry? Getter */
-	@NonNull
+	@Nonnull
 	String getRegistryHost();
 
 	/** Where is the registry? Setter */
-	void setRegistryHost(@NonNull String host);
+	void setRegistryHost(@Nonnull String host);
 
 	/** Where is the registry? Getter */
 	int getRegistryPort();
@@ -52,38 +52,38 @@ public interface ConfigurableRunFactory extends RunFactory {
 	void setWaitSeconds(int seconds);
 
 	/** How do we start the workflow engine? Getter */
-	@NonNull
+	@Nonnull
 	String getExecuteWorkflowScript();
 
 	/** How do we start the workflow engine? Setter */
-	void setExecuteWorkflowScript(@NonNull String executeWorkflowScript);
+	void setExecuteWorkflowScript(@Nonnull String executeWorkflowScript);
 
 	/** How do we start the file system access process? Getter */
-	@NonNull
+	@Nonnull
 	String getServerWorkerJar();
 
 	/** How do we start the file system access process? Setter */
-	void setServerWorkerJar(@NonNull String serverWorkerJar);
+	void setServerWorkerJar(@Nonnull String serverWorkerJar);
 
 	/**
 	 * How do we start the file system access process? Extra arguments to pass.
 	 * Getter
 	 */
-	@NonNull
+	@Nonnull
 	String[] getExtraArguments();
 
 	/**
 	 * How do we start the file system access process? Extra arguments to pass.
 	 * Setter
 	 */
-	void setExtraArguments(@NonNull String[] firstArguments);
+	void setExtraArguments(@Nonnull String[] firstArguments);
 
 	/** Where is Java? Getter */
-	@NonNull
+	@Nonnull
 	String getJavaBinary();
 
 	/** Where is Java? Setter */
-	void setJavaBinary(@NonNull String javaBinary);
+	void setJavaBinary(@Nonnull String javaBinary);
 
 	/** Where do we get passwords from? Getter */
 	@Nullable
@@ -93,11 +93,11 @@ public interface ConfigurableRunFactory extends RunFactory {
 	void setPasswordFile(@Nullable String newValue);
 
 	/** How do we switch users? Getter */
-	@NonNull
+	@Nonnull
 	String getServerForkerJar();
 
 	/** How do we switch users? Setter */
-	void setServerForkerJar(@NonNull String newValue);
+	void setServerForkerJar(@Nonnull String newValue);
 
 	/** How many runs have there been? */
 	int getTotalRuns();
@@ -106,7 +106,7 @@ public interface ConfigurableRunFactory extends RunFactory {
 	int getLastStartupCheckCount();
 
 	/** What are the current runs? */
-	@NonNull
+	@Nonnull
 	String[] getCurrentRunNames();
 
 	/** What is the RMI ID of the factory process? */
@@ -117,7 +117,7 @@ public interface ConfigurableRunFactory extends RunFactory {
 	Integer getLastExitCode();
 
 	/** What factory process to use for a particular user? */
-	@NonNull
+	@Nonnull
 	String[] getFactoryProcessMapping();
 
 	/** How many runs can be operating at once? Setter */
@@ -135,9 +135,13 @@ public interface ConfigurableRunFactory extends RunFactory {
 	int getOperatingCount() throws Exception;
 
 	/** How do we start the RMI registry process? Getter */
-	@NonNull
+	@Nonnull
 	String getRmiRegistryJar();
 
 	/** How do we start the RMI registry process? Setter */
-	void setRmiRegistryJar(@NonNull String rmiRegistryJar);
+	void setRmiRegistryJar(@Nonnull String rmiRegistryJar);
+
+	boolean getGenerateProvenance();
+
+	void setGenerateProvenance(boolean generateProvenance);
 }

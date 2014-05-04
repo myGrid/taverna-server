@@ -11,6 +11,7 @@ import static org.taverna.server.master.utils.RestUtils.opt;
 
 import java.util.List;
 
+import javax.annotation.Nonnull;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
@@ -21,9 +22,8 @@ import org.taverna.server.master.interfaces.TavernaRun;
 import org.taverna.server.master.rest.TavernaServerListenersREST;
 import org.taverna.server.master.rest.TavernaServerListenersREST.ListenerDescription;
 import org.taverna.server.master.rest.TavernaServerListenersREST.TavernaServerListenerREST;
+import org.taverna.server.master.utils.CallTimeLogger.PerfLogged;
 import org.taverna.server.master.utils.InvocationCounter.CallCounted;
-
-import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
  * RESTful interface to a single listener attached to a workflow run.
@@ -36,46 +36,47 @@ abstract class SingleListenerREST implements TavernaServerListenerREST,
 	private TavernaRun run;
 
 	@Override
-	@NonNull
-	public SingleListenerREST connect(@NonNull Listener listen, @NonNull TavernaRun run) {
+	@Nonnull
+	public SingleListenerREST connect(@Nonnull Listener listen, @Nonnull TavernaRun run) {
 		this.listen = listen;
 		this.run = run;
 		return this;
 	}
 
 	@Override
-	@NonNull
+	@Nonnull
 	@CallCounted
+	@PerfLogged
 	public String getConfiguration() {
 		return listen.getConfiguration();
 	}
 
 	@Override
-	@NonNull
+	@Nonnull
 	@CallCounted
-	public ListenerDescription getDescription(@NonNull UriInfo ui) {
+	@PerfLogged
+	public ListenerDescription getDescription(UriInfo ui) {
 		return new ListenerDescription(listen, secure(ui));
 	}
 
 	@Override
-	@NonNull
+	@Nonnull
 	@CallCounted
-	public TavernaServerListenersREST.Properties getProperties(
-			@NonNull UriInfo ui) {
+	@PerfLogged
+	public TavernaServerListenersREST.Properties getProperties(UriInfo ui) {
 		return new TavernaServerListenersREST.Properties(secure(ui).path(
 				"{prop}"), listen.listProperties());
 	}
 
-	@SuppressWarnings("null")
 	@Override
-	@NonNull
+	@Nonnull
 	@CallCounted
+	@PerfLogged
 	public TavernaServerListenersREST.Property getProperty(
-			@NonNull final String propertyName) throws NoListenerException {
+			@Nonnull final String propertyName) throws NoListenerException {
 		List<String> p = asList(listen.listProperties());
-		if (p.contains(propertyName)) {
+		if (p.contains(propertyName))
 			return makePropertyInterface().connect(listen, run, propertyName);
-		}
 		throw new NoListenerException("no such property");
 	}
 

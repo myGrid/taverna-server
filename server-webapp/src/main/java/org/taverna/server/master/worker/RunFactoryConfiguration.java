@@ -6,19 +6,19 @@ import static org.taverna.server.master.TavernaServer.JMX_ROOT;
 
 import java.util.List;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.annotation.PreDestroy;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.annotation.Order;
 import org.springframework.jmx.export.annotation.ManagedAttribute;
 import org.springframework.jmx.export.annotation.ManagedMetric;
 import org.springframework.jmx.export.annotation.ManagedResource;
 import org.taverna.server.master.factories.ConfigurableRunFactory;
 import org.taverna.server.master.localworker.LocalWorkerState;
-
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 
 @ManagedResource(objectName = JMX_ROOT + "Factory", description = "The factory for runs.")
 public abstract class RunFactoryConfiguration implements ConfigurableRunFactory {
@@ -33,11 +33,13 @@ public abstract class RunFactoryConfiguration implements ConfigurableRunFactory 
 	}
 
 	@Autowired(required = true)
+	@Order(0)
 	void setState(LocalWorkerState state) {
 		this.state = state;
 	}
 
 	@Autowired(required = true)
+	@Order(0)
 	void setRunDB(RunDBSupport runDB) {
 		this.runDB = runDB;
 	}
@@ -72,7 +74,7 @@ public abstract class RunFactoryConfiguration implements ConfigurableRunFactory 
 		}
 	}
 
-	@NonNull
+	@Nonnull
 	@Override
 	@ManagedAttribute(description = "The host holding the RMI registry to communicate via.")
 	public final String getRegistryHost() {
@@ -82,7 +84,7 @@ public abstract class RunFactoryConfiguration implements ConfigurableRunFactory 
 
 	@Override
 	@ManagedAttribute(description = "The host holding the RMI registry to communicate via.")
-	public final void setRegistryHost(@NonNull String host) {
+	public final void setRegistryHost(@Nonnull String host) {
 		state.setRegistryHost(host);
 		reinitRegistry();
 		reinitFactory();
@@ -102,7 +104,7 @@ public abstract class RunFactoryConfiguration implements ConfigurableRunFactory 
 		reinitFactory();
 	}
 
-	@NonNull
+	@Nonnull
 	@Override
 	@ManagedAttribute(description = "What JAR do we use to start the RMI registry process?")
 	public final String getRmiRegistryJar() {
@@ -111,7 +113,7 @@ public abstract class RunFactoryConfiguration implements ConfigurableRunFactory 
 
 	@Override
 	@ManagedAttribute(description = "What JAR do we use to start the RMI registry process?")
-	public final void setRmiRegistryJar(@NonNull String rmiRegistryJar) {
+	public final void setRmiRegistryJar(@Nonnull String rmiRegistryJar) {
 		state.setRegistryJar(rmiRegistryJar);
 		reinitRegistry();
 		reinitFactory();
@@ -190,7 +192,7 @@ public abstract class RunFactoryConfiguration implements ConfigurableRunFactory 
 	}
 
 	/** @return The script to run to start running a workflow. */
-	@NonNull
+	@Nonnull
 	@Override
 	@ManagedAttribute(description = "The script to run to start running a workflow.", currencyTimeLimit = 300)
 	public final String getExecuteWorkflowScript() {
@@ -204,13 +206,13 @@ public abstract class RunFactoryConfiguration implements ConfigurableRunFactory 
 	@Override
 	@ManagedAttribute(description = "The script to run to start running a workflow.", currencyTimeLimit = 300)
 	public final void setExecuteWorkflowScript(
-			@NonNull String executeWorkflowScript) {
+			@Nonnull String executeWorkflowScript) {
 		state.setExecuteWorkflowScript(executeWorkflowScript);
 		reinitFactory();
 	}
 
 	/** @return The location of the JAR implementing the server worker processes. */
-	@NonNull
+	@Nonnull
 	@Override
 	@ManagedAttribute(description = "The location of the JAR implementing the server worker processes.")
 	public final String getServerWorkerJar() {
@@ -224,13 +226,13 @@ public abstract class RunFactoryConfiguration implements ConfigurableRunFactory 
 	 */
 	@Override
 	@ManagedAttribute(description = "The location of the JAR implementing the server worker processes.")
-	public final void setServerWorkerJar(@NonNull String serverWorkerJar) {
+	public final void setServerWorkerJar(@Nonnull String serverWorkerJar) {
 		state.setServerWorkerJar(serverWorkerJar);
 		reinitFactory();
 	}
 
 	/** @return The list of additional arguments used to make a worker process. */
-	@NonNull
+	@Nonnull
 	@Override
 	@ManagedAttribute(description = "The list of additional arguments used to make a worker process.", currencyTimeLimit = 300)
 	public final String[] getExtraArguments() {
@@ -244,13 +246,13 @@ public abstract class RunFactoryConfiguration implements ConfigurableRunFactory 
 	 */
 	@Override
 	@ManagedAttribute(description = "The list of additional arguments used to make a worker process.", currencyTimeLimit = 300)
-	public final void setExtraArguments(@NonNull String[] extraArguments) {
+	public final void setExtraArguments(@Nonnull String[] extraArguments) {
 		state.setExtraArgs(extraArguments);
 		reinitFactory();
 	}
 
 	/** @return Which java executable to run. */
-	@NonNull
+	@Nonnull
 	@Override
 	@ManagedAttribute(description = "Which java executable to run.", currencyTimeLimit = 300)
 	public final String getJavaBinary() {
@@ -263,7 +265,7 @@ public abstract class RunFactoryConfiguration implements ConfigurableRunFactory 
 	 */
 	@Override
 	@ManagedAttribute(description = "Which java executable to run.", currencyTimeLimit = 300)
-	public final void setJavaBinary(@NonNull String javaBinary) {
+	public final void setJavaBinary(@Nonnull String javaBinary) {
 		state.setJavaBinary(javaBinary);
 		reinitFactory();
 	}
@@ -294,7 +296,7 @@ public abstract class RunFactoryConfiguration implements ConfigurableRunFactory 
 	/**
 	 * @return The location of the JAR implementing the secure-fork process.
 	 */
-	@NonNull
+	@Nonnull
 	@Override
 	@ManagedAttribute(description = "The location of the JAR implementing the secure-fork process.", currencyTimeLimit = 300)
 	public final String getServerForkerJar() {
@@ -307,7 +309,7 @@ public abstract class RunFactoryConfiguration implements ConfigurableRunFactory 
 	 */
 	@Override
 	@ManagedAttribute(description = "The location of the JAR implementing the secure-fork process.", currencyTimeLimit = 300)
-	public final void setServerForkerJar(@NonNull String forkerJarFilename) {
+	public final void setServerForkerJar(@Nonnull String forkerJarFilename) {
 		state.setServerForkerJar(forkerJarFilename);
 		reinitFactory();
 	}
@@ -330,8 +332,7 @@ public abstract class RunFactoryConfiguration implements ConfigurableRunFactory 
 	@ManagedAttribute(description = "How many checks were done for the worker process the last time a spawn was tried.", currencyTimeLimit = 60)
 	public abstract int getLastStartupCheckCount();
 
-	@SuppressWarnings("null")
-	@NonNull
+	@Nonnull
 	@Override
 	@ManagedAttribute(description = "The names of the current runs.", currencyTimeLimit = 5)
 	public final String[] getCurrentRunNames() {
@@ -355,7 +356,7 @@ public abstract class RunFactoryConfiguration implements ConfigurableRunFactory 
 	 * @return The mapping of user names to RMI factory IDs.
 	 */
 	@Override
-	@NonNull
+	@Nonnull
 	@ManagedAttribute(description = "The mapping of user names to RMI factory IDs.", currencyTimeLimit = 60)
 	public abstract String[] getFactoryProcessMapping();
 
@@ -382,5 +383,17 @@ public abstract class RunFactoryConfiguration implements ConfigurableRunFactory 
 	@ManagedMetric(description = "How many workflow runs are currently actually executing.", currencyTimeLimit = 10, metricType = GAUGE, category = "throughput")
 	public final int getOperatingCount() throws Exception {
 		return operatingCount();
+	}
+
+	@Override
+	@ManagedAttribute(description="Whether to tell a workflow to generate provenance bundles by default.")
+	public final void setGenerateProvenance(boolean genProv) {
+		state.setGenerateProvenance(genProv);
+	}
+
+	@Override
+	@ManagedAttribute(description="Whether to tell a workflow to generate provenance bundles by default.")
+	public final boolean getGenerateProvenance() {
+		return state.getGenerateProvenance();
 	}
 }

@@ -10,6 +10,7 @@ import static org.taverna.server.master.admin.Paths.ARGS;
 import static org.taverna.server.master.admin.Paths.EXEC_WF;
 import static org.taverna.server.master.admin.Paths.EXITCODE;
 import static org.taverna.server.master.admin.Paths.FACTORIES;
+import static org.taverna.server.master.admin.Paths.GEN_PROV;
 import static org.taverna.server.master.admin.Paths.INVOKES;
 import static org.taverna.server.master.admin.Paths.JAR_FORKER;
 import static org.taverna.server.master.admin.Paths.JAR_WORKER;
@@ -28,9 +29,9 @@ import static org.taverna.server.master.admin.Paths.REG_PORT;
 import static org.taverna.server.master.admin.Paths.REG_WAIT;
 import static org.taverna.server.master.admin.Paths.ROOT;
 import static org.taverna.server.master.admin.Paths.RUNS;
+import static org.taverna.server.master.admin.Paths.RUN_LIMIT;
 import static org.taverna.server.master.admin.Paths.STARTUP;
 import static org.taverna.server.master.admin.Paths.TOTAL_RUNS;
-import static org.taverna.server.master.admin.Paths.RUN_LIMIT;
 import static org.taverna.server.master.admin.Paths.URS;
 import static org.taverna.server.master.admin.Paths.UR_FILE;
 import static org.taverna.server.master.admin.Paths.USER;
@@ -44,6 +45,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.annotation.Nonnull;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -65,9 +67,6 @@ import org.ogf.usage.JobUsageRecord;
 import org.taverna.server.master.common.Uri;
 import org.taverna.server.master.common.VersionedElement;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
-
 /**
  * The administration interface for Taverna Server.
  * 
@@ -84,7 +83,7 @@ public interface Admin {
 	@GET
 	@Path(ROOT)
 	@Produces("text/html")
-	@NonNull
+	@Nonnull
 	Response getUserInterface() throws IOException;
 
 	/**
@@ -98,7 +97,7 @@ public interface Admin {
 	@GET
 	@Path("static/{file}")
 	@Produces("*/*")
-	Response getStaticResource(@NonNull @PathParam("file") String file)
+	Response getStaticResource(@Nonnull @PathParam("file") String file)
 			throws IOException;
 
 	/**
@@ -111,8 +110,8 @@ public interface Admin {
 	@GET
 	@Path(ROOT)
 	@Produces({ XML, JSON })
-	@NonNull
-	AdminDescription getDescription(@NonNull @Context UriInfo ui);
+	@Nonnull
+	AdminDescription getDescription(@Nonnull @Context UriInfo ui);
 
 	/** What HTTP methods may we use? */
 	@OPTIONS
@@ -221,7 +220,7 @@ public interface Admin {
 	@Path(UR_FILE)
 	@Produces(PLAIN)
 	@Description("What file to dump usage records to.")
-	@NonNull
+	@Nonnull
 	String getURFile();
 
 	/**
@@ -236,8 +235,8 @@ public interface Admin {
 	@Consumes(PLAIN)
 	@Produces(PLAIN)
 	@Description("What file to dump usage records to.")
-	@NonNull
-	String setURFile(@NonNull String urFile);
+	@Nonnull
+	String setURFile(@Nonnull String urFile);
 
 	/** What HTTP methods may we use? */
 	@OPTIONS
@@ -306,7 +305,7 @@ public interface Admin {
 	@Path(REG_JAR)
 	@Produces(PLAIN)
 	@Description("What is the full pathname of the server's custom RMI registry executable JAR file?")
-	@NonNull
+	@Nonnull
 	String getRegistryJar();
 
 	/**
@@ -321,8 +320,8 @@ public interface Admin {
 	@Consumes(PLAIN)
 	@Produces(PLAIN)
 	@Description("What is the full pathname of the server's custom RMI registry executable JAR file?")
-	@NonNull
-	String setRegistryJar(@NonNull String registryJar);
+	@Nonnull
+	String setRegistryJar(@Nonnull String registryJar);
 
 	/** What HTTP methods may we use? */
 	@OPTIONS
@@ -339,7 +338,7 @@ public interface Admin {
 	@Path(REG_HOST)
 	@Produces(PLAIN)
 	@Description("Where is the RMI registry?")
-	@NonNull
+	@Nonnull
 	String getRegistryHost();
 
 	/**
@@ -354,8 +353,8 @@ public interface Admin {
 	@Consumes(PLAIN)
 	@Produces(PLAIN)
 	@Description("Where is the RMI registry?")
-	@NonNull
-	String setRegistryHost(@NonNull String registryHost);
+	@Nonnull
+	String setRegistryHost(@Nonnull String registryHost);
 
 	/** What HTTP methods may we use? */
 	@OPTIONS
@@ -496,7 +495,7 @@ public interface Admin {
 	@Path(RUNS)
 	@Produces({ XML, JSON })
 	@Description("List the IDs of all current runs.")
-	@NonNull
+	@Nonnull
 	StringList currentRuns();
 
 	/** What HTTP methods may we use? */
@@ -514,7 +513,7 @@ public interface Admin {
 	@Path(JAVA)
 	@Produces(PLAIN)
 	@Description("Which Java binary should be used for execution of subprocesses?")
-	@NonNull
+	@Nonnull
 	String getJavaBinary();
 
 	/**
@@ -529,8 +528,8 @@ public interface Admin {
 	@Consumes(PLAIN)
 	@Produces(PLAIN)
 	@Description("Which Java binary should be used for execution of subprocesses?")
-	@NonNull
-	String setJavaBinary(@NonNull String javaBinary);
+	@Nonnull
+	String setJavaBinary(@Nonnull String javaBinary);
 
 	/** What HTTP methods may we use? */
 	@OPTIONS
@@ -547,7 +546,7 @@ public interface Admin {
 	@Path(ARGS)
 	@Produces({ XML, JSON })
 	@Description("What extra arguments should be supplied to Java subprocesses?")
-	@NonNull
+	@Nonnull
 	StringList getExtraArguments();
 
 	/**
@@ -562,8 +561,8 @@ public interface Admin {
 	@Consumes(XML)
 	@Produces({ XML, JSON })
 	@Description("What extra arguments should be supplied to Java subprocesses?")
-	@NonNull
-	StringList setExtraArguments(@NonNull StringList extraArguments);
+	@Nonnull
+	StringList setExtraArguments(@Nonnull StringList extraArguments);
 
 	/** What HTTP methods may we use? */
 	@OPTIONS
@@ -580,7 +579,7 @@ public interface Admin {
 	@Path(JAR_WORKER)
 	@Produces(PLAIN)
 	@Description("What is the full pathname of the server's per-user worker executable JAR file?")
-	@NonNull
+	@Nonnull
 	String getServerWorkerJar();
 
 	/**
@@ -595,8 +594,8 @@ public interface Admin {
 	@Consumes(PLAIN)
 	@Produces(PLAIN)
 	@Description("What is the full pathname of the server's per-user worker executable JAR file?")
-	@NonNull
-	String setServerWorkerJar(@NonNull String serverWorkerJar);
+	@Nonnull
+	String setServerWorkerJar(@Nonnull String serverWorkerJar);
 
 	/** What HTTP methods may we use? */
 	@OPTIONS
@@ -613,7 +612,7 @@ public interface Admin {
 	@Path(EXEC_WF)
 	@Produces(PLAIN)
 	@Description("What is the full pathname of the core Taverna executeWorkflow script?")
-	@NonNull
+	@Nonnull
 	String getExecuteWorkflowScript();
 
 	/**
@@ -628,8 +627,8 @@ public interface Admin {
 	@Consumes(PLAIN)
 	@Produces(PLAIN)
 	@Description("What is the full pathname of the core Taverna executeWorkflow script?")
-	@NonNull
-	String setExecuteWorkflowScript(@NonNull String executeWorkflowScript);
+	@Nonnull
+	String setExecuteWorkflowScript(@Nonnull String executeWorkflowScript);
 
 	/** What HTTP methods may we use? */
 	@OPTIONS
@@ -711,7 +710,7 @@ public interface Admin {
 	@Path(PASSFILE)
 	@Produces(PLAIN)
 	@Description("What is the full pathname of the file containing the password used for impersonating other users? (On Unix, this is the password for the deployment user to use \"sudo\".)")
-	@Nullable
+	@Nonnull
 	String getRunasPasswordFile();
 
 	/**
@@ -727,8 +726,8 @@ public interface Admin {
 	@Consumes(PLAIN)
 	@Produces(PLAIN)
 	@Description("What is the full pathname of the file containing the password used for impersonating other users? (On Unix, this is the password for the deployment user to use \"sudo\".)")
-	@Nullable
-	String setRunasPasswordFile(@NonNull String runasPasswordFile);
+	@Nonnull
+	String setRunasPasswordFile(@Nonnull String runasPasswordFile);
 
 	/** What HTTP methods may we use? */
 	@OPTIONS
@@ -745,7 +744,7 @@ public interface Admin {
 	@Path(JAR_FORKER)
 	@Produces(PLAIN)
 	@Description("What is the full pathname of the server's special authorized \"forker\" executable JAR file?")
-	@NonNull
+	@Nonnull
 	String getServerForkerJar();
 
 	/**
@@ -760,8 +759,8 @@ public interface Admin {
 	@Consumes(PLAIN)
 	@Produces(PLAIN)
 	@Description("What is the full pathname of the server's special authorized \"forker\" executable JAR file?")
-	@NonNull
-	String setServerForkerJar(@NonNull String serverForkerJar);
+	@Nonnull
+	String setServerForkerJar(@Nonnull String serverForkerJar);
 
 	/** What HTTP methods may we use? */
 	@OPTIONS
@@ -849,6 +848,27 @@ public interface Admin {
 	@Description("What are the current list of workflow URIs that may be started? Empty means allow any, including user-supplied workflows.")
 	StringList getPermittedWorkflowURIs();
 
+	/** Do we turn on the generate provenance option by default? */
+	@GET
+	@Path(GEN_PROV)
+	@Produces(PLAIN)
+	@Description("Do we turn on the generate provenance option by default? (boolean)")
+	String getGenerateProvenance();
+
+	/** Do we turn on the generate provenance option by default? */
+	@PUT
+	@Path(GEN_PROV)
+	@Consumes(PLAIN)
+	@Produces(PLAIN)
+	@Description("Do we turn on the generate provenance option by default? (boolean)")
+	String setGenerateProvenance(String newValue);
+
+	/** Do we turn on the generate provenance option by default? */
+	@OPTIONS
+	@Path(GEN_PROV)
+	@Description("Do we turn on the generate provenance option by default? (boolean)")
+	Response optionsGenerateProvenance();
+
 	/**
 	 * What are the current list of workflow URIs that may be started? Empty
 	 * means allow any, including user-supplied workflows.
@@ -862,7 +882,7 @@ public interface Admin {
 	@Consumes(XML)
 	@Produces({ XML, JSON })
 	@Description("What are the current list of workflow URIs that may be started? Empty means allow any, including user-supplied workflows.")
-	StringList setPermittedWorkflowURIs(@NonNull StringList permitted);
+	StringList setPermittedWorkflowURIs(@Nonnull StringList permitted);
 
 	/** What HTTP methods may we use? */
 	@OPTIONS
@@ -874,33 +894,33 @@ public interface Admin {
 	@Path(USERS)
 	@Produces({ XML, JSON })
 	@Description("What users are known to the server?")
-	UserList users(@NonNull @Context UriInfo ui);
+	UserList users(@Nonnull @Context UriInfo ui);
 
 	@GET
 	@Path(USER)
 	@Produces({ XML, JSON })
 	@Description("What do we know about a particular user?")
-	UserDesc user(@NonNull @PathParam("id") String username);
+	UserDesc user(@Nonnull @PathParam("id") String username);
 
 	@POST
 	@Path(USERS)
 	@Consumes(XML)
 	@Description("Create a user.")
-	Response useradd(@NonNull UserDesc userdesc, @NonNull @Context UriInfo ui);
+	Response useradd(@Nonnull UserDesc userdesc, @Nonnull @Context UriInfo ui);
 
 	@PUT
 	@Path(USER)
 	@Produces({ XML, JSON })
 	@Consumes(XML)
 	@Description("Update a user.")
-	UserDesc userset(@NonNull @PathParam("id") String username,
-			@NonNull UserDesc userdesc);
+	UserDesc userset(@Nonnull @PathParam("id") String username,
+			@Nonnull UserDesc userdesc);
 
 	@DELETE
 	@Path(USER)
 	@Produces({ XML, JSON })
 	@Description("What do we know about a particular user?")
-	Response userdel(@NonNull @PathParam("id") String username);
+	Response userdel(@Nonnull @PathParam("id") String username);
 
 	/** What HTTP methods may we use? */
 	@OPTIONS
@@ -912,7 +932,7 @@ public interface Admin {
 	@OPTIONS
 	@Path(USER)
 	@Description("What do we know about a particular user?")
-	Response optionsUser(@NonNull @PathParam("id") String username);
+	Response optionsUser(@Nonnull @PathParam("id") String username);
 
 	// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
@@ -952,11 +972,12 @@ public interface Admin {
 		public Uri operatingLimit;
 		public Uri operatingCount;
 		public Uri permittedWorkflowURIs;
+		public Uri generateProvenance;
 
 		public AdminDescription() {
 		}
 
-		public AdminDescription(@NonNull UriInfo ui) {
+		public AdminDescription(@Nonnull UriInfo ui) {
 			allowNew = new Uri(ui, ALLOW_NEW);
 			logWorkflows = new Uri(ui, LOG_WFS);
 			logFaults = new Uri(ui, LOG_EXN);
@@ -984,6 +1005,7 @@ public interface Admin {
 			operatingLimit = new Uri(ui, OP_LIMIT);
 			operatingCount = new Uri(ui, OPERATING);
 			permittedWorkflowURIs = new Uri(ui, PERM_WF);
+			generateProvenance = new Uri(ui, GEN_PROV);
 		}
 	}
 
@@ -996,7 +1018,7 @@ public interface Admin {
 	@XmlType(name = "StringList")
 	public static class StringList {
 		@XmlElement
-		public List<String> string = new ArrayList<String>();
+		public List<String> string = new ArrayList<>();
 	}
 
 	/**
@@ -1008,7 +1030,7 @@ public interface Admin {
 	@XmlType(name = "UserList")
 	public static class UserList {
 		@XmlElement
-		public List<URI> user = new ArrayList<URI>();
+		public List<URI> user = new ArrayList<>();
 	}
 
 	@XmlRootElement(name = "userDesc")
@@ -1068,6 +1090,7 @@ interface Paths {
 	static final String FACTORIES = "factoryProcessMapping";
 	static final String URS = "usageRecords";
 	static final String PERM_WF = "permittedWorkflowURIs";
+	static final String GEN_PROV = "generateProvenance";
 	static final String USERS = "users";
 	static final String USER = USERS + "/{id}";
 }
