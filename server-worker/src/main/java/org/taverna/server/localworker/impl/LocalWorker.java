@@ -545,7 +545,7 @@ public class LocalWorker extends UnicastRemoteObject implements RemoteSingleRun 
 
 	class InputDelegate extends UnicastRemoteObject implements RemoteInput {
 		@Nonnull
-		private String name;
+		private final String name;
 
 		InputDelegate(@Nonnull String name) throws RemoteException {
 			super();

@@ -20,6 +20,7 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.Date;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import org.taverna.server.localworker.remote.RemoteDirectory;
 import org.taverna.server.localworker.remote.RemoteFile;
@@ -33,7 +34,9 @@ import org.taverna.server.localworker.remote.RemoteFile;
  */
 @SuppressWarnings("serial")
 public class FileDelegate extends UnicastRemoteObject implements RemoteFile {
-	private File file;
+	@Nonnull
+	private final File file;
+	@Nullable
 	private DirectoryDelegate parent;
 
 	/**
@@ -94,8 +97,10 @@ public class FileDelegate extends UnicastRemoteObject implements RemoteFile {
 
 	@Override
 	public void destroy() throws IOException {
-		forceDelete(file);
-		parent.forgetEntry(this);
+		if (parent != null) {
+			forceDelete(file);
+			parent.forgetEntry(this);
+		}
 		parent = null;
 	}
 
