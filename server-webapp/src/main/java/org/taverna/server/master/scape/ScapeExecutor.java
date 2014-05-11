@@ -291,9 +291,10 @@ public class ScapeExecutor implements ScapeExecutionService {
 		@Nonnull
 		String id;
 		try {
-			Model model = pickExecutionModel(plan);
-			id = submitAndStart(splicer.constructWorkflow(workflow, model),
-					planId, objectList, qld == null ? null : qld.getAny(), ui);
+			Element sla = qld == null ? null : qld.getAny();
+			Workflow wf = splicer.constructWorkflow(workflow,
+					pickExecutionModel(plan));
+			id = new ScapeShepherd(planId, objectList, sla, wf, ui).startTask();
 		} catch (NoCreateException e) {
 			throw e;
 		} catch (Exception e) {
@@ -306,10 +307,11 @@ public class ScapeExecutor implements ScapeExecutionService {
 	@Nonnull
 	private Model pickExecutionModel(PreservationActionPlan plan) {
 		// TODO Find a better way of picking which model workflow to use
+		// TODO Allow for characterisation plans
 		QualityLevelDescription qld = plan.getQualityLevelDescription();
-		if (qld == null)
+		if (qld == null || qld.getAny() == null)
 			return One2OneNoSchema;
-		return qld.getAny() != null ? One2OneSchema : One2OneNoSchema;
+		return One2OneSchema;
 	}
 
 	@Override
@@ -353,13 +355,17 @@ public class ScapeExecutor implements ScapeExecutionService {
 	}
 
 	/**
-	 * @param id Job ID
+	 * @param id
+	 *            Job ID
 	 * @return Job object
-	 * @throws BadInputException If the ID is nonsense (e.g., empty).
-	 * @throws UnknownRunException If the ID is unknown or not for a SCAPE job.
+	 * @throws BadInputException
+	 *             If the ID is nonsense (e.g., empty).
+	 * @throws UnknownRunException
+	 *             If the ID is unknown or not for a SCAPE job.
 	 */
 	@Nonnull
-	private TavernaRun getScapeRun(@Nullable String id) throws UnknownRunException {
+	private TavernaRun getScapeRun(@Nullable String id)
+			throws UnknownRunException {
 		if (id == null || id.isEmpty())
 			throw new BadInputException("missing/bad job ID");
 		TavernaRun r = run(id);
@@ -369,127 +375,14 @@ public class ScapeExecutor implements ScapeExecutionService {
 	}
 
 	@Nonnull
-	private String submitAndStart(@Nonnull Workflow w,
-			@Nonnull final String planId, @Nonnull final List<Object> objs,
-			@Nullable final Element schematron, @Nonnull UriInfo ui)
-			throws NoCreateException, UnknownRunException {
-		/* Warning: do not move UriInfo across threads */
-		final URI base = ui.getBaseUri();
-		final String jobId = support.buildWorkflow(w);
-		dao.setScapeJob(jobId, planId);
-		if (notifyService != null)
-			dao.setNotify(jobId, notifyService);
-		final TavernaRun run = run(jobId);
-		final InputDescription inDesc = cb.makeInputDescriptor(run, ui);
-		Thread worker = new Thread(new Runnable() {
-			@Override
-			public void run() {
-				try {
-					executeWorkflow(planId, objs, schematron, base, jobId, run,
-							inDesc);
-				} catch (Exception e) {
-					log.warn("failed to initialize SCAPE workflow", e);
-				}
-			}
-		});
-		worker.setDaemon(true);
-		worker.setName("Taverna Server: SCAPE job initialization: " + jobId);
-		worker.start();
-		return jobId;
-	}
-
-	private void executeWorkflow(@Nonnull String planId,
-			@Nonnull List<Object> objs, @Nullable Element schematron,
-			@Nonnull URI base, @Nonnull String jobId, @Nonnull TavernaRun run,
-			@Nonnull InputDescription inDesc) throws BadStateChangeException,
-			TransformerException, InvalidCredentialException, IOException,
-			GeneralSecurityException {
-		Set<String> inputs = new HashSet<String>();
-		for (InputPort o : inDesc.input)
-			inputs.add(o.name);
-		if (inputs.contains("CreatorIdentity"))
-			initCreatorIdentity(run, planId);
-		run.setGenerateProvenance(true);
-		Date deadline = new Date();
-		deadline.setTime(deadline.getTime() + timeout);
-		run.setExpiry(deadline);
-		initRepositories(run);
-		initObjects(run, objs);
-		if (schematron != null)
-			initSLA(run, schematron);
-		initSecurity(run);
-		setExecuting(run);
-		if (notifyService != null) {
-			String msg = format("Commenced execution using jobID=%s on %s",
-					jobId, base);
-			notifyPlanService(planId, new ExecutionStateChange(
-					State.InProgress, msg));
-		}
-	}
-
-	private void initCreatorIdentity(@Nonnull TavernaRun run, @Nonnull String planId)
-			throws BadStateChangeException {
-		run.makeInput("CreatorIdentity").setValue(planId);
-	}
-
-	private void initRepositories(@Nonnull TavernaRun run)
-			throws BadStateChangeException {
-		run.makeInput("SourceRepository").setValue(repository);
-		run.makeInput("DestinationRepository").setValue(repository);
-		run.makeInput("RepositoryDirectory").setValue(repoDir);
-	}
-
-	private void initObjects(@Nonnull TavernaRun run, @Nonnull List<Object> objs)
-			throws BadStateChangeException {
-		StringBuffer sb = new StringBuffer();
-		for (Object object : objs)
-			sb.append(object.getUid()).append('\n');
-		run.makeInput("digitalObjects").setValue(sb.toString());
-	}
-
-	private void initSLA(@Nonnull TavernaRun run, @Nonnull Element schematron)
-			throws BadStateChangeException, TransformerException {
-		run.makeInput("SLA").setValue(serializeXml(schematron));
-	}
-
-	private void initSecurity(@Nonnull TavernaRun run)
-			throws InvalidCredentialException, IOException,
-			GeneralSecurityException {
-		TavernaSecurityContext ctxt = run.getSecurityContext();
-
-		Credential.Password pw = new Credential.Password();
-		pw.id = "urn:scape:repository-credential";
-		pw.username = notifyUser;
-		pw.password = notifyPass;
-		pw.serviceURI = URI.create(notifyService);
-		ctxt.validateCredential(pw);
-		ctxt.addCredential(pw);
-
-		Trust t = new Trust();
-		t.loadedCertificates = ccf.getTrustsForURI(pw.serviceURI);
-		if (t.loadedCertificates != null)
-			ctxt.addTrusted(t);
-	}
-
-	@Nonnull
-	private String serializeXml(@Nonnull Node node) throws TransformerException {
+	private static String serializeXml(@Nonnull Node node)
+			throws TransformerException {
 		Transformer writer = TransformerFactory.newInstance().newTransformer();
 		writer.setOutputProperty(OMIT_XML_DECLARATION, "yes");
 		writer.setOutputProperty(STANDALONE, "yes");
 		StringWriter sw = new StringWriter();
 		writer.transform(new DOMSource(node), new StreamResult(sw));
 		return sw.toString();
-	}
-
-	private void setExecuting(@Nonnull TavernaRun run)
-			throws BadStateChangeException {
-		while (run.setStatus(Operating) != null)
-			try {
-				Thread.sleep(5000);
-			} catch (InterruptedException e) {
-				throw new BadStateChangeException(
-						"interrupted while trying to start");
-			}
 	}
 
 	@PerfLogged
@@ -582,7 +475,8 @@ public class ScapeExecutor implements ScapeExecutionService {
 			Directory out = fileUtils.getDirectory(r, "out");
 			change.output = ub.build(r.getId(), out.getFullName()).toString();
 			File reportFile = fileUtils.getFile(r, "out/report");
-			report = new String(reportFile.getContents(0, (int)reportFile.getSize()));
+			report = new String(reportFile.getContents(0,
+					(int) reportFile.getSize()));
 		} catch (FilesystemAccessException | NoDirectoryEntryException e) {
 			// Do nothing in this case
 		}
@@ -621,6 +515,140 @@ public class ScapeExecutor implements ScapeExecutionService {
 			change.state = State.Fail;
 		}
 		notifyPlanService(planId, change);
+	}
+
+	/**
+	 * How to make a SCAPE job actually start executing.
+	 * 
+	 * @author Donal Fellows
+	 */
+	class ScapeShepherd implements Runnable {
+		@Nonnull
+		private final String planId;
+		@Nonnull
+		private final List<Object> objs;
+		@Nullable
+		private final Element schematron;
+		@Nonnull
+		private final URI base;
+		@Nonnull
+		private final String jobId;
+		@Nonnull
+		private final TavernaRun run;
+		@Nonnull
+		private final InputDescription inDesc;
+
+		ScapeShepherd(@Nonnull String planId, @Nonnull List<Object> objs,
+				@Nullable Element schematron, @Nonnull Workflow w,
+				@Nonnull UriInfo ui) throws NoCreateException,
+				UnknownRunException {
+			this.planId = planId;
+			this.objs = objs;
+			this.schematron = schematron;
+			jobId = support.buildWorkflow(w);
+			dao.setScapeJob(jobId, planId);
+			if (notifyService != null)
+				dao.setNotify(jobId, notifyService);
+			/* Warning: do not move UriInfo across threads */
+			base = ui.getBaseUri();
+			run = ScapeExecutor.this.run(jobId);
+			inDesc = cb.makeInputDescriptor(run, ui);
+		}
+
+		String startTask() {
+			Thread worker = new Thread(this);
+			worker.setDaemon(true);
+			worker.setName("Taverna Server: SCAPE job initialization: " + jobId);
+			worker.start();
+			return jobId;
+		}
+
+		@Override
+		public void run() {
+			try {
+				executeWorkflow();
+			} catch (Exception e) {
+				log.warn("failed to initialize SCAPE workflow", e);
+			}
+		}
+
+		private void executeWorkflow() throws BadStateChangeException,
+				TransformerException, InvalidCredentialException, IOException,
+				GeneralSecurityException {
+			Set<String> inputs = new HashSet<String>();
+			for (InputPort o : inDesc.input)
+				inputs.add(o.name);
+			if (inputs.contains("CreatorIdentity"))
+				initCreatorIdentity();
+			run.setGenerateProvenance(true);
+			initRepositories();
+			initObjects();
+			if (schematron != null)
+				initSLA(schematron);
+			initSecurity();
+
+			Date deadline = new Date();
+			deadline.setTime(deadline.getTime() + timeout);
+			run.setExpiry(deadline);
+
+			setExecuting();
+			if (notifyService != null) {
+				String msg = format("Commenced execution using jobID=%s on %s",
+						jobId, base);
+				notifyPlanService(planId, new ExecutionStateChange(
+						State.InProgress, msg));
+			}
+		}
+
+		private void initCreatorIdentity() throws BadStateChangeException {
+			run.makeInput("CreatorIdentity").setValue(planId);
+		}
+
+		private void initRepositories() throws BadStateChangeException {
+			run.makeInput("SourceRepository").setValue(repository);
+			run.makeInput("DestinationRepository").setValue(repository);
+			run.makeInput("RepositoryDirectory").setValue(repoDir);
+		}
+
+		private void initObjects() throws BadStateChangeException {
+			StringBuffer sb = new StringBuffer();
+			for (Object object : objs)
+				sb.append(object.getUid()).append('\n');
+			run.makeInput("digitalObjects").setValue(sb.toString());
+		}
+
+		private void initSLA(@Nonnull Element schematron)
+				throws BadStateChangeException, TransformerException {
+			run.makeInput("SLA").setValue(serializeXml(schematron));
+		}
+
+		private void initSecurity() throws InvalidCredentialException,
+				IOException, GeneralSecurityException {
+			TavernaSecurityContext ctxt = run.getSecurityContext();
+
+			Credential.Password pw = new Credential.Password();
+			pw.id = "urn:scape:repository-credential";
+			pw.username = notifyUser;
+			pw.password = notifyPass;
+			pw.serviceURI = URI.create(notifyService);
+			ctxt.validateCredential(pw);
+			ctxt.addCredential(pw);
+
+			Trust t = new Trust();
+			t.loadedCertificates = ccf.getTrustsForURI(pw.serviceURI);
+			if (t.loadedCertificates != null)
+				ctxt.addTrusted(t);
+		}
+
+		private void setExecuting() throws BadStateChangeException {
+			while (run.setStatus(Operating) != null)
+				try {
+					Thread.sleep(5000);
+				} catch (InterruptedException e) {
+					throw new BadStateChangeException(
+							"interrupted while trying to start");
+				}
+		}
 	}
 
 	@RolesAllowed(USER)
