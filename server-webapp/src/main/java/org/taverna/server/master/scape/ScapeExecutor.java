@@ -11,7 +11,6 @@ import static javax.xml.transform.OutputKeys.STANDALONE;
 import static org.apache.commons.logging.LogFactory.getLog;
 import static org.taverna.server.master.common.Roles.USER;
 import static org.taverna.server.master.common.Status.Finished;
-import static org.taverna.server.master.common.Status.Operating;
 import static org.taverna.server.master.scape.ScapeSplicingEngine.Model.One2OneNoSchema;
 import static org.taverna.server.master.scape.ScapeSplicingEngine.Model.One2OneSchema;
 import static org.taverna.server.master.utils.RestUtils.opt;
@@ -26,14 +25,10 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
-import java.security.GeneralSecurityException;
-import java.util.Date;
 import java.util.GregorianCalendar;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -59,14 +54,11 @@ import org.apache.commons.logging.Log;
 import org.springframework.beans.factory.annotation.Required;
 import org.taverna.server.master.ContentsDescriptorBuilder;
 import org.taverna.server.master.TavernaServerSupport;
-import org.taverna.server.master.common.Credential;
+import org.taverna.server.master.common.Credential.Password;
 import org.taverna.server.master.common.Namespaces;
-import org.taverna.server.master.common.Trust;
 import org.taverna.server.master.common.Uri;
 import org.taverna.server.master.common.Workflow;
-import org.taverna.server.master.exceptions.BadStateChangeException;
 import org.taverna.server.master.exceptions.FilesystemAccessException;
-import org.taverna.server.master.exceptions.InvalidCredentialException;
 import org.taverna.server.master.exceptions.NoCreateException;
 import org.taverna.server.master.exceptions.NoDestroyException;
 import org.taverna.server.master.exceptions.NoDirectoryEntryException;
@@ -78,7 +70,6 @@ import org.taverna.server.master.interfaces.File;
 import org.taverna.server.master.interfaces.Policy;
 import org.taverna.server.master.interfaces.RunStore;
 import org.taverna.server.master.interfaces.TavernaRun;
-import org.taverna.server.master.interfaces.TavernaSecurityContext;
 import org.taverna.server.master.rest.scape.ExecutionStateChange;
 import org.taverna.server.master.rest.scape.ExecutionStateChange.State;
 import org.taverna.server.master.rest.scape.ScapeExecutionService;
@@ -87,8 +78,6 @@ import org.taverna.server.master.utils.CallTimeLogger.PerfLogged;
 import org.taverna.server.master.utils.CertificateChainFetcher;
 import org.taverna.server.master.utils.FilenameUtils;
 import org.taverna.server.master.utils.InvocationCounter.CallCounted;
-import org.taverna.server.port_description.InputDescription;
-import org.taverna.server.port_description.InputDescription.InputPort;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
@@ -107,21 +96,21 @@ import at.ac.tuwien.ifs.dp.plato.QualityLevelDescription;
 public class ScapeExecutor implements ScapeExecutionService {
 	final JAXBContext context;
 	final Log log;
-	private TavernaServerSupport support;
+	TavernaServerSupport support;
 	private RunStore runStore;
 	private Policy policy;
 	private ScapeSplicingEngine splicer;
-	private ScapeJobDAO dao;
+	ScapeJobDAO dao;
 	private String notifyService;
 	private String notifyUser;
 	private String notifyPass;
 	private FilenameUtils fileUtils;
-	private ContentsDescriptorBuilder cb;
+	ContentsDescriptorBuilder cb;
 	private URI serviceUri;
-	private long timeout;
-	private String repository;
-	private String repoDir;
-	private CertificateChainFetcher ccf;
+	long timeout;
+	String repository;
+	String repoDir;
+	CertificateChainFetcher ccf;
 
 	public ScapeExecutor() throws JAXBException {
 		context = JAXBContext.newInstance(ExecutionStateChange.class);
@@ -225,7 +214,7 @@ public class ScapeExecutor implements ScapeExecutionService {
 	}
 
 	@Nonnull
-	private TavernaRun run(@Nonnull String id) throws UnknownRunException {
+	TavernaRun run(@Nonnull String id) throws UnknownRunException {
 		Policy p = policy;
 		if (p == null)
 			throw new WebApplicationException(serverError().entity(
@@ -255,8 +244,10 @@ public class ScapeExecutor implements ScapeExecutionService {
 	@Nonnull
 	public Response startJob(@Nullable JobRequest jobRequest,
 			@Nonnull UriInfo ui) throws NoCreateException {
-		if (this.serviceUri == null)
-			this.serviceUri = ui.getBaseUri();
+		synchronized (this) {
+			if (serviceUri == null)
+				serviceUri = ui.getBaseUri();
+		}
 		if (jobRequest == null)
 			throw new BadInputException("null request received!");
 		String planId = jobRequest.planId;
@@ -294,7 +285,8 @@ public class ScapeExecutor implements ScapeExecutionService {
 			Element sla = qld == null ? null : qld.getAny();
 			Workflow wf = splicer.constructWorkflow(workflow,
 					pickExecutionModel(plan));
-			id = new ScapeShepherd(planId, objectList, sla, wf, ui).startTask();
+			id = new ScapeShepherd(this, planId, objectList, sla, wf, ui)
+					.startTask();
 		} catch (NoCreateException e) {
 			throw e;
 		} catch (Exception e) {
@@ -375,8 +367,7 @@ public class ScapeExecutor implements ScapeExecutionService {
 	}
 
 	@Nonnull
-	private static String serializeXml(@Nonnull Node node)
-			throws TransformerException {
+	static String serializeXml(@Nonnull Node node) throws TransformerException {
 		Transformer writer = TransformerFactory.newInstance().newTransformer();
 		writer.setOutputProperty(OMIT_XML_DECLARATION, "yes");
 		writer.setOutputProperty(STANDALONE, "yes");
@@ -407,8 +398,7 @@ public class ScapeExecutor implements ScapeExecutionService {
 		}
 	}
 
-	private void notifyPlanService(String planId,
-			ExecutionStateChange stateChange) {
+	void notifyPlanService(String planId, ExecutionStateChange stateChange) {
 		URL u;
 		try {
 			u = fromUri(notifyService).path("/plan-execution-state/{id}")
@@ -466,10 +456,13 @@ public class ScapeExecutor implements ScapeExecutionService {
 	}
 
 	private String addFileInfo(TavernaRun r, ExecutionStateChange change) {
-		if (serviceUri == null)
-			return null;
-		UriBuilder ub = UriBuilder.fromUri(serviceUri).path(
-				"rest/runs/{id}/wd/{name}");
+		UriBuilder ub;
+		synchronized (this) {
+			if (serviceUri == null)
+				return null;
+			ub = UriBuilder.fromUri(serviceUri)
+					.path("rest/runs/{id}/wd/{name}");
+		}
 		String report = null;
 		try {
 			Directory out = fileUtils.getDirectory(r, "out");
@@ -517,140 +510,6 @@ public class ScapeExecutor implements ScapeExecutionService {
 		notifyPlanService(planId, change);
 	}
 
-	/**
-	 * How to make a SCAPE job actually start executing.
-	 * 
-	 * @author Donal Fellows
-	 */
-	class ScapeShepherd implements Runnable {
-		@Nonnull
-		private final String planId;
-		@Nonnull
-		private final List<Object> objs;
-		@Nullable
-		private final Element schematron;
-		@Nonnull
-		private final URI base;
-		@Nonnull
-		private final String jobId;
-		@Nonnull
-		private final TavernaRun run;
-		@Nonnull
-		private final InputDescription inDesc;
-
-		ScapeShepherd(@Nonnull String planId, @Nonnull List<Object> objs,
-				@Nullable Element schematron, @Nonnull Workflow w,
-				@Nonnull UriInfo ui) throws NoCreateException,
-				UnknownRunException {
-			this.planId = planId;
-			this.objs = objs;
-			this.schematron = schematron;
-			jobId = support.buildWorkflow(w);
-			dao.setScapeJob(jobId, planId);
-			if (notifyService != null)
-				dao.setNotify(jobId, notifyService);
-			/* Warning: do not move UriInfo across threads */
-			base = ui.getBaseUri();
-			run = ScapeExecutor.this.run(jobId);
-			inDesc = cb.makeInputDescriptor(run, ui);
-		}
-
-		String startTask() {
-			Thread worker = new Thread(this);
-			worker.setDaemon(true);
-			worker.setName("Taverna Server: SCAPE job initialization: " + jobId);
-			worker.start();
-			return jobId;
-		}
-
-		@Override
-		public void run() {
-			try {
-				executeWorkflow();
-			} catch (Exception e) {
-				log.warn("failed to initialize SCAPE workflow", e);
-			}
-		}
-
-		private void executeWorkflow() throws BadStateChangeException,
-				TransformerException, InvalidCredentialException, IOException,
-				GeneralSecurityException {
-			Set<String> inputs = new HashSet<String>();
-			for (InputPort o : inDesc.input)
-				inputs.add(o.name);
-			if (inputs.contains("CreatorIdentity"))
-				initCreatorIdentity();
-			run.setGenerateProvenance(true);
-			initRepositories();
-			initObjects();
-			if (schematron != null)
-				initSLA(schematron);
-			initSecurity();
-
-			Date deadline = new Date();
-			deadline.setTime(deadline.getTime() + timeout);
-			run.setExpiry(deadline);
-
-			setExecuting();
-			if (notifyService != null) {
-				String msg = format("Commenced execution using jobID=%s on %s",
-						jobId, base);
-				notifyPlanService(planId, new ExecutionStateChange(
-						State.InProgress, msg));
-			}
-		}
-
-		private void initCreatorIdentity() throws BadStateChangeException {
-			run.makeInput("CreatorIdentity").setValue(planId);
-		}
-
-		private void initRepositories() throws BadStateChangeException {
-			run.makeInput("SourceRepository").setValue(repository);
-			run.makeInput("DestinationRepository").setValue(repository);
-			run.makeInput("RepositoryDirectory").setValue(repoDir);
-		}
-
-		private void initObjects() throws BadStateChangeException {
-			StringBuffer sb = new StringBuffer();
-			for (Object object : objs)
-				sb.append(object.getUid()).append('\n');
-			run.makeInput("digitalObjects").setValue(sb.toString());
-		}
-
-		private void initSLA(@Nonnull Element schematron)
-				throws BadStateChangeException, TransformerException {
-			run.makeInput("SLA").setValue(serializeXml(schematron));
-		}
-
-		private void initSecurity() throws InvalidCredentialException,
-				IOException, GeneralSecurityException {
-			TavernaSecurityContext ctxt = run.getSecurityContext();
-
-			Credential.Password pw = new Credential.Password();
-			pw.id = "urn:scape:repository-credential";
-			pw.username = notifyUser;
-			pw.password = notifyPass;
-			pw.serviceURI = URI.create(notifyService);
-			ctxt.validateCredential(pw);
-			ctxt.addCredential(pw);
-
-			Trust t = new Trust();
-			t.loadedCertificates = ccf.getTrustsForURI(pw.serviceURI);
-			if (t.loadedCertificates != null)
-				ctxt.addTrusted(t);
-		}
-
-		private void setExecuting() throws BadStateChangeException {
-			while (run.setStatus(Operating) != null)
-				try {
-					Thread.sleep(5000);
-				} catch (InterruptedException e) {
-					throw new BadStateChangeException(
-							"interrupted while trying to start");
-				}
-		}
-	}
-
 	@RolesAllowed(USER)
 	@PerfLogged
 	@Override
@@ -683,5 +542,27 @@ public class ScapeExecutor implements ScapeExecutionService {
 	public Response notifyOpt(String id) throws UnknownRunException {
 		getScapeRun(id);
 		return opt("PUT");
+	}
+
+	protected void initForJob(String jobId, String planId) {
+		dao.setScapeJob(jobId, planId);
+		if (notifyService != null)
+			dao.setNotify(jobId, notifyService);
+	}
+
+	protected void notifyPlanService(String planId, State state, String fmt,
+			java.lang.Object... args) {
+		if (notifyService != null)
+			notifyPlanService(planId,
+					new ExecutionStateChange(state, format(fmt, args)));
+	}
+
+	protected Password synthesizeLoginCredential() {
+		Password pw = new Password();
+		pw.id = "urn:scape:repository-credential";
+		pw.username = notifyUser;
+		pw.password = notifyPass;
+		pw.serviceURI = URI.create(notifyService);
+		return pw;
 	}
 }
