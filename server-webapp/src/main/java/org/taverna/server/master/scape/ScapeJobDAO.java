@@ -56,15 +56,14 @@ public class ScapeJobDAO extends JDOSupport<ScapeJob> {
 	}
 
 	@WithinSingleTransaction
-	public void setNotify(@Nonnull String jobId, @Nullable String notify) {
-		int n = (notify == null ? 0 : Integer.parseInt(notify.trim()));
+	public void setNotify(@Nonnull String jobId, boolean notify) {
 		ScapeJob job = getById(jobId);
 		if (job != null)
-			job.setNotify(n == 0 ? 0 : 1);
+			job.setNotify(notify ? 1 : 0);
 	}
 
 	@WithinSingleTransaction
-	public int updateNotify(@Nonnull String jobId, @Nullable String notify) {
+	public int updateNotify(@Nonnull String jobId, boolean notify) {
 		setNotify(jobId, notify);
 		return getNotify(jobId);
 	}

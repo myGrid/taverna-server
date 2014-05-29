@@ -56,7 +56,6 @@ import org.springframework.beans.factory.annotation.Required;
 import org.taverna.server.master.ContentsDescriptorBuilder;
 import org.taverna.server.master.TavernaServerSupport;
 import org.taverna.server.master.common.Credential.Password;
-import org.taverna.server.master.common.Namespaces;
 import org.taverna.server.master.common.Uri;
 import org.taverna.server.master.common.Workflow;
 import org.taverna.server.master.exceptions.FilesystemAccessException;
@@ -405,7 +404,7 @@ public class ScapeExecutor implements ScapeExecutionService {
 			} catch (Exception e) {
 				log.warn("failure in notification", e);
 			}
-			dao.setNotify(id, null);
+			dao.setNotify(id, false);
 		}
 	}
 
@@ -535,7 +534,8 @@ public class ScapeExecutor implements ScapeExecutionService {
 	public String setNotification(String id, String newValue)
 			throws UnknownRunException, NoUpdateException {
 		getScapeRun(id);
-		return Integer.toString(dao.updateNotify(id, newValue));
+		return Integer.toString(dao.updateNotify(id,
+				Integer.parseInt(newValue) != 0));
 	}
 
 	@Override
@@ -558,7 +558,7 @@ public class ScapeExecutor implements ScapeExecutionService {
 	protected void initForJob(String jobId, String planId) {
 		dao.setScapeJob(jobId, planId);
 		if (notifyService != null)
-			dao.setNotify(jobId, notifyService);
+			dao.setNotify(jobId, true);
 	}
 
 	protected void notifyPlanService(String planId, State state, String fmt,
