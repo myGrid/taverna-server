@@ -85,6 +85,7 @@ class ScapeShepherd implements Runnable {
 		inDesc = context.cb.makeInputDescriptor(run, ui);
 	}
 
+	@Nonnull
 	String startTask() {
 		Thread worker = new Thread(this);
 		worker.setDaemon(true);

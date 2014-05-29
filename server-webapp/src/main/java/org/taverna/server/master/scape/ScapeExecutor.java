@@ -279,7 +279,6 @@ public class ScapeExecutor implements ScapeExecutionService {
 					"bad content of executable plan: {%s}%s",
 					workflow.getNamespaceURI(), workflow.getLocalName()));
 
-		@Nonnull
 		String id;
 		try {
 			Element sla = qld == null ? null : qld.getAny();
