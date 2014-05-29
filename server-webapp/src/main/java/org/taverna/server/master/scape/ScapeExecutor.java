@@ -275,7 +275,7 @@ public class ScapeExecutor implements ScapeExecutionService {
 		if (workflow == null)
 			throw new BadInputException("the executable plan must be present");
 		if (!"workflow".equals(workflow.getLocalName())
-				|| T2FLOW.equals(workflow.getNamespaceURI()))
+				|| !T2FLOW.equals(workflow.getNamespaceURI()))
 			throw new BadInputException(format(
 					"bad content of executable plan: {%s}%s",
 					workflow.getNamespaceURI(), workflow.getLocalName()));
