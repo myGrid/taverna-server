@@ -20,8 +20,8 @@ import javax.jdo.annotations.Query;
 		@Query(name = "exists", language = "SQL", value = ScapeJob.EXISTS_QUERY, unique = "true", resultClass = Integer.class),
 		@Query(name = "notifiable", language = "SQL", value = ScapeJob.NOTIFY_QUERY, unique = "false", resultClass = String.class), })
 class ScapeJob implements Serializable {
-	static final String SCHEMA = "SCAPE";
-	static final String TABLE = "JOB";
+	static final String SCHEMA = "TAVERNA";
+	static final String TABLE = "SCAPE_JOB";
 	private static final String FULL_NAME = SCHEMA + "." + TABLE;
 	static final String EXISTS_QUERY = "SELECT count(*) FROM " + FULL_NAME
 			+ " WHERE id = ?";

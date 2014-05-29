@@ -650,6 +650,7 @@
 						org/taverna/server/master/identity/*.class,
 						org/taverna/server/master/localworker/*.class,
 						org/taverna/server/master/notification/atom/*.class,
+						org/taverna/server/master/scape/*.class,
 						org/taverna/server/master/usage/*.class,
 						org/taverna/server/master/worker/*.class
 					</metadataIncludes>
