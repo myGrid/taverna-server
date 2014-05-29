@@ -24,6 +24,7 @@
 		<edition.commandline>enterprise</edition.commandline>
 		<version.jdoapi>3.0.1</version.jdoapi>
 		<version.phloc-schematron>2.6.4</version.phloc-schematron>
+		<version.datanucleus-core>3.2.14</version.datanucleus-core>
 		<version.scape-platform-datamodel>0.1.8-SNAPSHOT</version.scape-platform-datamodel>
 		<forker.module>server-unix-forker</forker.module>
 		<util.dir>${project.build.directory}/${project.build.finalName}/WEB-INF/classes/util</util.dir>
@@ -198,7 +199,7 @@
 		<dependency>
 			<groupId>org.datanucleus</groupId>
 			<artifactId>datanucleus-core</artifactId>
-			<version>3.2.10</version>
+			<version>${version.datanucleus-core}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.datanucleus</groupId>
@@ -458,7 +459,7 @@
 						<dependency>
 							<groupId>org.datanucleus</groupId>
 							<artifactId>datanucleus-core</artifactId>
-							<version>3.2.10</version>
+							<version>${version.datanucleus-core}</version>
 						</dependency>
 						<dependency>
 							<groupId>org.datanucleus</groupId>
