@@ -9,6 +9,7 @@ import static javax.xml.bind.DatatypeConverter.printBase64Binary;
 import static javax.xml.transform.OutputKeys.OMIT_XML_DECLARATION;
 import static javax.xml.transform.OutputKeys.STANDALONE;
 import static org.apache.commons.logging.LogFactory.getLog;
+import static org.taverna.server.master.common.Namespaces.T2FLOW;
 import static org.taverna.server.master.common.Roles.USER;
 import static org.taverna.server.master.common.Status.Finished;
 import static org.taverna.server.master.scape.ScapeSplicingEngine.Model.One2OneNoSchema;
@@ -274,18 +275,29 @@ public class ScapeExecutor implements ScapeExecutionService {
 		if (workflow == null)
 			throw new BadInputException("the executable plan must be present");
 		if (!"workflow".equals(workflow.getLocalName())
-				|| Namespaces.T2FLOW.equals(workflow.getNamespaceURI()))
+				|| T2FLOW.equals(workflow.getNamespaceURI()))
 			throw new BadInputException(format(
 					"bad content of executable plan: {%s}%s",
 					workflow.getNamespaceURI(), workflow.getLocalName()));
 
+		log.info(format("request to start execution of job for plan (id=%s)",
+				planId));
 		String id;
 		try {
+			// TODO consider moving splicer use into shepherd
 			Element sla = qld == null ? null : qld.getAny();
-			Workflow wf = splicer.constructWorkflow(workflow,
-					pickExecutionModel(plan));
+			Model m = pickExecutionModel(plan);
+			log.info(format("selected execution model %s for plan (id=%s)", m,
+					planId));
+			Workflow wf = splicer.constructWorkflow(workflow, m);
+			log.info(format(
+					"constructed merged execution workflow for plan (id=%s)",
+					planId));
 			id = new ScapeShepherd(this, planId, objectList, sla, wf, ui)
 					.startTask();
+			log.info(format(
+					"instantiated execution for plan (id=%s) as workflow run (id=%s)",
+					planId, id));
 		} catch (NoCreateException e) {
 			throw e;
 		} catch (Exception e) {
@@ -557,6 +569,7 @@ public class ScapeExecutor implements ScapeExecutionService {
 	}
 
 	protected Password synthesizeLoginCredential() {
+		log.info("issuing credential to access repository " + notifyService);
 		Password pw = new Password();
 		pw.id = "urn:scape:repository-credential";
 		pw.username = notifyUser;
