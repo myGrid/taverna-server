@@ -430,6 +430,7 @@ public class ScapeExecutor implements ScapeExecutionService {
 				conn.setRequestProperty("Authorization", "Basic " + token);
 			}
 			conn.setRequestProperty("Content-Type", "application/xml");
+			log.info("about to POST to " + u + " this message:\n" + payload);
 
 			try (Writer out = new OutputStreamWriter(conn.getOutputStream(),
 					"UTF-8")) {
@@ -440,13 +441,13 @@ public class ScapeExecutor implements ScapeExecutionService {
 				try (Reader in = new InputStreamReader(conn.getErrorStream())) {
 					response = IOUtils.toString(in);
 				}
-				log.warn(String.format("notification response: %s\n%s",
+				log.warn(format("notification response: %s\n%s",
 						conn.getResponseMessage(), response));
 			} else {
 				try (Reader in = new InputStreamReader(conn.getInputStream())) {
 					response = IOUtils.toString(in);
 				}
-				log.info(String.format("notification response: %s\n%s",
+				log.info(format("notification response: %s\n%s",
 						conn.getResponseMessage(), response));
 			}
 		} catch (IOException | DatatypeConfigurationException | JAXBException | RuntimeException e) {
