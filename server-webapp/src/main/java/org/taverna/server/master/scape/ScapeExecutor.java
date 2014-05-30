@@ -436,12 +436,19 @@ public class ScapeExecutor implements ScapeExecutionService {
 				out.write(payload);
 			}
 			String response = "";
-			try (Reader in = new InputStreamReader(conn.getInputStream())) {
-				response = IOUtils.toString(in);
-			}
-			if (conn.getResponseCode() >= 400 && log.isInfoEnabled())
+			if (conn.getResponseCode() >= 400 && log.isInfoEnabled()) {
+				try (Reader in = new InputStreamReader(conn.getErrorStream())) {
+					response = IOUtils.toString(in);
+				}
+				log.warn(String.format("notification response: %s\n%s",
+						conn.getResponseMessage(), response));
+			} else {
+				try (Reader in = new InputStreamReader(conn.getInputStream())) {
+					response = IOUtils.toString(in);
+				}
 				log.info(String.format("notification response: %s\n%s",
 						conn.getResponseMessage(), response));
+			}
 		} catch (IOException | DatatypeConfigurationException | JAXBException | RuntimeException e) {
 			log.warn("failed to do notification to " + u, e);
 		}
