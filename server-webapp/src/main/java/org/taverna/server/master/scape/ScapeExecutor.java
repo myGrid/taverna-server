@@ -427,7 +427,7 @@ public class ScapeExecutor implements ScapeExecutionService {
 			if (notifyUser != null && notifyPass != null) {
 				String token = notifyUser + ":" + notifyPass;
 				token = printBase64Binary(token.getBytes("UTF-8"));
-				conn.setRequestProperty("Authorization", token);
+				conn.setRequestProperty("Authorization", "Basic " + token);
 			}
 			conn.setRequestProperty("Content-Type", "application/xml");
 
@@ -442,7 +442,7 @@ public class ScapeExecutor implements ScapeExecutionService {
 			if (conn.getResponseCode() >= 400 && log.isInfoEnabled())
 				log.info(String.format("notification response: %s\n%s",
 						conn.getResponseMessage(), response));
-		} catch (IOException | DatatypeConfigurationException | JAXBException e) {
+		} catch (IOException | DatatypeConfigurationException | JAXBException | RuntimeException e) {
 			log.warn("failed to do notification to " + u, e);
 		}
 	}
