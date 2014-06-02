@@ -1,11 +1,13 @@
 package org.taverna.server.master.rest.scape;
 
+import static org.taverna.server.master.rest.scape.Namespaces.SCAPE_MODEL;
+
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlValue;
 import javax.xml.datatype.XMLGregorianCalendar;
 
-@XmlRootElement(name = "execution-state", namespace = "")
+@XmlRootElement(name = "plan-execution-state", namespace = SCAPE_MODEL)
 public class ExecutionStateChange {
 	@XmlAttribute(required = true)
 	public XMLGregorianCalendar timestamp;
