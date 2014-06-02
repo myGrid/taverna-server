@@ -10,8 +10,7 @@
 	<description>This is an implementation of the SCAPE execution service using Taverna Server.</description>
 	<context-param>
 		<param-name>contextConfigLocation</param-name>
-		<!-- <param-value>WEB-INF/secure.xml</param-value> -->
-		<param-value>WEB-INF/insecure.xml</param-value>
+		<param-value>WEB-INF/secure.xml</param-value>
 		<description>Where Spring is to load its bean definitions from. DO NOT
 			CHANGE WITHOUT CONSULTING DOCUMENTATION.</description>
 	</context-param>
