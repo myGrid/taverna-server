@@ -545,5 +545,6 @@
 		<module>server-usagerecord</module>
 		<module>server-port-description</module>
 		<module>server-rmidaemon</module>
+		<module>server-scape-operations</module>
 	</modules>
 </project>
