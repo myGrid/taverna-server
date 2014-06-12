@@ -1,5 +1,8 @@
 package org.taverna.server.master.scape.beanshells;
 
+import static java.lang.String.format;
+
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -12,81 +15,67 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class RealizeDOs extends Support<RealizeDOs> {
+	@Input
 	private String repository;
+	@Input
 	private String workDirectory;
+	@Input
 	private List<String> objects;
+
+	@Output
 	private List<String> files;
+	@Output
 	private List<String> objectList;
+	@Output
 	private List<String> resolvedObjectList;
+	@Output
+	private List<String> representationList;
+	@Output
+	private List<String> representationUriList;
+
 	private final byte[] buffer = new byte[4096];
 
 	@Override
 	public void perform() throws Exception {
 		URL baseURL = new URL(repository + "/file");
+		URL repURL = new URL(repository + "/representation");
 		File wd = (workDirectory == null ? new File(".") : new File(
 				workDirectory));
 		files = new ArrayList<>();
 		objectList = new ArrayList<>();
 		resolvedObjectList = new ArrayList<>();
+		representationList = new ArrayList<>();
+		representationUriList = new ArrayList<>();
 		int ids = 0;
 		for (String obj : objects)
-			realizeOneDO(baseURL, wd, ++ids, obj);
+			realizeOneDO(baseURL, repURL, wd, ++ids, obj);
 	}
 
-	private void realizeOneDO(URL baseURL, File wd, int id, String obj)
+	private void realizeOneDO(URL baseURL, URL repURL, File wd, int id, String obj)
 			throws MalformedURLException, IOException, FileNotFoundException {
 		objectList.add(obj);
 		URL url = new URL(baseURL, obj);
+		URL repUrl = new URL(repURL, format("%s/%s", (Object[]) obj.split("/")));
 		resolvedObjectList.add(url.toString());
+		representationUriList.add(repUrl.toString());
 		File f = new File(wd, "" + id);
 
 		// Download file
 		try (InputStream is = url.openStream();
 				OutputStream os = new FileOutputStream(f)) {
-			files.add(f.toString());
 			int bytesRead = 0;
 			while ((bytesRead = is.read(buffer)) != -1)
 				os.write(buffer, 0, bytesRead);
+			files.add(f.toString());
 		}
-	}
 
-	@Override
-	public RealizeDOs init(String name, String value) {
-		switch (name) {
-		case "repository":
-			repository = value;
-			break;
-		case "workDirectory":
-			workDirectory = value;
-			break;
-		default:
-			throw new UnsupportedOperationException();
+		// Download metadata
+		try (ByteArrayOutputStream sw = new ByteArrayOutputStream();
+				InputStream is = repUrl.openStream()) {
+			int bytesRead = 0;
+			while ((bytesRead = is.read(buffer)) != -1)
+				sw.write(buffer, 0, bytesRead);
+			representationList.add(sw.toString());
 		}
-		return this;
-	}
-
-	@Override
-	public RealizeDOs init(String name, List<String> value) {
-		switch (name) {
-		case "objects":
-			objects = value;
-			break;
-		default:
-			throw new UnsupportedOperationException();
-		}
-		return this;
-	}
-
-	@Override
-	public List<String> getResultList(String name) {
-		switch (name) {
-		case "files":
-			return files;
-		case "objectList":
-			return objectList;
-		case "resolvedObjectList":
-			return resolvedObjectList;
-		}
-		throw new UnsupportedOperationException();
 	}
 }

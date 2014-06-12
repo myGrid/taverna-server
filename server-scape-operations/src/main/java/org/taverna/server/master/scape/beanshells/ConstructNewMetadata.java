@@ -19,11 +19,17 @@ import eu.scape_project.model.Representation;
 import eu.scape_project.util.ScapeMarshaller;
 
 public class ConstructNewMetadata extends Support<ConstructNewMetadata> {
+	@Input
 	private String originalMetadata;
+	@Input
 	private String newInformation;
+	@Input
 	private String generatedFilename;
+	@Input
 	private String creator;
+	@Input
 	private String contentType;
+	@Output
 	private String newMetadata;
 
 	@Override
@@ -55,38 +61,5 @@ public class ConstructNewMetadata extends Support<ConstructNewMetadata> {
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		sm.serialize(ie.build(), baos);
 		newMetadata = baos.toString();
-	}
-
-	@Override
-	public ConstructNewMetadata init(String name, String value) {
-		switch (name) {
-		case "originalMetadata":
-			originalMetadata = value;
-			break;
-		case "newInformation":
-			newInformation = value;
-			break;
-		case "generatedFilename":
-			generatedFilename = value;
-			break;
-		case "creator":
-			creator = value;
-			break;
-		case "contentType":
-			contentType = value;
-			break;
-		default:
-			throw new UnsupportedOperationException();
-		}
-		return this;
-	}
-
-	@Override
-	public String getResult(String name) {
-		switch (name) {
-		case "newMetadata":
-			return newMetadata;
-		}
-		throw new UnsupportedOperationException();
 	}
 }

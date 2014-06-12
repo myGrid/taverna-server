@@ -12,16 +12,20 @@ import java.util.Scanner;
 
 public class UpdateIntellectualEntityInRepository extends
 		Support<UpdateIntellectualEntityInRepository> {
+	@Output
 	private String error, written;
-	String src, repository, doWrite, sat, meta;
+	@Input
+	private String src, repository, meta;
+	@Input
+	private boolean sat, doWrite;
 
 	@Override
 	public void perform() throws Exception {
 		error = written = "";
 		URL url = new URL(repository + src);
-		if (!"true".equals(sat))
+		if (!sat)
 			error = "failed quality check";
-		else if (!"true".equals(doWrite))
+		else if (!doWrite)
 			written = format("%s;%s", src, repository);
 		else
 			writeIEUpdate(url);
@@ -36,54 +40,19 @@ public class UpdateIntellectualEntityInRepository extends
 				w.write(meta);
 			}
 			if (conn.getResponseCode() >= 400) {
-				error = "failed during write: " + conn.getResponseMessage()
-						+ "<br><pre>";
+				StringBuilder sb = new StringBuilder("failed during write: ")
+						.append(conn.getResponseMessage()).append("<br><pre>");
 				try (Scanner sc = new Scanner(conn.getErrorStream())) {
 					while (sc.hasNextLine())
-						error += "\n" + sc.nextLine();
+						sb.append("\n").append(sc.nextLine());
 				}
-				error += "\n</pre>";
+				error = sb.append("\n</pre>").toString();
 			} else {
 				written = format("%s;%s", src, repository);
-				// # Ignore a successful write's response
+				// Ignore a successful write's response
 			}
 		} finally {
 			conn.disconnect();
 		}
-	}
-
-	@Override
-	public UpdateIntellectualEntityInRepository init(String name, String value) {
-		switch (name) {
-		case "src":
-			src = value;
-			break;
-		case "repository":
-			repository = value;
-			break;
-		case "doWrite":
-			doWrite = value;
-			break;
-		case "sat":
-			sat = value;
-			break;
-		case "meta":
-			meta = value;
-			break;
-		default:
-			throw new UnsupportedOperationException();
-		}
-		return this;
-	}
-
-	@Override
-	public String getResult(String name) {
-		switch (name) {
-		case "error":
-			return error;
-		case "written":
-			return written;
-		}
-		throw new UnsupportedOperationException();
 	}
 }

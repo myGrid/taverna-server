@@ -6,9 +6,13 @@ import java.util.Iterator;
 import java.util.List;
 
 public class GenerateReport extends Support<GenerateReport> {
-	private String report, errors, written;
+	@Output
+	private String report;
+	@Input
 	private boolean doWrite;
+	@Input
 	private List<String> objects, writtenInfo, writeErrors;
+	@Input
 	private List<List<String>> assessErrors;
 	private int nout, nerr;
 
@@ -32,7 +36,6 @@ public class GenerateReport extends Support<GenerateReport> {
 						+ "<h2>Errors</h2><ul>%s</ul>", nout, nerr,
 				writtenBuffer, errorsBuffer);
 	}
-
 
 	private void generateReportLine(StringBuilder errorsBuffer,
 			StringBuilder writtenBuffer, boolean reallyWrite, String ob,
@@ -65,60 +68,5 @@ public class GenerateReport extends Support<GenerateReport> {
 					.append(repo).append(tail).append("</li>");
 			nout++;
 		}
-	}
-
-
-	@Override
-	public GenerateReport init(String name, String value) {
-		switch (name) {
-		case "doWrite":
-			doWrite = "true".equals(value);
-			break;
-		default:
-			throw new UnsupportedOperationException();
-		}
-		return this;
-	}
-
-	@Override
-	public GenerateReport init(String name, List<String> value) {
-		switch (name) {
-		case "objects":
-			objects = value;
-			break;
-		case "writtenInfo":
-			writtenInfo = value;
-			break;
-		case "writeErrors":
-			writeErrors = value;
-			break;
-		default:
-			throw new UnsupportedOperationException();
-		}
-		return this;
-	}
-
-	public GenerateReport initDeep(String name, List<List<String>> value) {
-		switch (name) {
-		case "assessErrors":
-			assessErrors = value;
-			break;
-		default:
-			throw new UnsupportedOperationException();
-		}
-		return this;
-	}
-
-	@Override
-	public String getResult(String name) {
-		switch (name) {
-		case "report":
-			return report;
-		case "errors":
-			return errors;
-		case "written":
-			return written;
-		}
-		throw new UnsupportedOperationException();
 	}
 }

@@ -17,10 +17,14 @@ import org.w3c.dom.NodeList;
 import com.phloc.schematron.ISchematronResource;
 
 public class AssessMetrics extends Support<AssessMetrics> {
+	@Input
 	private String QLD;
+	@Input
 	private String metrics;
+	@Output
 	private List<String> failures;
-	private String isSatisfied;
+	@Output
+	private boolean isSatisfied;
 
 	@Override
 	public void perform() throws Exception {
@@ -51,43 +55,10 @@ public class AssessMetrics extends Support<AssessMetrics> {
 								"http://purl.oclc.org/dsdl/svrl", "text")
 						.item(0).getTextContent());
 			}
-			isSatisfied = "" + failures.isEmpty();
+			isSatisfied = failures.isEmpty();
 		} finally {
 			measuresDoc.delete();
 			schematron.delete();
 		}
-	}
-
-	@Override
-	public AssessMetrics init(String name, String value) {
-		switch (name) {
-		case "QLD":
-			QLD = value;
-			break;
-		case "metrics":
-			metrics = value;
-			break;
-		default:
-			throw new UnsupportedOperationException();
-		}
-		return this;
-	}
-
-	@Override
-	public String getResult(String name) {
-		switch (name) {
-		case "isSatisfied":
-			return isSatisfied;
-		}
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public List<String> getResultList(String name) {
-		switch (name) {
-		case "failures":
-			return failures;
-		}
-		throw new UnsupportedOperationException();
 	}
 }
