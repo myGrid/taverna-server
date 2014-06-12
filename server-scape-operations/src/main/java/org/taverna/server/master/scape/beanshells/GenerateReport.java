@@ -5,7 +5,7 @@ import static java.lang.String.format;
 import java.util.Iterator;
 import java.util.List;
 
-class GenerateReport extends Support<GenerateReport> {
+public class GenerateReport extends Support<GenerateReport> {
 	private String report, errors, written;
 	private boolean doWrite;
 	private List<String> objects, writtenInfo, writeErrors;

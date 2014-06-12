@@ -2,7 +2,7 @@ package org.taverna.server.master.scape.beanshells;
 
 import java.io.File;
 
-class GenerateRepositoryFilename extends Support<GenerateRepositoryFilename> {
+public class GenerateRepositoryFilename extends Support<GenerateRepositoryFilename> {
 	private String repositoryDirectory, temporaryFile;
 	private String repositoryFile;
 

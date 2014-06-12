@@ -18,7 +18,7 @@ import eu.scape_project.model.IntellectualEntity;
 import eu.scape_project.model.Representation;
 import eu.scape_project.util.ScapeMarshaller;
 
-class ConstructNewMetadata extends Support<ConstructNewMetadata> {
+public class ConstructNewMetadata extends Support<ConstructNewMetadata> {
 	private String originalMetadata;
 	private String newInformation;
 	private String generatedFilename;
@@ -34,13 +34,13 @@ class ConstructNewMetadata extends Support<ConstructNewMetadata> {
 		File file = new File(generatedFilename);
 
 		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		factory.setNamespaceAware(true);
 		DocumentBuilder builder = factory.newDocumentBuilder();
 		InputSource is = new InputSource(new StringReader(newInformation));
 		Element newMeta = builder.parse(is).getDocumentElement();
 
-		IntellectualEntity original = (IntellectualEntity) sm
-				.deserialize(new ByteArrayInputStream(originalMetadata
-						.getBytes()));
+		IntellectualEntity original = sm.deserialize(IntellectualEntity.class,
+				new ByteArrayInputStream(originalMetadata.getBytes()));
 		IntellectualEntity.Builder ie = new IntellectualEntity.Builder(original);
 
 		ie.representation(new Representation.Builder()

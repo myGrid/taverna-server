@@ -16,7 +16,7 @@ import org.w3c.dom.NodeList;
 
 import com.phloc.schematron.ISchematronResource;
 
-class AssessMetrics extends Support<AssessMetrics> {
+public class AssessMetrics extends Support<AssessMetrics> {
 	private String QLD;
 	private String metrics;
 	private List<String> failures;

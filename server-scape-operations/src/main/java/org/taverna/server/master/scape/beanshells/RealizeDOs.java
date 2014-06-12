@@ -11,7 +11,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
-class RealizeDOs extends Support<RealizeDOs> {
+public class RealizeDOs extends Support<RealizeDOs> {
 	private String repository;
 	private String workDirectory;
 	private List<String> objects;

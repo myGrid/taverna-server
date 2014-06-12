@@ -4,7 +4,7 @@ import static java.nio.file.Files.copy;
 
 import java.io.File;
 
-class CopyDataToRepository extends Support<CopyDataToRepository> {
+public class CopyDataToRepository extends Support<CopyDataToRepository> {
 	private boolean doWrite;
 	private String temporaryFile;
 	private String repositoryFile;
