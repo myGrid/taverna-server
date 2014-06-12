@@ -1,10 +1,11 @@
 package org.taverna.server.master.scape.beanshells;
 
+import static java.util.UUID.randomUUID;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.StringReader;
-import java.util.UUID;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -17,20 +18,19 @@ import eu.scape_project.model.IntellectualEntity;
 import eu.scape_project.model.Representation;
 import eu.scape_project.util.ScapeMarshaller;
 
-@Deprecated
-class ConstructNewMetadata implements BeanshellSupport {
-	static String originalMetadata;
-	static String newInformation;
-	static String generatedFilename;
-	static String creator;
-	static String contentType;
-	String newMetadata;
+class ConstructNewMetadata extends Support<ConstructNewMetadata> {
+	private String originalMetadata;
+	private String newInformation;
+	private String generatedFilename;
+	private String creator;
+	private String contentType;
+	private String newMetadata;
 
 	@Override
-	public void shell() throws Exception {
+	public void perform() throws Exception {
 		ScapeMarshaller sm = ScapeMarshaller.newInstance();
-		String id1 = UUID.randomUUID().toString();
-		String id2 = UUID.randomUUID().toString();
+		String id1 = randomUUID().toString();
+		String id2 = randomUUID().toString();
 		File file = new File(generatedFilename);
 
 		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
@@ -55,5 +55,38 @@ class ConstructNewMetadata implements BeanshellSupport {
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		sm.serialize(ie.build(), baos);
 		newMetadata = baos.toString();
+	}
+
+	@Override
+	public ConstructNewMetadata init(String name, String value) {
+		switch (name) {
+		case "originalMetadata":
+			originalMetadata = value;
+			break;
+		case "newInformation":
+			newInformation = value;
+			break;
+		case "generatedFilename":
+			generatedFilename = value;
+			break;
+		case "creator":
+			creator = value;
+			break;
+		case "contentType":
+			contentType = value;
+			break;
+		default:
+			throw new UnsupportedOperationException();
+		}
+		return this;
+	}
+
+	@Override
+	public String getResult(String name) {
+		switch (name) {
+		case "newMetadata":
+			return newMetadata;
+		}
+		throw new UnsupportedOperationException();
 	}
 }

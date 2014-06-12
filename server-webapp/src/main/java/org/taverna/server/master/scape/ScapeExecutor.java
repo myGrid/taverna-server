@@ -21,6 +21,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.StringWriter;
+import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -498,6 +499,14 @@ public class ScapeExecutor implements ScapeExecutionService {
 		return report;
 	}
 
+	private void logProp(TavernaRun r, String property) throws NoListenerException {
+		String val = support.getProperty(r, "io", property);
+		if (val.isEmpty())
+			log.info(format("no %s for job %s", property, r.getId()));
+		else
+			log.info(format("%s for job %s\n%s", property, r.getId(), val));
+	}
+
 	private void notifySuccess(TavernaRun r, String planId) {
 		ExecutionStateChange change = new ExecutionStateChange();
 		try {
@@ -517,13 +526,21 @@ public class ScapeExecutor implements ScapeExecutionService {
 			}
 			if (report != null)
 				change.contents += "<p>" + report;
+			log.info(format("job %s is now in state %s", r.getId(), change.state));
 		} catch (NoListenerException e) {
 			log.error(
-					"no such listener or property when looking for io/exitcode",
+					"no such listener or property when looking for io/exitcode of " + r.getId(),
 					e);
 			change.contents = format(
 					"job %s has no properly defined exit status?", r.getId());
 			change.state = State.Fail;
+		}
+		try {
+			log.info("log contents for job " + r.getId() + "\n"
+					+ support.getLogs(r).get("ISO-8859-1"));
+			logProp(r, "stdout");
+			logProp(r, "stderr");
+		} catch (UnsupportedEncodingException | NoListenerException e) {
 		}
 		notifyPlanService(planId, change);
 	}

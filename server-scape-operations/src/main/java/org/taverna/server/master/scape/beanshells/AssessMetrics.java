@@ -1,10 +1,12 @@
 package org.taverna.server.master.scape.beanshells;
 
+import static com.phloc.schematron.pure.SchematronResourcePure.fromFile;
+import static java.util.UUID.randomUUID;
+
 import java.io.File;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 import javax.xml.transform.stream.StreamSource;
 
@@ -13,33 +15,29 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
 import com.phloc.schematron.ISchematronResource;
-import com.phloc.schematron.pure.SchematronResourcePure;
 
-@Deprecated
-@SuppressWarnings({ "rawtypes", "unchecked" })
-class AssessMetrics implements BeanshellSupport {
-	static String QLD;
-	static String metrics;
-	List<String> failures;
-	String isSatisfied;
+class AssessMetrics extends Support<AssessMetrics> {
+	private String QLD;
+	private String metrics;
+	private List<String> failures;
+	private String isSatisfied;
 
 	@Override
-	public void shell() throws Exception {
-		String id = UUID.randomUUID().toString();
+	public void perform() throws Exception {
+		String id = randomUUID().toString();
 		File schematron = new File("schematron_" + id + ".xml");
 		File measuresDoc = new File("measures_" + id + ".xml");
 
-		PrintWriter pw = new PrintWriter(schematron, "UTF-8");
-		pw.println(QLD);
-		pw.close();
-		pw = new PrintWriter(measuresDoc, "UTF-8");
-		pw.println(metrics);
-		pw.close();
-		failures = new ArrayList();
+		try (PrintWriter pw = new PrintWriter(schematron, "UTF-8")) {
+			pw.println(QLD);
+		}
+		try (PrintWriter pw = new PrintWriter(measuresDoc, "UTF-8")) {
+			pw.println(metrics);
+		}
+		failures = new ArrayList<>();
 
 		try {
-			ISchematronResource validator = SchematronResourcePure
-					.fromFile(schematron);
+			ISchematronResource validator = fromFile(schematron);
 			if (!validator.isValidSchematron())
 				throw new Exception("invalid schematron document");
 			Document result = validator
@@ -58,5 +56,38 @@ class AssessMetrics implements BeanshellSupport {
 			measuresDoc.delete();
 			schematron.delete();
 		}
+	}
+
+	@Override
+	public AssessMetrics init(String name, String value) {
+		switch (name) {
+		case "QLD":
+			QLD = value;
+			break;
+		case "metrics":
+			metrics = value;
+			break;
+		default:
+			throw new UnsupportedOperationException();
+		}
+		return this;
+	}
+
+	@Override
+	public String getResult(String name) {
+		switch (name) {
+		case "isSatisfied":
+			return isSatisfied;
+		}
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public List<String> getResultList(String name) {
+		switch (name) {
+		case "failures":
+			return failures;
+		}
+		throw new UnsupportedOperationException();
 	}
 }

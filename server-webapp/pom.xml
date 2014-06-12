@@ -23,7 +23,6 @@
 		<version.commandline>2.5.0</version.commandline>
 		<edition.commandline>enterprise</edition.commandline>
 		<version.jdoapi>3.0.1</version.jdoapi>
-		<version.phloc-schematron>2.6.4</version.phloc-schematron>
 		<version.datanucleus-core>3.2.14</version.datanucleus-core>
 		<version.scape-platform-datamodel>0.1.8-SNAPSHOT</version.scape-platform-datamodel>
 		<forker.module>server-unix-forker</forker.module>
@@ -32,16 +31,6 @@
 	</properties>
 
 	<repositories>
-		<repository>
-			<id>phloc.com</id>
-			<url>http://repo.phloc.com/maven2</url>
-			<releases>
-				<enabled>true</enabled>
-			</releases>
-			<snapshots>
-				<enabled>true</enabled>
-			</snapshots>
-		</repository>
 		<repository>
 			<id>sonatype-nexus-snapshots</id>
 			<name>Sonatype Nexus Snapshots</name>
@@ -320,12 +309,6 @@
 			<groupId>org.apache.jena</groupId>
 			<artifactId>jena-core</artifactId>
 			<version>2.11.0</version>
-		</dependency>
-		<dependency>
-			<groupId>com.phloc</groupId>
-			<artifactId>phloc-schematron</artifactId>
-			<version>${version.phloc-schematron}</version>
-			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>eu.scape-project.model</groupId>
@@ -628,19 +611,10 @@
 						<configuration>
 							<artifactItems>
 								<artifactItem>
-									<groupId>com.phloc</groupId>
-									<artifactId>phloc-schematron</artifactId>
-									<version>${version.phloc-schematron}</version>
-								</artifactItem>
-								<artifactItem>
-									<groupId>eu.scape-project.model</groupId>
-									<artifactId>scape-platform-datamodel</artifactId>
-									<version>${version.scape-platform-datamodel}</version>
-								</artifactItem>
-								<artifactItem>
 									<groupId>uk.org.taverna.server</groupId>
 									<artifactId>server-scape-operations</artifactId>
 									<version>${project.parent.version}</version>
+									<classifier>jar-with-dependencies</classifier>
 								</artifactItem>
 							</artifactItems>
 							<outputDirectory>${cmdline.dir}/lib</outputDirectory>

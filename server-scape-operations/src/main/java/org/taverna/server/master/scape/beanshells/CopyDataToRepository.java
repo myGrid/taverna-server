@@ -1,17 +1,36 @@
 package org.taverna.server.master.scape.beanshells;
 
-import java.io.File;
-import java.nio.file.CopyOption;
-import java.nio.file.Files;
+import static java.nio.file.Files.copy;
 
-@Deprecated
-class CopyDataToRepository implements BeanshellSupport {
-	static String doWrite, temporaryFile, repositoryFile;
+import java.io.File;
+
+class CopyDataToRepository extends Support<CopyDataToRepository> {
+	private boolean doWrite;
+	private String temporaryFile;
+	private String repositoryFile;
 
 	@Override
-	public void shell() throws Exception {
-		if ("true".equals(doWrite))
-			Files.copy(new File(temporaryFile).toPath(), new File(
-					repositoryFile).toPath(), new CopyOption[0]);
+	public void perform() throws Exception {
+		if (doWrite)
+			copy(new File(temporaryFile).toPath(),
+					new File(repositoryFile).toPath());
+	}
+
+	@Override
+	public CopyDataToRepository init(String name, String value) {
+		switch (name) {
+		case "doWrite":
+			doWrite = "true".equals(value);
+			break;
+		case "temporaryFile":
+			temporaryFile = value;
+			break;
+		case "repositoryFile":
+			repositoryFile = value;
+			break;
+		default:
+			throw new UnsupportedOperationException();
+		}
+		return this;
 	}
 }

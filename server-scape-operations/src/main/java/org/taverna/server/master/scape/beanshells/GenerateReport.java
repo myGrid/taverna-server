@@ -1,65 +1,124 @@
 package org.taverna.server.master.scape.beanshells;
 
+import static java.lang.String.format;
+
 import java.util.Iterator;
 import java.util.List;
 
-@Deprecated
-@SuppressWarnings({ "rawtypes" })
-class GenerateReport implements BeanshellSupport {
-	String report, errors, written;
-	static String doWrite;
-	static List<String> objects, writtenInfo, writeErrors;
-	static List<List<String>> assessErrors;
+class GenerateReport extends Support<GenerateReport> {
+	private String report, errors, written;
+	private boolean doWrite;
+	private List<String> objects, writtenInfo, writeErrors;
+	private List<List<String>> assessErrors;
+	private int nout, nerr;
 
 	@Override
-	public void shell() throws Exception {
-		Iterator ob_it = objects.iterator();
-		Iterator wi_it = writtenInfo.iterator();
-		Iterator we_it = writeErrors.iterator();
-		Iterator ae_it = assessErrors.iterator();
+	public void perform() throws Exception {
+		Iterator<String> ob_it = objects.iterator();
+		Iterator<String> wi_it = writtenInfo.iterator();
+		Iterator<String> we_it = writeErrors.iterator();
+		Iterator<List<String>> ae_it = assessErrors.iterator();
 		StringBuilder errorsBuffer = new StringBuilder();
 		StringBuilder writtenBuffer = new StringBuilder("<h1>Written:</h1><ul>");
-		boolean reallyWrite = "true".equals(doWrite);
-		int nout = 0, nerr = 0;
+		nout = nerr = 0;
 
 		while (ob_it.hasNext() && wi_it.hasNext() && we_it.hasNext()
-				&& ae_it.hasNext()) {
-			String ob = (String) ob_it.next();
-			String wi = (String) wi_it.next();
-			String we = (String) we_it.next();
-			List ae = (List) ae_it.next();
+				&& ae_it.hasNext())
+			generateReportLine(errorsBuffer, writtenBuffer, doWrite,
+					ob_it.next(), wi_it.next(), we_it.next(), ae_it.next());
+		report = format(
+				"<h2>Summary</h2>There were %s successful writes and %d errors."
+						+ "<h2>Written</h2><ul>%s<ul>"
+						+ "<h2>Errors</h2><ul>%s</ul>", nout, nerr,
+				writtenBuffer, errorsBuffer);
+	}
 
-			if (!ae.isEmpty()) {
-				errorsBuffer.append("<li>Object ").append(ob)
-						.append(" failed assessment.<ul>");
-				for (Object e : ae)
-					errorsBuffer.append("<li>").append(e).append("</li>");
-				errorsBuffer.append("</ul></li>");
-				nerr++;
-			} else if (we != null && !we.isEmpty()) {
-				errorsBuffer.append("<li>Object ").append(ob)
-						.append(" failed in upload.<br>").append(we)
-						.append("</ul></li>");
-				nerr++;
-			} else {
-				String[] info = wi.split(";", 2);
-				String src = info[0];
-				String repo = info[1];
-				writtenBuffer.append("<li>Object ").append(ob);
-				String tail = "";
-				if (reallyWrite) {
-					writtenBuffer.append(" was written back to ");
-				} else {
-					tail = " (write-back inhibited)";
-					writtenBuffer.append(" would have been written back to ");
-				}
-				writtenBuffer.append(src).append(" in repository ")
-						.append(repo).append(tail).append("</li>");
-				nout++;
+
+	private void generateReportLine(StringBuilder errorsBuffer,
+			StringBuilder writtenBuffer, boolean reallyWrite, String ob,
+			String wi, String we, List<String> ae) {
+		if (!ae.isEmpty()) {
+			errorsBuffer.append("<li>Object ").append(ob)
+					.append(" failed assessment.<ul>");
+			for (String e : ae)
+				errorsBuffer.append("<li>").append(e).append("</li>");
+			errorsBuffer.append("</ul></li>");
+			nerr++;
+		} else if (we != null && !we.isEmpty()) {
+			errorsBuffer.append("<li>Object ").append(ob)
+					.append(" failed in upload.<br>").append(we)
+					.append("</ul></li>");
+			nerr++;
+		} else {
+			String[] info = wi.split(";", 2);
+			String src = info[0];
+			String repo = info[1];
+			writtenBuffer.append("<li>Object ").append(ob);
+			String tail = "";
+			if (reallyWrite)
+				writtenBuffer.append(" was written back to ");
+			else {
+				tail = " (write-back inhibited)";
+				writtenBuffer.append(" would have been written back to ");
 			}
+			writtenBuffer.append(src).append(" in repository ")
+					.append(repo).append(tail).append("</li>");
+			nout++;
 		}
-		report = "There were " + nout + " successful writes and " + nerr
-				+ " errors.<h1>Written:</h1><ul>" + writtenBuffer
-				+ "</ul><h1>Errors:</h1><ul>" + errorsBuffer + "</ul>";
+	}
+
+
+	@Override
+	public GenerateReport init(String name, String value) {
+		switch (name) {
+		case "doWrite":
+			doWrite = "true".equals(value);
+			break;
+		default:
+			throw new UnsupportedOperationException();
+		}
+		return this;
+	}
+
+	@Override
+	public GenerateReport init(String name, List<String> value) {
+		switch (name) {
+		case "objects":
+			objects = value;
+			break;
+		case "writtenInfo":
+			writtenInfo = value;
+			break;
+		case "writeErrors":
+			writeErrors = value;
+			break;
+		default:
+			throw new UnsupportedOperationException();
+		}
+		return this;
+	}
+
+	public GenerateReport initDeep(String name, List<List<String>> value) {
+		switch (name) {
+		case "assessErrors":
+			assessErrors = value;
+			break;
+		default:
+			throw new UnsupportedOperationException();
+		}
+		return this;
+	}
+
+	@Override
+	public String getResult(String name) {
+		switch (name) {
+		case "report":
+			return report;
+		case "errors":
+			return errors;
+		case "written":
+			return written;
+		}
+		throw new UnsupportedOperationException();
 	}
 }
