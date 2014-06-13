@@ -17,16 +17,21 @@ public class UpdateIntellectualEntityInRepository extends
 	@Input
 	private String src, repository, meta;
 	@Input
-	private boolean sat, doWrite;
+	private boolean sat = true;
+	@Input
+	private boolean doWrite;
 
+	private void success() {
+		written = format("%s;%s", src, repository);
+	}
 	@Override
 	public void perform() throws Exception {
 		error = written = "";
-		URL url = new URL(repository + src);
+		URL url = new URL(new URL(repository), src);
 		if (!sat)
 			error = "failed quality check";
 		else if (!doWrite)
-			written = format("%s;%s", src, repository);
+			success();
 		else
 			writeIEUpdate(url);
 	}
@@ -48,7 +53,7 @@ public class UpdateIntellectualEntityInRepository extends
 				}
 				error = sb.append("\n</pre>").toString();
 			} else {
-				written = format("%s;%s", src, repository);
+				success();
 				// Ignore a successful write's response
 			}
 		} finally {

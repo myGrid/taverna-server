@@ -5,6 +5,8 @@ import static java.lang.String.format;
 import java.util.Iterator;
 import java.util.List;
 
+import javax.annotation.Nullable;
+
 public class GenerateReport extends Support<GenerateReport> {
 	@Output
 	private String report;
@@ -13,8 +15,17 @@ public class GenerateReport extends Support<GenerateReport> {
 	@Input
 	private List<String> objects, writtenInfo, writeErrors;
 	@Input
+	@Nullable
 	private List<List<String>> assessErrors;
+	private boolean wasCharacterise;
 	private int nout, nerr;
+
+	public GenerateReport() {
+	}
+
+	public GenerateReport(boolean characterise) {
+		wasCharacterise = characterise;
+	}
 
 	@Override
 	public void perform() throws Exception {
@@ -32,9 +43,10 @@ public class GenerateReport extends Support<GenerateReport> {
 			generateReportLine(errorsBuffer, writtenBuffer, next(ob_it),
 					next(wi_it), next(we_it), next(ae_it));
 		report = format(
-				"<h2>Summary</h2>There were %s successful writes and %d errors."
+				"<h2>Summary</h2>There were %s successful %s and %d errors."
 						+ "<h2>Written</h2><ul>%s<ul>"
-						+ "<h2>Errors</h2><ul>%s</ul>", nout, nerr,
+						+ "<h2>Errors</h2><ul>%s</ul>", nout,
+				wasCharacterise ? "metadata updates" : "writes", nerr,
 				writtenBuffer, errorsBuffer);
 	}
 
@@ -70,6 +82,17 @@ public class GenerateReport extends Support<GenerateReport> {
 		String src = info[0];
 		String repo = info[1];
 		writtenBuffer.append("<li>Object ").append(ob);
+		nout++;
+		if (wasCharacterise) {
+			if (doWrite)
+				writtenBuffer
+						.append(" had its metadata updated in repository ");
+			else
+				writtenBuffer
+						.append(" would have had its metadata updated in repository ");
+			writtenBuffer.append(repo).append("</li>");
+			return;
+		}
 		String tail = "";
 		if (doWrite)
 			writtenBuffer.append(" was written back to ");
@@ -79,6 +102,5 @@ public class GenerateReport extends Support<GenerateReport> {
 		}
 		writtenBuffer.append(src).append(" in repository ").append(repo)
 				.append(tail).append("</li>");
-		nout++;
 	}
 }
