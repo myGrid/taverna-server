@@ -1,0 +1,17 @@
+<schema xmlns="http://purl.oclc.org/dsdl/schematron">
+	<pattern>
+		<rule context="measures">
+			<assert test="measure">measure element is missing</assert>
+			<assert
+				test="measure[@type='width'][@subject='inputFile']/text() * measure[@type='height'][@subject='inputFile']/text() &gt; 999999999"
+				>pixel count acceptable</assert>
+		</rule>
+		<rule context="measure">
+			<assert test="@type">measure type attribute is missing</assert>
+			<assert test="@subject">measure subject attribute is missing</assert>
+		</rule>
+		<rule context="measure[@type='compressionRatio'][@subject='inputFile']">
+			<assert test="text()&gt;99">compression ratio acceptable</assert>
+		</rule>
+	</pattern>
+</schema>

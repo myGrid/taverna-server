@@ -49,7 +49,7 @@ public class AssessMetrics extends Support<AssessMetrics> {
 			NodeList nl = result.getDocumentElement().getElementsByTagNameNS(
 					"http://purl.oclc.org/dsdl/svrl", "failed-assert");
 			for (int i = 0; i < nl.getLength(); i++) {
-				Element elem = (Element) nl.item(0);
+				Element elem = (Element) nl.item(i);
 				failures.add(elem
 						.getElementsByTagNameNS(
 								"http://purl.oclc.org/dsdl/svrl", "text")

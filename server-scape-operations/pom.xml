@@ -9,7 +9,7 @@
 	<artifactId>server-scape-operations</artifactId>
 	<name>Operations for SCAPE Workflows</name>
 	<properties>
-		<version.phloc-schematron>2.6.4</version.phloc-schematron>
+		<version.phloc-schematron>2.7.1</version.phloc-schematron>
 		<version.scape-platform-datamodel>0.1.8-SNAPSHOT</version.scape-platform-datamodel>
 	</properties>
 	<repositories>
