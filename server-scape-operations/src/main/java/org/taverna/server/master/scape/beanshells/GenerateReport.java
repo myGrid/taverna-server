@@ -35,7 +35,7 @@ public class GenerateReport extends Support<GenerateReport> {
 		Iterator<List<String>> ae_it = (assessErrors != null ? assessErrors
 				.iterator() : null);
 		StringBuilder errorsBuffer = new StringBuilder();
-		StringBuilder writtenBuffer = new StringBuilder("<h1>Written:</h1><ul>");
+		StringBuilder writtenBuffer = new StringBuilder();
 		nout = nerr = 0;
 
 		while (ob_it.hasNext() && wi_it.hasNext() && we_it.hasNext()
@@ -44,7 +44,7 @@ public class GenerateReport extends Support<GenerateReport> {
 					next(wi_it), next(we_it), next(ae_it));
 		report = format(
 				"<h2>Summary</h2>There were %s successful %s and %d errors."
-						+ "<h2>Written</h2><ul>%s<ul>"
+						+ "<h2>Written</h2><ul>%s</ul>"
 						+ "<h2>Errors</h2><ul>%s</ul>", nout,
 				wasCharacterise ? "metadata updates" : "writes", nerr,
 				writtenBuffer, errorsBuffer);

@@ -1,6 +1,7 @@
 package org.taverna.server.master.scape.beanshells;
 
 import static java.lang.Boolean.parseBoolean;
+import static java.lang.Integer.parseInt;
 import static java.lang.annotation.ElementType.FIELD;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
@@ -59,7 +60,10 @@ abstract class Support<T extends BeanshellSupport<?>> implements
 		try {
 			if (f.getType().equals(Boolean.TYPE))
 				f.setBoolean(this, parseBoolean(value.toString()));
-			f.set(this, value);
+			else if (f.getType().equals(Integer.TYPE))
+				f.setInt(this, parseInt(value.toString()));
+			else
+				f.set(this, value);
 			return (T) this;
 		} catch (IllegalArgumentException | IllegalAccessException e) {
 			throw new UnsupportedOperationException(e);

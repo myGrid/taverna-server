@@ -8,7 +8,7 @@ import java.nio.file.Paths;
 import org.junit.Before;
 import org.junit.Test;
 
-public class ConstructNewMetadataTests {
+public class TestConstructNewMetadata {
 	String originalMetadata;
 	String newInformation;
 
