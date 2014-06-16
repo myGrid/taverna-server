@@ -37,8 +37,6 @@ public class RealizeDOs extends Support<RealizeDOs> {
 
 	@Override
 	public void perform() throws Exception {
-		URL baseURL = new URL(repository + "/file");
-		URL repURL = new URL(repository + "/representation");
 		File wd = (workDirectory == null ? new File(".") : new File(
 				workDirectory));
 		files = new ArrayList<>();
@@ -48,14 +46,14 @@ public class RealizeDOs extends Support<RealizeDOs> {
 		representationUriList = new ArrayList<>();
 		int ids = 0;
 		for (String obj : objects)
-			realizeOneDO(baseURL, repURL, wd, ++ids, obj);
+			realizeOneDO(wd, ++ids, obj);
 	}
 
-	private void realizeOneDO(URL baseURL, URL repURL, File wd, int id, String obj)
+	private void realizeOneDO(File wd, int id, String obj)
 			throws MalformedURLException, IOException, FileNotFoundException {
 		objectList.add(obj);
-		URL url = new URL(baseURL, obj);
-		URL repUrl = new URL(repURL, format("%s/%s", (Object[]) obj.split("/")));
+		URL url = resolveContent(obj);
+		URL repUrl = resolveRepresentation(obj);
 		resolvedObjectList.add(url.toString());
 		representationUriList.add(repUrl.toString());
 		File f = new File(wd, "" + id);
@@ -77,5 +75,17 @@ public class RealizeDOs extends Support<RealizeDOs> {
 				sw.write(buffer, 0, bytesRead);
 			representationList.add(sw.toString());
 		}
+	}
+
+	public URL resolveRepresentation(String obj) throws MalformedURLException {
+		URL repURL = new URL(repository + "/representation");
+		String[] bits = obj.split("/");
+		if (bits.length < 2)
+			return new URL(repURL, obj);
+		return new URL(repURL, format("%s/%s", bits[0], bits[1]));
+	}
+
+	public URL resolveContent(String obj) throws MalformedURLException {
+		return new URL(new URL(repository + "/file"), obj);
 	}
 }
