@@ -9,9 +9,9 @@ import javax.xml.datatype.XMLGregorianCalendar;
 
 @XmlRootElement(name = "plan-execution-state", namespace = SCAPE_MODEL)
 public class ExecutionStateChange {
-	@XmlAttribute(required = true)
+	@XmlAttribute(required = true, namespace = SCAPE_MODEL)
 	public XMLGregorianCalendar timestamp;
-	@XmlAttribute(required = true)
+	@XmlAttribute(required = true, namespace = SCAPE_MODEL)
 	public State state;
 	@XmlAttribute(name = "output-location")
 	public String output;
