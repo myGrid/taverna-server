@@ -3,13 +3,16 @@ package org.taverna.server.master.rest.scape;
 import static org.taverna.server.master.rest.scape.Namespaces.SCAPE_MODEL;
 
 import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlEnum;
+import javax.xml.bind.annotation.XmlEnumValue;
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlType;
 import javax.xml.bind.annotation.XmlValue;
 import javax.xml.datatype.XMLGregorianCalendar;
 
 @XmlRootElement(name = "plan-execution-state", namespace = SCAPE_MODEL)
 public class ExecutionStateChange {
-	@XmlAttribute(required = true, namespace = SCAPE_MODEL)
+	@XmlAttribute(required = true, name = "timeStamp", namespace = SCAPE_MODEL)
 	public XMLGregorianCalendar timestamp;
 	@XmlAttribute(required = true, namespace = SCAPE_MODEL)
 	public State state;
@@ -28,18 +31,11 @@ public class ExecutionStateChange {
 		this.contents = contents;
 	}
 
+	@XmlType
+	@XmlEnum
 	public static enum State {
-		InProgress("EXECUTION_IN_PROGRESS"), Success("EXECUTION_SUCCESS"), Fail(
-				"EXECUTION_FAIL");
-		private final String name;
-
-		private State(String name) {
-			this.name = name;
-		}
-
-		@Override
-		public String toString() {
-			return name;
-		}
+		@XmlEnumValue("EXECUTION_IN_PROGRESS") InProgress,
+		@XmlEnumValue("EXECUTION_SUCCESS") Success,
+		@XmlEnumValue("EXECUTION_FAIL") Fail
 	}
 }
