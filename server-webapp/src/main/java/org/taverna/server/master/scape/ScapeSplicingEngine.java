@@ -1,6 +1,5 @@
 package org.taverna.server.master.scape;
 
-import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static java.lang.String.format;
 import static org.apache.commons.logging.LogFactory.getLog;
 import static org.taverna.server.master.scape.DOMUtils.attrs;
@@ -18,7 +17,6 @@ import static org.taverna.server.master.scape.XPaths.REQUIRE_NESTED;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.StringReader;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
@@ -46,12 +44,6 @@ import org.w3c.dom.Element;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
-import com.hp.hpl.jena.ontology.OntResource;
-import com.hp.hpl.jena.rdf.model.Property;
-import com.hp.hpl.jena.rdf.model.RDFNode;
-import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.rdf.model.Statement;
-
 /**
  * The splicing engine that turns the workflow part of a Preservation Action
  * Plan into a full, useful Taverna Workflow that we can then enact.
@@ -63,8 +55,6 @@ public class ScapeSplicingEngine extends SplicingEngine {
 	private static final Log log = getLog("Taverna.Server.WorkflowSplicing.Scape");
 	private static final Pattern PORT_INFO_EXTRACT = Pattern
 			.compile("^measure_([a-zA-Z0-9]+)_([a-zA-Z0-9]+)$");
-	private static final Pattern NAME_EXTRACT = Pattern
-			.compile("[a-zA-Z0-9]+$");
 
 	/** The name of the processor to splice. Must be a dataflow processor! */
 	public static final String SPLICE_PROCESSOR_NAME = "PreservationActionPlan";
@@ -77,10 +67,11 @@ public class ScapeSplicingEngine extends SplicingEngine {
 	 * The name of a processor to remove from the outermost workflow.
 	 */
 	public static final String DUMMY_PROCESSOR_NAME = "ignore";
-	private static final String SPLICER_URL = "http://ns.taverna.org.uk/taverna-server/splicing";
-	private static final String SUBJECT_PROPERTY = SPLICER_URL
+	private static final String TAVERNA_SPLICER_URL = "http://ns.taverna.org.uk/taverna-server/splicing";
+	private static final String TAVERNA_SUBJECT_PROPERTY = TAVERNA_SPLICER_URL
 			+ "#OutputPortSubject";
-	private static final String TYPE_PROPERTY = SPLICER_URL + "#OutputPortType";
+	private static final String TAVERNA_TYPE_PROPERTY = TAVERNA_SPLICER_URL + "#OutputPortType";
+	private static final String SCAPE_PROVIDES_PROPERTY = "http://purl.org/DP/components#provides";
 	private final String baseSubject;
 
 	public static enum Model {
@@ -240,12 +231,14 @@ public class ScapeSplicingEngine extends SplicingEngine {
 	protected boolean getSubjectType(String name, Element port,
 			Holder<String> subject, Holder<String> type) {
 		try {
+			String portName = text(port, "t:name");
 			String turtle = text(
 					port,
 					".//annotationBean[@class=\"%s\"][mimeType=\"text/rdf+n3\"]/content",
 					"net.sf.taverna.t2.annotation.annotationbeans.SemanticAnnotation");
 			if (turtle != null && !turtle.trim().isEmpty())
-				if (getSubjectTypeFromAnnotation(turtle, subject, type))
+				if (getSubjectTypeFromAnnotation(portName, turtle, subject,
+						type))
 					return true;
 		} catch (XPathExpressionException e) {
 			// Ignore; fall back to names
@@ -258,61 +251,32 @@ public class ScapeSplicingEngine extends SplicingEngine {
 		return true;
 	}
 
-	private boolean getSubjectTypeFromAnnotation(String turtle,
+	private boolean getSubjectTypeFromAnnotation(String name, String turtle,
 			Holder<String> subject, Holder<String> type) {
 		try {
-			com.hp.hpl.jena.rdf.model.Model annotationModel = createDefaultModel();
-			annotationModel.read(new StringReader(turtle), baseSubject,
-					"TURTLE");
-			Resource base = annotationModel.createResource(baseSubject);
-			subject.value = getSemanticModelProperty(annotationModel, base,
-					SUBJECT_PROPERTY);
-			type.value = getSemanticModelProperty(annotationModel, base,
-					TYPE_PROPERTY);
-			if (subject.value != null && !subject.value.trim().isEmpty()
-					&& type.value != null && !type.value.trim().isEmpty())
+			SemanticAnnotationParser ah = new SemanticAnnotationParser(
+					baseSubject, turtle);
+			subject.value = ah.getProperty(TAVERNA_SUBJECT_PROPERTY);
+			if (subject.value == null)
+				subject.value = "TargetObject";
+			type.value = ah.getProperty(TAVERNA_TYPE_PROPERTY);
+			if (type.value == null)
+				type.value = ah.getProperty(SCAPE_PROVIDES_PROPERTY);
+			if (!subject.value.isEmpty() && type.value != null
+					&& !type.value.isEmpty()) {
+				log.info(String.format("port %s has subject %s and type %s",
+						name, subject.value, type.value));
 				return true;
+			}
 		} catch (RuntimeException e) {
 			log.error(
-					"failed to construct and extract info from semantic model",
-					e);
+					"failed to construct and extract info from semantic model for port "
+							+ name, e);
 		}
+		log.info("failed to get subject and type for port " + name);
 		subject.value = null;
 		type.value = null;
 		return false;
-	}
-
-	private String getSemanticModelProperty(
-			com.hp.hpl.jena.rdf.model.Model annotationModel, Resource base,
-			String propertyURI) {
-		Property subjectProperty = annotationModel.getProperty(propertyURI);
-		for (Statement s : annotationModel.listStatements(base,
-				subjectProperty, (RDFNode) null).toList()) {
-			RDFNode node = s.getObject();
-			if (node != null && node.isLiteral())
-				return strip(node.asLiteral().getLexicalForm());
-			else if (node != null && node.isResource()) {
-				Resource resource = node.asResource();
-				if (resource instanceof OntResource) {
-					String label = ((OntResource) resource).getLabel(null);
-					if (label != null)
-						return strip(label);
-				}
-				String localName = resource.getLocalName();
-				if ((localName != null) && !localName.isEmpty())
-					return strip(localName);
-				else
-					return strip(resource.toString());
-			}
-			log.info("got a node for " + propertyURI
-					+ "that I can't interpret: " + node);
-		}
-		return null;
-	}
-
-	private static String strip(String name) {
-		Matcher m = NAME_EXTRACT.matcher(name.trim());
-		return m.find() ? m.group() : null;
 	}
 
 	@Nonnull
