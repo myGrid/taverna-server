@@ -56,7 +56,7 @@ class ScapeJob implements Serializable {
 
 	@Nonnull
 	public String getPlanId() {
-		return id;
+		return planId;
 	}
 
 	public int getNotify() {
