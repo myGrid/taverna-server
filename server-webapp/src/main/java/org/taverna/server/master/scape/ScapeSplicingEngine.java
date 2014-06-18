@@ -11,7 +11,9 @@ import static org.taverna.server.master.scape.XPaths.ITERATION_STRATEGY;
 import static org.taverna.server.master.scape.XPaths.NAMED_PORT;
 import static org.taverna.server.master.scape.XPaths.NAMED_PROCESSOR;
 import static org.taverna.server.master.scape.XPaths.OUTPUT_PORT_LIST;
+import static org.taverna.server.master.scape.XPaths.PORT;
 import static org.taverna.server.master.scape.XPaths.PORT_DEPTH;
+import static org.taverna.server.master.scape.XPaths.PORT_NAME;
 import static org.taverna.server.master.scape.XPaths.REQUIRE_NESTED;
 
 import java.io.File;
@@ -19,6 +21,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -27,6 +30,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.WeakHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -72,7 +76,15 @@ public class ScapeSplicingEngine extends SplicingEngine {
 			+ "#OutputPortSubject";
 	private static final String TAVERNA_TYPE_PROPERTY = TAVERNA_SPLICER_URL
 			+ "#OutputPortType";
-	private static final String SCAPE_PROVIDES_PROPERTY = "http://purl.org/DP/components#provides";
+	private static final String SCAPE_URL = "http://purl.org/DP/components";
+	private static final String SCAPE_ACCEPTS_PROPERTY = SCAPE_URL + "#accepts";
+	private static final String SCAPE_PROVIDES_PROPERTY = SCAPE_URL
+			+ "#provides";
+	private static final String SCAPE_SOURCE_OBJECT = SCAPE_URL
+			+ "#SourceObject";
+	private static final String SCAPE_TARGET_OBJECT = SCAPE_URL
+			+ "#TargetObject";
+
 	private final String baseSubject;
 
 	public static enum Model {
@@ -250,14 +262,9 @@ public class ScapeSplicingEngine extends SplicingEngine {
 			Holder<String> subject, Holder<String> type) {
 		try {
 			String portName = text(port, "t:name");
-			String turtle = text(
-					port,
-					".//annotationBean[@class=\"%s\"][mimeType=\"text/rdf+n3\"]/content",
-					"net.sf.taverna.t2.annotation.annotationbeans.SemanticAnnotation");
-			if (turtle != null && !turtle.trim().isEmpty())
-				if (getSubjectTypeFromAnnotation(portName, turtle, subject,
-						type))
-					return true;
+			SemanticAnnotationParser p = getAnnotations(port);
+			if (getSubjectTypeFromAnnotation(portName, p, subject, type))
+				return true;
 		} catch (XPathExpressionException e) {
 			// Ignore; fall back to names
 		}
@@ -269,17 +276,45 @@ public class ScapeSplicingEngine extends SplicingEngine {
 		return true;
 	}
 
-	private boolean getSubjectTypeFromAnnotation(String name, String turtle,
+	private WeakHashMap<Element, SemanticAnnotationParser> annotationCache = new WeakHashMap<>();
+
+	private SemanticAnnotationParser getAnnotations(
+			@Nonnull Element workflowElement) {
+		SemanticAnnotationParser ann = annotationCache.get(workflowElement);
+		if (ann != null)
+			return ann;
+		try {
+			List<Element> turtle = select(
+					workflowElement,
+					".//annotationBean[@class=\"%s\"][mimeType=\"text/rdf+n3\"]/content",
+					"net.sf.taverna.t2.annotation.annotationbeans.SemanticAnnotation");
+			if (turtle != null && !turtle.isEmpty())
+				ann = new SemanticAnnotationParser(baseSubject, turtle);
+		} catch (RuntimeException | XPathExpressionException e) {
+		}
+		if (ann == null)
+			ann = new SemanticAnnotationParser(baseSubject, "");
+		annotationCache.put(workflowElement, ann);
+		return ann;
+	}
+
+	private boolean getSubjectTypeFromAnnotation(String name, SemanticAnnotationParser ah,
 			Holder<String> subject, Holder<String> type) {
 		try {
-			SemanticAnnotationParser ah = new SemanticAnnotationParser(
-					baseSubject, turtle);
 			subject.value = ah.getProperty(TAVERNA_SUBJECT_PROPERTY);
-			if (subject.value == null)
-				subject.value = "TargetObject";
+			try {
+				if (subject.value == null)
+					subject.value = "TargetObject";
+				else
+					subject.value = new URI(subject.value).getFragment().trim();
+			} catch (URISyntaxException | NullPointerException e) {
+			}
 			type.value = ah.getProperty(TAVERNA_TYPE_PROPERTY);
-			if (type.value == null)
-				type.value = ah.getProperty(SCAPE_PROVIDES_PROPERTY);
+			if (type.value == null) {
+				String provided = ah.getProperty(SCAPE_PROVIDES_PROPERTY);
+				if (provided != null && !provided.equals(SCAPE_TARGET_OBJECT))
+					type.value = provided;
+			}
 			if (!subject.value.isEmpty() && type.value != null
 					&& !type.value.isEmpty()) {
 				log.info(String.format("port %s has subject %s and type %s",
@@ -287,9 +322,8 @@ public class ScapeSplicingEngine extends SplicingEngine {
 				return true;
 			}
 		} catch (RuntimeException e) {
-			log.error(
-					"failed to construct and extract info from semantic model for port "
-							+ name, e);
+			log.error("failed to construct and extract info from "
+					+ "semantic model for port " + name, e);
 		}
 		log.info("failed to get subject and type for port " + name);
 		subject.value = null;
@@ -301,21 +335,37 @@ public class ScapeSplicingEngine extends SplicingEngine {
 	private Set<String> connectInnerOutputsToTop(@Nonnull Element topMaster,
 			@Nonnull Element innerMaster, @Nonnull Element outerMaster,
 			@Nonnull Set<String> createdOut) throws Exception {
-		Map<String, List<String>> types = new HashMap<String, List<String>>();
-		Set<String> topPortSet = new HashSet<String>();
+		for (Element out: select(innerMaster, OUTPUT_PORT_LIST + "/" + PORT)) {
+			String name = text(out, PORT_NAME);
+			SemanticAnnotationParser ann = getAnnotations(out);
+			if (SCAPE_TARGET_OBJECT.equals(ann.getProperty(SCAPE_PROVIDES_PROPERTY))) {
+				datalink(outerMaster, innerProcessorName, name, null, "outputFile");
+				break;
+			}
+		}
+		class Pair {
+			String type, name;
+
+			Pair(Holder<String> type, String name) {
+				this.type = type.value;
+				this.name = name;
+			}
+		}
+		Map<String, List<Pair>> types = new HashMap<>();
+		Set<String> topPortSet = new HashSet<>();
 		Element outPorts = get(outerMaster, OUTPUT_PORT_LIST);
 		Element topProcessor = get(topMaster, NAMED_PROCESSOR,
 				linkingDataflowName);
 		Element topPorts = get(topProcessor, OUTPUT_PORT_LIST);
 		for (String out : createdOut) {
-			Holder<String> subject = new Holder<String>();
-			Holder<String> type = new Holder<String>();
+			Holder<String> subject = new Holder<>();
+			Holder<String> type = new Holder<>();
 			if (!getSubjectType(out,
 					get(innerMaster, OUTPUT_PORT_LIST + NAMED_PORT, out),
 					subject, type))
 				continue;
 			if (!types.containsKey(subject.value)) {
-				types.put(subject.value, new ArrayList<String>());
+				types.put(subject.value, new ArrayList<Pair>());
 				String mp = "measures_" + subject.value;
 				topPortSet.add(mp);
 				Element outp = branch(outPorts, "port");
@@ -325,7 +375,7 @@ public class ScapeSplicingEngine extends SplicingEngine {
 					port(topPorts, mp, 0, 0);
 				mapOutput(topProcessor, mp);
 			}
-			types.get(subject.value).add(type.value);
+			types.get(subject.value).add(new Pair(type, out));
 		}
 		Element links = get(outerMaster, "t:datalinks");
 		for (String subject : types.keySet()) {
@@ -335,7 +385,7 @@ public class ScapeSplicingEngine extends SplicingEngine {
 
 			StringBuilder sb = new StringBuilder();
 			String sep = "";
-			for (String type : types.get(subject)) {
+			for (Pair type : types.get(subject)) {
 				Element link = branch(links, "datalink");
 				Element sink = attrs(branch(link, "sink"), "type", "merge");
 				leaf(sink, "processor", dbName);
@@ -343,8 +393,8 @@ public class ScapeSplicingEngine extends SplicingEngine {
 				Element source = attrs(branch(link, "source"), "type",
 						"processor");
 				leaf(source, "processor", innerProcessorName);
-				leaf(source, "port", "measure_" + subject + "_" + type);
-				sb.append(sep).append(type);
+				leaf(source, "port", type.name);
+				sb.append(sep).append(type.type);
 				sep = ",";
 			}
 			makeConstant(outerMaster, subjectName, subject);
@@ -406,6 +456,14 @@ public class ScapeSplicingEngine extends SplicingEngine {
 			branch(port(get(topMaster, INPUT_PORT_LIST), in, 0, 0),
 					"annotations");
 			datalink(topMaster, null, in, linkingDataflowName, in);
+		}
+		for (Element in: select(innerMaster, INPUT_PORT_LIST + "/" + PORT)) {
+			String name = text(in, PORT_NAME);
+			SemanticAnnotationParser ann = getAnnotations(in);
+			if (SCAPE_SOURCE_OBJECT.equals(ann.getProperty(SCAPE_ACCEPTS_PROPERTY))) {
+				datalink(outerMaster, null, "inputFile", innerProcessorName, name);
+				break;
+			}
 		}
 	}
 
