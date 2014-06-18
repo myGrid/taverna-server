@@ -70,7 +70,8 @@ public class ScapeSplicingEngine extends SplicingEngine {
 	private static final String TAVERNA_SPLICER_URL = "http://ns.taverna.org.uk/taverna-server/splicing";
 	private static final String TAVERNA_SUBJECT_PROPERTY = TAVERNA_SPLICER_URL
 			+ "#OutputPortSubject";
-	private static final String TAVERNA_TYPE_PROPERTY = TAVERNA_SPLICER_URL + "#OutputPortType";
+	private static final String TAVERNA_TYPE_PROPERTY = TAVERNA_SPLICER_URL
+			+ "#OutputPortType";
 	private static final String SCAPE_PROVIDES_PROPERTY = "http://purl.org/DP/components#provides";
 	private final String baseSubject;
 
@@ -190,16 +191,17 @@ public class ScapeSplicingEngine extends SplicingEngine {
 		concatenateDocuments(topDataflow, linkingOutputNames);
 	}
 
-	// FIXME put splicing inside the ObjectTransform
-	private void concatenateDocuments(@Nonnull Element topMaster,
-			@Nonnull Set<String> subjectPorts) throws Exception {
+	private void combineMetricDocuments(@Nonnull Element topMaster,
+			@Nonnull Set<String> subjectPorts,
+			@Nonnull Holder<String> finalProcessor,
+			@Nonnull Holder<String> finalPort) throws Exception {
 		int counter = 0;
-		String sourceProcessor = null, currentPort = null;
+		String currentProcessor = null, currentPort = null;
 		for (String portName : subjectPorts) {
 			if (portName == null)
 				continue;
 			if (currentPort == null) {
-				sourceProcessor = linkingDataflowName;
+				currentProcessor = linkingDataflowName;
 				currentPort = portName;
 				continue;
 			}
@@ -208,24 +210,40 @@ public class ScapeSplicingEngine extends SplicingEngine {
 					joinerName, joinerVersion, new String[] {
 							"metricDocument1", "metricDocument2" },
 					new String[] { "combinedMetricDocument" });
-			datalink(topMaster, sourceProcessor, currentPort, procName,
+			datalink(topMaster, currentProcessor, currentPort, procName,
 					"metricDocument1");
 			datalink(topMaster, linkingDataflowName, portName, procName,
 					"metricDocument2");
-			sourceProcessor = procName;
+			currentProcessor = procName;
 			currentPort = "combinedMetricDocument";
 		}
+		finalProcessor.value = currentProcessor;
+		finalPort.value = currentPort;
+	}
 
+	// FIXME put splicing inside the ObjectTransform
+	private void concatenateDocuments(@Nonnull Element topMaster,
+			@Nonnull Set<String> subjectPorts) throws Exception {
+		Holder<String> sourceProcessor = new Holder<>(), sourcePort = new Holder<>();
+		combineMetricDocuments(topMaster, subjectPorts, sourceProcessor,
+				sourcePort);
+		boolean removedWorkflow = false;
 		for (Element e : select(topMaster, NAMED_PROCESSOR, dummyProcessorName))
-			e.getParentNode().removeChild(e);
+			removedWorkflow |= e.getParentNode().removeChild(e) != null;
 
-		if (currentPort != null)
+		if (sourcePort.value != null)
 			for (Element e : select(topMaster, DATALINK_FROM_PROCESSOR,
 					dummyProcessorName)) {
-				datalink(topMaster, sourceProcessor, currentPort,
+				datalink(topMaster, sourceProcessor.value, sourcePort.value,
 						text(e, "t:sink/t:processor"), text(e, "t:sink/t:port"));
 				e.getParentNode().removeChild(e);
 			}
+		else if (removedWorkflow) {
+			log.warn("failed to replace datalink from removed processor \""
+					+ dummyProcessorName
+					+ "\" with real link: workflow WILL FAIL");
+			throw new Exception("no link replacement");
+		}
 	}
 
 	protected boolean getSubjectType(String name, Element port,
