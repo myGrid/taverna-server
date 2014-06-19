@@ -26,6 +26,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
+import java.util.WeakHashMap;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -59,10 +61,12 @@ public abstract class SplicingEngine extends XPathSupport {
 	private static final String STRING_CONSTANT_PKG = "net.sf.taverna.t2.activities.stringconstant.";
 	private static final String BEANSHELL_PKG = "net.sf.taverna.t2.activities.beanshell.";
 	private static final String COMPONENT_PKG = "net.sf.taverna.t2.component.";
+	private static final String SEMANTIC_ANNOTATION_CLASS = "net.sf.taverna.t2.annotation.annotationbeans.SemanticAnnotation";
 
 	private final Log log;
 	private final Map<String, String> wrapperContents = new HashMap<String, String>();
 	private final DocumentBuilderFactory docBuilderFactory;
+	private final String baseSubject;
 
 	protected String wrapperPrefix;
 	protected String innerProcessorName;
@@ -73,6 +77,7 @@ public abstract class SplicingEngine extends XPathSupport {
 		this.log = log;
 		docBuilderFactory = DocumentBuilderFactory.newInstance();
 		docBuilderFactory.setNamespaceAware(true);
+		baseSubject = "urn:" + UUID.randomUUID();
 	}
 
 	/**
@@ -614,5 +619,37 @@ public abstract class SplicingEngine extends XPathSupport {
 		}
 		throw new NoCreateException("no processor splice point (called "
 				+ innerProcessorName + ")");
+	}
+
+	private WeakHashMap<Element, SemanticAnnotationParser> annotationCache = new WeakHashMap<>();
+
+	/**
+	 * Get the semantic annotations about a particular workflow element (a
+	 * dataflow, a processor, or a port).
+	 * 
+	 * @param workflowElement
+	 *            The entity to get the annotations of.
+	 * @return The parsed annotations.
+	 */
+	@Nonnull
+	protected SemanticAnnotationParser getAnnotations(
+			@Nonnull Element workflowElement) {
+		SemanticAnnotationParser ann = annotationCache.get(workflowElement);
+		if (ann != null)
+			return ann;
+		try {
+			List<Element> turtle = select(
+					workflowElement,
+					"t:annotations//annotationBean[@class=\""
+							+ SEMANTIC_ANNOTATION_CLASS
+							+ "\"][mimeType=\"text/rdf+n3\"]/content");
+			if (!turtle.isEmpty())
+				ann = new SemanticAnnotationParser(baseSubject, turtle);
+		} catch (RuntimeException | XPathExpressionException e) {
+		}
+		if (ann == null)
+			ann = new SemanticAnnotationParser(baseSubject, "");
+		annotationCache.put(workflowElement, ann);
+		return ann;
 	}
 }

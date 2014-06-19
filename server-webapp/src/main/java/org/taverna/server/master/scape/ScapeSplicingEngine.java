@@ -5,13 +5,14 @@ import static org.apache.commons.logging.LogFactory.getLog;
 import static org.taverna.server.master.scape.DOMUtils.attrs;
 import static org.taverna.server.master.scape.DOMUtils.branch;
 import static org.taverna.server.master.scape.DOMUtils.leaf;
+import static org.taverna.server.master.scape.XPaths.DATALINKS;
 import static org.taverna.server.master.scape.XPaths.DATALINK_FROM_PROCESSOR;
 import static org.taverna.server.master.scape.XPaths.INPUT_PORT_LIST;
 import static org.taverna.server.master.scape.XPaths.ITERATION_STRATEGY;
 import static org.taverna.server.master.scape.XPaths.NAMED_PORT;
 import static org.taverna.server.master.scape.XPaths.NAMED_PROCESSOR;
 import static org.taverna.server.master.scape.XPaths.OUTPUT_PORT_LIST;
-import static org.taverna.server.master.scape.XPaths.PORT;
+import static org.taverna.server.master.scape.XPaths.PORTS;
 import static org.taverna.server.master.scape.XPaths.PORT_DEPTH;
 import static org.taverna.server.master.scape.XPaths.PORT_NAME;
 import static org.taverna.server.master.scape.XPaths.REQUIRE_NESTED;
@@ -29,8 +30,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
-import java.util.WeakHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -85,8 +84,6 @@ public class ScapeSplicingEngine extends SplicingEngine {
 	private static final String SCAPE_TARGET_OBJECT = SCAPE_URL
 			+ "#TargetObject";
 
-	private final String baseSubject;
-
 	public static enum Model {
 		One2OneNoSchema("1to1"), One2OneSchema("1to1_schema"), Characterise(
 				"characterise"), CharacteriseSchema("characterise_schema");
@@ -112,10 +109,12 @@ public class ScapeSplicingEngine extends SplicingEngine {
 	private String joinerVersion = "1";
 	private String dummyProcessorName;
 	private String wrapperDirectory;
+	private String workflowInputName = "inputFile"; // TODO parameterize
+	private String workflowOutputName = "outputFile"; // TODO parameterize
+	private String defaultSubject = "TargetObject"; // TODO parameterize
 
 	public ScapeSplicingEngine() throws ParserConfigurationException {
 		super(log);
-		baseSubject = "urn:" + UUID.randomUUID();
 	}
 
 	/** Where components are stored. Probably myExperiment. */
@@ -261,7 +260,7 @@ public class ScapeSplicingEngine extends SplicingEngine {
 	protected boolean getSubjectType(String name, Element port,
 			Holder<String> subject, Holder<String> type) {
 		try {
-			String portName = text(port, "t:name");
+			String portName = text(port, PORT_NAME);
 			SemanticAnnotationParser p = getAnnotations(port);
 			if (getSubjectTypeFromAnnotation(portName, p, subject, type))
 				return true;
@@ -276,38 +275,18 @@ public class ScapeSplicingEngine extends SplicingEngine {
 		return true;
 	}
 
-	private WeakHashMap<Element, SemanticAnnotationParser> annotationCache = new WeakHashMap<>();
-
-	private SemanticAnnotationParser getAnnotations(
-			@Nonnull Element workflowElement) {
-		SemanticAnnotationParser ann = annotationCache.get(workflowElement);
-		if (ann != null)
-			return ann;
-		try {
-			List<Element> turtle = select(
-					workflowElement,
-					".//annotationBean[@class=\"%s\"][mimeType=\"text/rdf+n3\"]/content",
-					"net.sf.taverna.t2.annotation.annotationbeans.SemanticAnnotation");
-			if (turtle != null && !turtle.isEmpty())
-				ann = new SemanticAnnotationParser(baseSubject, turtle);
-		} catch (RuntimeException | XPathExpressionException e) {
-		}
-		if (ann == null)
-			ann = new SemanticAnnotationParser(baseSubject, "");
-		annotationCache.put(workflowElement, ann);
-		return ann;
-	}
-
 	private boolean getSubjectTypeFromAnnotation(String name, SemanticAnnotationParser ah,
 			Holder<String> subject, Holder<String> type) {
 		try {
 			subject.value = ah.getProperty(TAVERNA_SUBJECT_PROPERTY);
 			try {
-				if (subject.value == null)
-					subject.value = "TargetObject";
-				else
+				if (subject.value != null)
 					subject.value = new URI(subject.value).getFragment().trim();
+				if (subject.value == null || subject.value.isEmpty())
+					subject.value = defaultSubject;
 			} catch (URISyntaxException | NullPointerException e) {
+				if (subject.value == null)
+					subject.value = defaultSubject;
 			}
 			type.value = ah.getProperty(TAVERNA_TYPE_PROPERTY);
 			if (type.value == null) {
@@ -317,7 +296,7 @@ public class ScapeSplicingEngine extends SplicingEngine {
 			}
 			if (!subject.value.isEmpty() && type.value != null
 					&& !type.value.isEmpty()) {
-				log.info(String.format("port %s has subject %s and type %s",
+				log.info(format("port %s has subject %s and type %s",
 						name, subject.value, type.value));
 				return true;
 			}
@@ -335,11 +314,11 @@ public class ScapeSplicingEngine extends SplicingEngine {
 	private Set<String> connectInnerOutputsToTop(@Nonnull Element topMaster,
 			@Nonnull Element innerMaster, @Nonnull Element outerMaster,
 			@Nonnull Set<String> createdOut) throws Exception {
-		for (Element out: select(innerMaster, OUTPUT_PORT_LIST + "/" + PORT)) {
+		for (Element out: select(innerMaster, OUTPUT_PORT_LIST + PORTS)) {
 			String name = text(out, PORT_NAME);
 			SemanticAnnotationParser ann = getAnnotations(out);
 			if (SCAPE_TARGET_OBJECT.equals(ann.getProperty(SCAPE_PROVIDES_PROPERTY))) {
-				datalink(outerMaster, innerProcessorName, name, null, "outputFile");
+				datalink(outerMaster, innerProcessorName, name, null, workflowOutputName);
 				break;
 			}
 		}
@@ -358,15 +337,16 @@ public class ScapeSplicingEngine extends SplicingEngine {
 				linkingDataflowName);
 		Element topPorts = get(topProcessor, OUTPUT_PORT_LIST);
 		for (String out : createdOut) {
-			Holder<String> subject = new Holder<>();
+			Holder<String> subjectHolder = new Holder<>();
 			Holder<String> type = new Holder<>();
 			if (!getSubjectType(out,
 					get(innerMaster, OUTPUT_PORT_LIST + NAMED_PORT, out),
-					subject, type))
+					subjectHolder, type))
 				continue;
-			if (!types.containsKey(subject.value)) {
-				types.put(subject.value, new ArrayList<Pair>());
-				String mp = "measures_" + subject.value;
+			final String subject = subjectHolder.value;
+			if (!types.containsKey(subject)) {
+				types.put(subject, new ArrayList<Pair>());
+				String mp = "measures_" + subject;
 				topPortSet.add(mp);
 				Element outp = branch(outPorts, "port");
 				leaf(outp, "name", mp);
@@ -375,9 +355,9 @@ public class ScapeSplicingEngine extends SplicingEngine {
 					port(topPorts, mp, 0, 0);
 				mapOutput(topProcessor, mp);
 			}
-			types.get(subject.value).add(new Pair(type, out));
+			types.get(subject).add(new Pair(type, out));
 		}
-		Element links = get(outerMaster, "t:datalinks");
+		Element links = get(outerMaster, DATALINKS);
 		for (String subject : types.keySet()) {
 			String dbName = "SCAPE_Metric_Document_Builder_" + subject;
 			String typesName = "TYPES_" + subject;
@@ -457,11 +437,11 @@ public class ScapeSplicingEngine extends SplicingEngine {
 					"annotations");
 			datalink(topMaster, null, in, linkingDataflowName, in);
 		}
-		for (Element in: select(innerMaster, INPUT_PORT_LIST + "/" + PORT)) {
+		for (Element in: select(innerMaster, INPUT_PORT_LIST + PORTS)) {
 			String name = text(in, PORT_NAME);
 			SemanticAnnotationParser ann = getAnnotations(in);
 			if (SCAPE_SOURCE_OBJECT.equals(ann.getProperty(SCAPE_ACCEPTS_PROPERTY))) {
-				datalink(outerMaster, null, "inputFile", innerProcessorName, name);
+				datalink(outerMaster, null, workflowInputName, innerProcessorName, name);
 				break;
 			}
 		}

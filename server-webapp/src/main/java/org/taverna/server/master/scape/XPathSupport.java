@@ -86,6 +86,7 @@ class XPathSupport {
 		return cache.get().compile(format(expression, args));
 	}
 
+	@Nonnull
 	public List<Element> select(Element context, String expression,
 			Object... args) throws XPathExpressionException {
 		List<Element> result = new ArrayList<Element>();
@@ -96,6 +97,7 @@ class XPathSupport {
 		return result;
 	}
 
+	@Nonnull
 	public List<Node> selectNodes(Element context, String expression,
 			Object... args) throws XPathExpressionException {
 		List<Node> result = new ArrayList<Node>();
