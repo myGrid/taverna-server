@@ -603,24 +603,43 @@
 						</configuration>
 					</execution>
 					<execution>
-						<id>patch-in-schematron-support</id>
+						<id>patch-in-beanshell-support-1</id>
 						<phase>prepare-package</phase>
 						<goals>
-							<goal>copy</goal>
+							<goal>get</goal>
 						</goals>
 						<configuration>
-							<artifactItems>
-								<artifactItem>
-									<groupId>uk.org.taverna.server</groupId>
-									<artifactId>server-scape-operations</artifactId>
-									<version>${project.parent.version}</version>
-									<classifier>jar-with-dependencies</classifier>
-								</artifactItem>
-							</artifactItems>
-							<outputDirectory>${cmdline.dir}/lib</outputDirectory>
+							<groupId>uk.org.taverna.server</groupId>
+							<artifactId>server-scape-operations</artifactId>
+							<version>${project.parent.version}</version>
+							<classifier>jar-with-dependencies</classifier>
+							<destination>${project.build.directory}</destination>
 							<overWriteReleases>false</overWriteReleases>
 							<overWriteSnapshots>true</overWriteSnapshots>
 							<excludeTransitive>true</excludeTransitive>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-install-plugin</artifactId>
+				<version>2.5.1</version>
+				<executions>
+					<execution>
+						<id>patch-in-beanshell-support-2</id>
+						<phase>prepare-package</phase>
+						<goals>
+							<goal>install-file</goal>
+						</goals>
+						<configuration>
+							<file>${project.build.directory}/server-scape-operations-${project.parent.version}-jar-with-dependencies.jar</file>
+							<generatePom>true</generatePom>
+							<localRepositoryPath>${cmdline.dir}/repository</localRepositoryPath>
+							<groupId>uk.org.taverna.server</groupId>
+							<artifactId>scape-operations</artifactId>
+							<version>123.456</version>
+							<packaging>jar</packaging>
 						</configuration>
 					</execution>
 				</executions>

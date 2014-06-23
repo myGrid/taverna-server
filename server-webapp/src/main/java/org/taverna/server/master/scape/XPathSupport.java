@@ -66,7 +66,7 @@ class XPathSupport {
 		XPathExpression compile(String expression)
 				throws XPathExpressionException {
 			if (!containsKey(expression)) {
-				log.info("compiling expression for " + expression);
+				log.debug("compiling expression for " + expression);
 				put(expression, factory.compile(expression));
 			}
 			return get(expression);

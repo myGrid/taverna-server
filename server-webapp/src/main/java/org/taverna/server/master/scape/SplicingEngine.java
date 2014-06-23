@@ -26,10 +26,10 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
-import java.util.WeakHashMap;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.UUID;
+import java.util.WeakHashMap;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -59,7 +59,7 @@ public abstract class SplicingEngine extends XPathSupport {
 	private static final String ACTIVITY_CONFIG_PKG = "net.sf.taverna.t2.workflowmodel.processor.activity.config.";
 	private static final String DISPATCH_LAYERS_PKG = "net.sf.taverna.t2.workflowmodel.processor.dispatch.layers.";
 	private static final String STRING_CONSTANT_PKG = "net.sf.taverna.t2.activities.stringconstant.";
-	private static final String BEANSHELL_PKG = "net.sf.taverna.t2.activities.beanshell.";
+	static final String BEANSHELL_PKG = "net.sf.taverna.t2.activities.beanshell.";
 	private static final String COMPONENT_PKG = "net.sf.taverna.t2.component.";
 	private static final String SEMANTIC_ANNOTATION_CLASS = "net.sf.taverna.t2.annotation.annotationbeans.SemanticAnnotation";
 
@@ -209,10 +209,16 @@ public abstract class SplicingEngine extends XPathSupport {
 		connectInnerToOuter(topMaster, outerMaster, innerMaster, createdIn,
 				createdOut);
 
+		postProcess(wrap);
+
 		// Splice into POJO
 		Workflow w = new Workflow();
 		w.content = new Element[] { wrap };
 		return w;
+	}
+
+	protected void postProcess(@Nonnull Element documentElement) throws Exception {
+		// Do nothing by default
 	}
 
 	/**
@@ -621,7 +627,7 @@ public abstract class SplicingEngine extends XPathSupport {
 				+ innerProcessorName + ")");
 	}
 
-	private WeakHashMap<Element, SemanticAnnotationParser> annotationCache = new WeakHashMap<>();
+	private WeakHashMap<Element, SemanticAnnotations> annotationCache = new WeakHashMap<>();
 
 	/**
 	 * Get the semantic annotations about a particular workflow element (a
@@ -632,9 +638,9 @@ public abstract class SplicingEngine extends XPathSupport {
 	 * @return The parsed annotations.
 	 */
 	@Nonnull
-	protected SemanticAnnotationParser getAnnotations(
+	protected SemanticAnnotations getAnnotations(
 			@Nonnull Element workflowElement) {
-		SemanticAnnotationParser ann = annotationCache.get(workflowElement);
+		SemanticAnnotations ann = annotationCache.get(workflowElement);
 		if (ann != null)
 			return ann;
 		try {
@@ -644,12 +650,22 @@ public abstract class SplicingEngine extends XPathSupport {
 							+ SEMANTIC_ANNOTATION_CLASS
 							+ "\"][mimeType=\"text/rdf+n3\"]/content");
 			if (!turtle.isEmpty())
-				ann = new SemanticAnnotationParser(baseSubject, turtle);
+				ann = new SemanticAnnotations(baseSubject, turtle);
 		} catch (RuntimeException | XPathExpressionException e) {
 		}
 		if (ann == null)
-			ann = new SemanticAnnotationParser(baseSubject, "");
+			ann = new SemanticAnnotations(baseSubject, "");
 		annotationCache.put(workflowElement, ann);
 		return ann;
+	}
+
+	protected void addBeanshellArtifactDependency(Element beanshellConfig,
+			String group, String artifact, String version)
+			throws XPathExpressionException {
+		Element elem = branch(get(beanshellConfig, "artifactDependencies"),
+				"net.sf.taverna.raven.repository.BasicArtifact");
+		leaf(elem, "groupId", group);
+		leaf(elem, "artifactId", artifact);
+		leaf(elem, "version", version);
 	}
 }

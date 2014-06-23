@@ -17,21 +17,21 @@ import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.Statement;
 
-class SemanticAnnotationParser {
+class SemanticAnnotations {
 	private static final Log log = getLog("Taverna.Server.WorkflowSplicing.Scape");
 	private static final Pattern NAME_EXTRACT = Pattern
 			.compile("[a-zA-Z0-9]+$");
 	Model annotationModel;
 	Resource base;
 
-	public SemanticAnnotationParser(String baseSubject, String turtle) {
+	public SemanticAnnotations(String baseSubject, String turtle) {
 		annotationModel = ModelFactory.createDefaultModel();
 		annotationModel.read(new StringReader(turtle), baseSubject, "TTL");
 		base = annotationModel.createResource(baseSubject);
 		log.debug("parsed turtle \"" + turtle + "\" with base " + base);
 	}
 
-	public SemanticAnnotationParser(String baseSubject,
+	public SemanticAnnotations(String baseSubject,
 			List<Element> turtleContainers) {
 		annotationModel = ModelFactory.createDefaultModel();
 		base = annotationModel.createResource(baseSubject);
