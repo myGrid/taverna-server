@@ -604,7 +604,7 @@ public abstract class SplicingEngine extends XPathSupport {
 	}
 
 	@Nonnull
-	private Element getTop(@Nonnull Element wrap) throws NoCreateException,
+	Element getTop(@Nonnull Element wrap) throws NoCreateException,
 			XPathExpressionException {
 		Element top = get(wrap, "t:dataflow[@role = \"top\"]");
 		if (top != null)

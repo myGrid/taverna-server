@@ -28,6 +28,9 @@
 		<forker.module>server-unix-forker</forker.module>
 		<util.dir>${project.build.directory}/${project.build.finalName}/WEB-INF/classes/util</util.dir>
 		<cmdline.dir>${util.dir}/taverna-commandline-${edition.commandline}-${version.commandline}</cmdline.dir>
+		<splice.groupId>${project.groupId}</splice.groupId>
+		<splice.artifactId>scape-operations</splice.artifactId>
+		<splice.version>123.456</splice.version>
 	</properties>
 
 	<repositories>
@@ -636,9 +639,9 @@
 							<file>${project.build.directory}/server-scape-operations-${project.parent.version}-jar-with-dependencies.jar</file>
 							<generatePom>true</generatePom>
 							<localRepositoryPath>${cmdline.dir}/repository</localRepositoryPath>
-							<groupId>uk.org.taverna.server</groupId>
-							<artifactId>scape-operations</artifactId>
-							<version>123.456</version>
+							<groupId>${splice.groupId}</groupId>
+							<artifactId>${splice.artifactId}</artifactId>
+							<version>${splice.version}</version>
 							<packaging>jar</packaging>
 						</configuration>
 					</execution>

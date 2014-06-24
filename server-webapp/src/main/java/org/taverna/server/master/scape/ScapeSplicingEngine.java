@@ -26,6 +26,7 @@ import static org.taverna.server.master.scape.XPaths.REQUIRE_NESTED;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -35,6 +36,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -81,7 +83,7 @@ public class ScapeSplicingEngine extends SplicingEngine {
 	public static enum Model {
 		One2OneNoSchema("1to1"), One2OneSchema("1to1_schema"), Characterise(
 				"characterise"), CharacteriseSchema("characterise_schema");
-		// FIXME Write these alternate schemas
+		// FIXME Implement all the alternate models
 		@Nonnull
 		private final String key;
 
@@ -228,7 +230,7 @@ public class ScapeSplicingEngine extends SplicingEngine {
 		finalPort.value = currentPort;
 	}
 
-	// FIXME put splicing inside the ObjectTransform
+	// TODO put concatenation inside the ObjectTransform
 	private void concatenateDocuments(@Nonnull Element topMaster,
 			@Nonnull Set<String> subjectPorts) throws Exception {
 		Holder<String> sourceProcessor = new Holder<>(), sourcePort = new Holder<>();
@@ -475,10 +477,17 @@ public class ScapeSplicingEngine extends SplicingEngine {
 	private static final String SCAPE_BEANSHELLS_REPLACEMENT;
 
 	static {
-		// TODO pull artifact data out of pom.xml; see VersionedElement for how to do it
-		SCAPE_BEANSHELLS_GROUP = "uk.org.taverna.server";
-		SCAPE_BEANSHELLS_ARTIFACT = "scape-operations";
-		SCAPE_BEANSHELLS_VERSION = "123.456";
+		Properties p = new Properties();
+		try {
+			try (InputStream is = ScapeSplicingEngine.class.getResourceAsStream("scape-splice.properties")) {
+				p.load(is);
+			}
+		} catch (IOException e) {
+			log.warn("failed to read scape-splice.properties", e);
+		}
+		SCAPE_BEANSHELLS_GROUP = p.getProperty("splice.groupId", "uk.org.taverna.server");
+		SCAPE_BEANSHELLS_ARTIFACT = p.getProperty("splice.artifactId", "scape-operations");
+		SCAPE_BEANSHELLS_VERSION = p.getProperty("splice.version", "123.456");
 		SCAPE_BEANSHELLS_PATTERN = Pattern
 				.compile("(var\\s+\\w+\\s*=)\\s*new\\s+("
 						+ Pattern.quote(SCAPE_BEANSHELLS_PACKAGE)

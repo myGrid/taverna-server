@@ -14,6 +14,8 @@ import static org.taverna.server.master.common.Roles.USER;
 import static org.taverna.server.master.common.Status.Finished;
 import static org.taverna.server.master.scape.ScapeSplicingEngine.Model.One2OneNoSchema;
 import static org.taverna.server.master.scape.ScapeSplicingEngine.Model.One2OneSchema;
+import static org.taverna.server.master.scape.WorkflowConstants.SCAPE_PROVIDES_PROPERTY;
+import static org.taverna.server.master.scape.WorkflowConstants.SCAPE_TARGET_OBJECT;
 import static org.taverna.server.master.utils.RestUtils.opt;
 
 import java.io.IOException;
@@ -308,13 +310,25 @@ public class ScapeExecutor implements ScapeExecutionService {
 	}
 
 	@Nonnull
-	private Model pickExecutionModel(PreservationActionPlan plan) {
-		// TODO Find a better way of picking which model workflow to use
-		// TODO Allow for characterisation plans
+	private Model pickExecutionModel(PreservationActionPlan plan) throws Exception {
 		QualityLevelDescription qld = plan.getQualityLevelDescription();
-		if (qld == null || qld.getAny() == null)
-			return One2OneNoSchema;
-		return One2OneSchema;
+		boolean providesTarget = false;
+		Element top = splicer.getTop(plan.getExecutablePlan().getAny());
+		for (Element outPort : splicer.select(top, "t:outputPorts/t:port")) {
+			String provides = splicer.getAnnotations(outPort).getProperty(
+					SCAPE_PROVIDES_PROPERTY);
+			if (provides != null && provides.equals(SCAPE_TARGET_OBJECT)) {
+				providesTarget = true;
+				break;
+			}
+		}
+		if (providesTarget) {
+			if (qld == null || qld.getAny() == null)
+				return One2OneNoSchema;
+			return One2OneSchema;
+		}
+		// FIXME Allow for characterisation plans with QLD
+		return Model.Characterise;
 	}
 
 	@Override
@@ -563,17 +577,22 @@ public class ScapeExecutor implements ScapeExecutionService {
 				Integer.parseInt(newValue) != 0));
 	}
 
+	@RolesAllowed(USER)
 	@Override
 	public Response rootOpt() {
 		return opt("POST");
 	}
 
+	@RolesAllowed(USER)
+	@PerfLogged
 	@Override
 	public Response jobOpt(String id) throws UnknownRunException {
 		getScapeRun(id);
 		return opt("DELETE");
 	}
 
+	@RolesAllowed(USER)
+	@PerfLogged
 	@Override
 	public Response notifyOpt(String id) throws UnknownRunException {
 		getScapeRun(id);
