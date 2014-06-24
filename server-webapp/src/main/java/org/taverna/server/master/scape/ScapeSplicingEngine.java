@@ -462,6 +462,37 @@ public class ScapeSplicingEngine extends SplicingEngine {
 		return super.loadWrapperInstance(name);
 	}
 
+	private static final String SCAPE_BEANSHELLS_PACKAGE = "org.taverna.server.master.scape.beanshells";
+	/** The artifact group of the beanshell support code */
+	private static final String SCAPE_BEANSHELLS_GROUP;
+	/** The artifact id of the beanshell support code */
+	private static final String SCAPE_BEANSHELLS_ARTIFACT;
+	/** The artifact version of the beanshell support code */
+	private static final String SCAPE_BEANSHELLS_VERSION;
+	/** The compiled RE pattern for injecting beanshell implementations */
+	private static final Pattern SCAPE_BEANSHELLS_PATTERN;
+	/** The replacement pattern for injecting beanshell implementations */
+	private static final String SCAPE_BEANSHELLS_REPLACEMENT;
+
+	static {
+		// TODO pull artifact data out of pom.xml; see VersionedElement for how to do it
+		SCAPE_BEANSHELLS_GROUP = "uk.org.taverna.server";
+		SCAPE_BEANSHELLS_ARTIFACT = "scape-operations";
+		SCAPE_BEANSHELLS_VERSION = "123.456";
+		SCAPE_BEANSHELLS_PATTERN = Pattern
+				.compile("(var\\s+\\w+\\s*=)\\s*new\\s+("
+						+ Pattern.quote(SCAPE_BEANSHELLS_PACKAGE)
+						+ "\\.\\w+)\\s*\\(\\s*\\)\\s*;");
+		SCAPE_BEANSHELLS_REPLACEMENT = String
+				.format("var inject_act = new net.sf.taverna.raven.repository.BasicArtifact(\"%s\", \"%s\", \"%s\");"
+						+ "var inject_cl = net.sf.taverna.t2.activities.beanshell.BeanshellActivityConfigurationBean.class.getClassLoader();"
+						+ "inject_cl.getRepository().addArtifact(inject_act);"
+						+ "inject_cl.getRepository().update();"
+						+ "$1 inject_cl.getRepository().getLoader(inject_act, inject_cl).loadClass(\"$2\").newInstance();",
+						SCAPE_BEANSHELLS_GROUP, SCAPE_BEANSHELLS_ARTIFACT,
+						SCAPE_BEANSHELLS_VERSION);
+	}
+
 	@Override
 	protected void postProcess(@Nonnull Element documentElement)
 			throws XPathException {
@@ -469,11 +500,20 @@ public class ScapeSplicingEngine extends SplicingEngine {
 				documentElement,
 				"//t:processors/t:processor/t:activities/t:activity[t:class='%s']/t:configBean/%s",
 				BEANSHELL_PKG + "BeanshellActivity", BEANSHELL_PKG
-						+ "BeanshellActivityConfigurationBean"))
-			if (text(config, "script").contains(
-					"org.taverna.server.master.scape.beanshells."))
-				addBeanshellArtifactDependency(config, "uk.org.taverna.server",
-						"scape-operations", "123.456");
+						+ "BeanshellActivityConfigurationBean")) {
+			String script = text(config, "script");
+			if (!script.contains(SCAPE_BEANSHELLS_PACKAGE))
+				continue;
+			String newscript = SCAPE_BEANSHELLS_PATTERN.matcher(script).replaceFirst(
+					SCAPE_BEANSHELLS_REPLACEMENT);
+			if (script.equals(newscript)) {
+				log.warn("Failed to extend script:\n" + script);
+				continue;
+			}
+			get(config, "script").setTextContent(newscript);
+			addBeanshellArtifactDependency(config, SCAPE_BEANSHELLS_GROUP,
+					SCAPE_BEANSHELLS_ARTIFACT, SCAPE_BEANSHELLS_VERSION);
+		}
 	}
 
 	public static void main(String... args) throws Exception {
