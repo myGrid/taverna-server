@@ -1,7 +1,5 @@
 package org.taverna.server.master.scape.beanshells;
 
-import static java.lang.String.format;
-
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -12,6 +10,7 @@ import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class RealizeDOs extends Support<RealizeDOs> {
@@ -29,11 +28,16 @@ public class RealizeDOs extends Support<RealizeDOs> {
 	@Output
 	private List<String> resolvedObjectList;
 	@Output
+	private List<String> entityList;
+	@Output
+	private List<String> entityUriList;
+	@Output
 	private List<String> representationList;
 	@Output
 	private List<String> representationUriList;
 
 	private final byte[] buffer = new byte[4096];
+	URL entBase, repBase, fileBase;
 
 	@Override
 	public void perform() throws Exception {
@@ -44,6 +48,14 @@ public class RealizeDOs extends Support<RealizeDOs> {
 		resolvedObjectList = new ArrayList<>();
 		representationList = new ArrayList<>();
 		representationUriList = new ArrayList<>();
+		entityList = new ArrayList<>();
+		entityUriList = new ArrayList<>();
+		if (!repository.endsWith("/"))
+			repository += "/";
+		URL rURL = new URL(repository);
+		entBase = new URL(rURL, "entity/");
+		repBase = new URL(rURL, "representation/");
+		fileBase = new URL(rURL, "file/");
 		int ids = 0;
 		for (String obj : objects)
 			realizeOneDO(wd, ++ids, obj);
@@ -51,11 +63,14 @@ public class RealizeDOs extends Support<RealizeDOs> {
 
 	private void realizeOneDO(File wd, int id, String obj)
 			throws MalformedURLException, IOException, FileNotFoundException {
+		List<String>objBits = cleanUpObjectHandle(obj);
 		objectList.add(obj);
-		URL url = resolveContent(obj);
-		URL repUrl = resolveRepresentation(obj);
+		URL url = resolveContent(objBits);
+		URL repUrl = resolveRepresentation(objBits);
+		URL entUrl = resolveEntity(objBits);
 		resolvedObjectList.add(url.toString());
 		representationUriList.add(repUrl.toString());
+		entityUriList.add(entUrl.toString());
 		File f = new File(wd, "" + id);
 
 		// Download file
@@ -75,17 +90,47 @@ public class RealizeDOs extends Support<RealizeDOs> {
 				sw.write(buffer, 0, bytesRead);
 			representationList.add(sw.toString());
 		}
+
+		// Download metadata
+		try (ByteArrayOutputStream sw = new ByteArrayOutputStream();
+				InputStream is = entUrl.openStream()) {
+			int bytesRead = 0;
+			while ((bytesRead = is.read(buffer)) != -1)
+				sw.write(buffer, 0, bytesRead);
+			entityList.add(sw.toString());
+		}
 	}
 
-	public URL resolveRepresentation(String obj) throws MalformedURLException {
-		URL repURL = new URL(repository + "/representation");
-		String[] bits = obj.split("/");
-		if (bits.length < 2)
-			return new URL(repURL, obj);
-		return new URL(repURL, format("%s/%s", bits[0], bits[1]));
+	private List<String> cleanUpObjectHandle(String obj) {
+		List<String> bits = Arrays.asList(obj.split("/"));
+		return bits.subList(bits.size()-3, bits.size());
 	}
 
-	public URL resolveContent(String obj) throws MalformedURLException {
-		return new URL(new URL(repository + "/file"), obj);
+	private String join(List<String> list) {
+		StringBuilder sb = new StringBuilder();
+		String sep = "";
+		for (String bit : list) {
+			sb.append(sep).append(bit);
+			sep = "/";
+		}
+		return sb.toString();
+	}
+
+	public URL resolveEntity(List<String> obj) throws MalformedURLException {
+		if (obj.size() < 1)
+			return new URL(entBase, join(obj));
+		return new URL(entBase, join(obj.subList(0, 1)));
+	}
+
+	public URL resolveRepresentation(List<String> obj) throws MalformedURLException {
+		if (obj.size() < 2)
+			return new URL(repBase, join(obj));
+		return new URL(repBase, join(obj.subList(0, 2)));
+	}
+
+	public URL resolveContent(List<String> obj) throws MalformedURLException {
+		if (obj.size() < 3)
+			return new URL(fileBase, join(obj));
+		return new URL(fileBase, join(obj.subList(0, 3)));
 	}
 }
