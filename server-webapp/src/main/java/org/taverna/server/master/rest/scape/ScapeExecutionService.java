@@ -3,6 +3,7 @@ package org.taverna.server.master.rest.scape;
 import static org.taverna.server.master.common.Roles.USER;
 import static org.taverna.server.master.rest.ContentTypes.TEXT;
 import static org.taverna.server.master.rest.ContentTypes.XML;
+import static org.taverna.server.master.rest.scape.Namespaces.PLATO;
 
 import java.util.List;
 
@@ -116,7 +117,7 @@ public interface ScapeExecutionService {
 
 	@XmlRootElement(name = "job-request")
 	public static class JobRequest {
-		@XmlElement(required = true, namespace="http://ifs.tuwien.ac.at/dp/plato")
+		@XmlElement(required = true, namespace = PLATO)
 		public PreservationActionPlan preservationActionPlan;
 		@XmlElement(required = true, name = "plan-id")
 		public String planId;
