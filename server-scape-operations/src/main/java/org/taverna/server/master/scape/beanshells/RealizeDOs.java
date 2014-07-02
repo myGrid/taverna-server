@@ -7,6 +7,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.management.ManagementFactory;
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -14,6 +16,12 @@ import java.util.Arrays;
 import java.util.List;
 
 public class RealizeDOs extends Support<RealizeDOs> {
+	private static final String pid;
+	private static volatile int ids;
+	static {
+		pid = ManagementFactory.getRuntimeMXBean().getName().replaceFirst("@.*", "");
+		ids = 0;
+	}
 	@Input
 	private String repository;
 	@Input
@@ -56,11 +64,16 @@ public class RealizeDOs extends Support<RealizeDOs> {
 		entBase = new URL(rURL, "entity/");
 		repBase = new URL(rURL, "representation/");
 		fileBase = new URL(rURL, "file/");
-		int ids = 0;
 		for (String obj : objects)
 			realizeOneDO(wd, ++ids, obj);
 	}
 
+	private InputStream connect(URL url) throws IOException {
+		HttpURLConnection huc = (HttpURLConnection) url.openConnection();
+		huc.setConnectTimeout(2000);
+		huc.setReadTimeout(10000);
+		return huc.getInputStream();
+	}
 	private void realizeOneDO(File wd, int id, String obj)
 			throws MalformedURLException, IOException, FileNotFoundException {
 		List<String>objBits = cleanUpObjectHandle(obj);
@@ -71,10 +84,10 @@ public class RealizeDOs extends Support<RealizeDOs> {
 		resolvedObjectList.add(url.toString());
 		representationUriList.add(repUrl.toString());
 		entityUriList.add(entUrl.toString());
-		File f = new File(wd, "" + id);
+		File f = new File(wd, "data." + pid + "." + id);
 
 		// Download file
-		try (InputStream is = url.openStream();
+		try (InputStream is = connect(url);
 				OutputStream os = new FileOutputStream(f)) {
 			int bytesRead = 0;
 			while ((bytesRead = is.read(buffer)) != -1)
@@ -84,7 +97,7 @@ public class RealizeDOs extends Support<RealizeDOs> {
 
 		// Download metadata
 		try (ByteArrayOutputStream sw = new ByteArrayOutputStream();
-				InputStream is = repUrl.openStream()) {
+				InputStream is = connect(repUrl)) {
 			int bytesRead = 0;
 			while ((bytesRead = is.read(buffer)) != -1)
 				sw.write(buffer, 0, bytesRead);
@@ -93,7 +106,7 @@ public class RealizeDOs extends Support<RealizeDOs> {
 
 		// Download metadata
 		try (ByteArrayOutputStream sw = new ByteArrayOutputStream();
-				InputStream is = entUrl.openStream()) {
+				InputStream is = connect(entUrl)) {
 			int bytesRead = 0;
 			while ((bytesRead = is.read(buffer)) != -1)
 				sw.write(buffer, 0, bytesRead);
