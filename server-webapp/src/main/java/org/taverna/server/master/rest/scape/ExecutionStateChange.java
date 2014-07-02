@@ -10,6 +10,13 @@ import javax.xml.bind.annotation.XmlType;
 import javax.xml.bind.annotation.XmlValue;
 import javax.xml.datatype.XMLGregorianCalendar;
 
+import eu.scape_project.model.plan.PlanExecutionState;
+
+/**
+ * Rich message sent to update the Preservation Plan execution state.
+ * @author Donal Fellows
+ * @see PlanExecutionState
+ */
 @XmlRootElement(name = "plan-execution-state", namespace = SCAPE_MODEL)
 public class ExecutionStateChange {
 	@XmlAttribute(required = true, name = "timeStamp", namespace = SCAPE_MODEL)

@@ -24,7 +24,7 @@
 		<edition.commandline>enterprise</edition.commandline>
 		<version.jdoapi>3.0.1</version.jdoapi>
 		<version.datanucleus-core>3.2.14</version.datanucleus-core>
-		<version.scape-platform-datamodel>0.1.8-SNAPSHOT</version.scape-platform-datamodel>
+		<version.scape-platform-datamodel>0.1.9-SNAPSHOT</version.scape-platform-datamodel>
 		<forker.module>server-unix-forker</forker.module>
 		<util.dir>${project.build.directory}/${project.build.finalName}/WEB-INF/classes/util</util.dir>
 		<cmdline.dir>${util.dir}/taverna-commandline-${edition.commandline}-${version.commandline}</cmdline.dir>

@@ -17,6 +17,9 @@ import static org.taverna.server.master.scape.ScapeSplicingEngine.Model.One2OneS
 import static org.taverna.server.master.scape.WorkflowConstants.SCAPE_PROVIDES_PROPERTY;
 import static org.taverna.server.master.scape.WorkflowConstants.SCAPE_TARGET_OBJECT;
 import static org.taverna.server.master.utils.RestUtils.opt;
+import static eu.scape_project.model.plan.PlanExecutionState.ExecutionState.EXECUTION_IN_PROGRESS;
+import static eu.scape_project.model.plan.PlanExecutionState.ExecutionState.EXECUTION_SUCCESS;
+import static eu.scape_project.model.plan.PlanExecutionState.ExecutionState.EXECUTION_FAIL;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -29,6 +32,7 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
+import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.Iterator;
 import java.util.List;
@@ -84,6 +88,7 @@ import org.taverna.server.master.utils.InvocationCounter.CallCounted;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
+import eu.scape_project.model.plan.PlanExecutionState;
 import at.ac.tuwien.ifs.dp.plato.ExecutablePlan;
 import at.ac.tuwien.ifs.dp.plato.Object;
 import at.ac.tuwien.ifs.dp.plato.Objects;
@@ -97,7 +102,8 @@ import at.ac.tuwien.ifs.dp.plato.QualityLevelDescription;
  */
 @Path("/")
 public class ScapeExecutor implements ScapeExecutionService {
-	final JAXBContext context;
+	static final boolean RICH_NOTIFICATION = false;//FIXME
+	final JAXBContext context, context2;
 	final Log log;
 	TavernaServerSupport support;
 	private RunStore runStore;
@@ -117,6 +123,7 @@ public class ScapeExecutor implements ScapeExecutionService {
 
 	public ScapeExecutor() throws JAXBException {
 		context = JAXBContext.newInstance(ExecutionStateChange.class);
+		context2 = JAXBContext.newInstance(PlanExecutionState.class);
 		log = getLog("Taverna.Server.Webapp.SCAPE");
 	}
 
@@ -434,7 +441,12 @@ public class ScapeExecutor implements ScapeExecutionService {
 			return;
 		}
 		try {
-			String payload = serializeStateChange(stateChange);
+			String payload;
+			if (RICH_NOTIFICATION)
+				payload = serializeStateChange(stateChange);
+			else
+				payload = serializeStateChange(new PlanExecutionState(
+						new Date(), map(stateChange.state)));
 
 			HttpURLConnection conn = (HttpURLConnection) u.openConnection();
 			conn.setDoOutput(true);
@@ -470,6 +482,19 @@ public class ScapeExecutor implements ScapeExecutionService {
 		}
 	}
 
+	private static PlanExecutionState.ExecutionState map(State state) {
+		switch (state) {
+		case Fail:
+			return EXECUTION_FAIL;
+		case InProgress:
+			return EXECUTION_IN_PROGRESS;
+		case Success:
+			return EXECUTION_SUCCESS;
+		default:
+			return null;
+		}
+	}
+
 	/**
 	 * Convert a state change description to its serialized XML form. Adds in
 	 * the timestamp.
@@ -485,6 +510,14 @@ public class ScapeExecutor implements ScapeExecutionService {
 				.newXMLGregorianCalendar(c);
 		StringWriter sw = new StringWriter();
 		context.createMarshaller().marshal(stateChange, sw);
+		return sw.toString();
+	}
+
+	private String serializeStateChange(PlanExecutionState stateChange)
+			throws DatatypeConfigurationException, JAXBException {
+		stateChange.setTimeStamp(new Date());
+		StringWriter sw = new StringWriter();
+		context2.createMarshaller().marshal(stateChange, sw);
 		return sw.toString();
 	}
 
