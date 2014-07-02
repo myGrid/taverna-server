@@ -306,7 +306,7 @@ public class ScapeExecutor implements ScapeExecutionService {
 			throw new NoCreateException("failed to construct workflow", e);
 		}
 		return created(ui.getRequestUriBuilder().path("{id}").build(id))
-				.build();
+				.entity(id).build();
 	}
 
 	@Nonnull

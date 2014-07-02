@@ -49,6 +49,7 @@ public interface ScapeExecutionService {
 	@POST
 	@Path("/")
 	@Consumes(XML)
+	@Produces(TEXT)
 	@RolesAllowed(USER)
 	Response startJob(@Nonnull JobRequest plan,
 			@Context @Nonnull UriInfo ui) throws NoCreateException;
@@ -64,6 +65,7 @@ public interface ScapeExecutionService {
 			@Context @Nonnull UriInfo ui) throws UnknownRunException;
 
 	@DELETE
+	@Produces(TEXT)
 	@Path("{id}")
 	Response deleteJob(@Nonnull @PathParam("id") String id)
 			throws UnknownRunException, NoDestroyException;
