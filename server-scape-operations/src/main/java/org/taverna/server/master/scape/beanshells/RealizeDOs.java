@@ -13,6 +13,7 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -48,10 +49,13 @@ public class RealizeDOs extends Support<RealizeDOs> {
 	private final byte[] buffer = new byte[4096];
 	URL entBase, repBase, fileBase;
 
+	private static File getCWD() {
+		return Paths.get("").toAbsolutePath().toFile();
+	}
+
 	@Override
 	public void perform() throws Exception {
-		File wd = (workDirectory == null ? new File(".") : new File(
-				workDirectory));
+		File wd = (workDirectory == null ? getCWD() : new File(workDirectory));
 		files = new ArrayList<>();
 		objectList = new ArrayList<>();
 		resolvedObjectList = new ArrayList<>();

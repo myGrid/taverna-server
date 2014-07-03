@@ -12,6 +12,8 @@ import static org.apache.commons.logging.LogFactory.getLog;
 import static org.taverna.server.master.common.Namespaces.T2FLOW;
 import static org.taverna.server.master.common.Roles.USER;
 import static org.taverna.server.master.common.Status.Finished;
+import static org.taverna.server.master.scape.ScapeSplicingEngine.Model.CharacteriseNoSchema;
+import static org.taverna.server.master.scape.ScapeSplicingEngine.Model.CharacteriseSchema;
 import static org.taverna.server.master.scape.ScapeSplicingEngine.Model.One2OneNoSchema;
 import static org.taverna.server.master.scape.ScapeSplicingEngine.Model.One2OneSchema;
 import static org.taverna.server.master.scape.WorkflowConstants.SCAPE_PROVIDES_PROPERTY;
@@ -335,7 +337,9 @@ public class ScapeExecutor implements ScapeExecutionService {
 			return One2OneSchema;
 		}
 		// FIXME Allow for characterisation plans with QLD
-		return Model.Characterise;
+		if (qld == null || qld.getAny() == null)
+			return CharacteriseNoSchema;
+		return CharacteriseSchema;
 	}
 
 	@Override

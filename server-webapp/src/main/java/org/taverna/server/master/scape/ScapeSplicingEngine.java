@@ -81,7 +81,7 @@ public class ScapeSplicingEngine extends SplicingEngine {
 	public static final String DUMMY_PROCESSOR_NAME = "ignore";
 
 	public static enum Model {
-		One2OneNoSchema("1to1"), One2OneSchema("1to1_schema"), Characterise(
+		One2OneNoSchema("1to1"), One2OneSchema("1to1_schema"), CharacteriseNoSchema(
 				"characterise"), CharacteriseSchema("characterise_schema");
 		// FIXME Implement all the alternate models
 		@Nonnull
