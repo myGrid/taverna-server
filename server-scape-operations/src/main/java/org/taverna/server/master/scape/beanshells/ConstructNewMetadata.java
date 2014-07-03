@@ -1,24 +1,21 @@
 package org.taverna.server.master.scape.beanshells;
 
 import static java.util.UUID.randomUUID;
+import static org.taverna.server.master.scape.beanshells.utils.XmlUtils.parseDocument;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.StringReader;
 
 import javax.annotation.Nullable;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.w3c.dom.Element;
-import org.xml.sax.InputSource;
 
+import eu.scape_project.model.File.Builder;
 import eu.scape_project.model.Identifier;
 import eu.scape_project.model.IntellectualEntity;
 import eu.scape_project.model.Representation;
 import eu.scape_project.util.ScapeMarshaller;
-import eu.scape_project.model.File.Builder;
 
 public class ConstructNewMetadata extends Support<ConstructNewMetadata> {
 	@Input
@@ -42,15 +39,10 @@ public class ConstructNewMetadata extends Support<ConstructNewMetadata> {
 		String id1 = randomUUID().toString();
 		String id2 = randomUUID().toString();
 
-		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-		factory.setNamespaceAware(true);
-		DocumentBuilder builder = factory.newDocumentBuilder();
-		InputSource is = new InputSource(new StringReader(newInformation));
-		Element newMeta = builder.parse(is).getDocumentElement();
+		Element newMeta = parseDocument(newInformation).getDocumentElement();
 
 		IntellectualEntity original = sm.deserialize(IntellectualEntity.class,
 				new ByteArrayInputStream(originalMetadata.getBytes()));
-		IntellectualEntity.Builder ie = new IntellectualEntity.Builder(original);
 
 		Representation.Builder rep = new Representation.Builder()
 				.identifier(new Identifier(id2)).technical(newMeta)
@@ -63,10 +55,11 @@ public class ConstructNewMetadata extends Support<ConstructNewMetadata> {
 				file.mimetype(contentType);
 			rep.file(file.build());
 		}
-		ie.representation(rep.build());
 
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		sm.serialize(ie.build(), baos);
+		sm.serialize(
+				new IntellectualEntity.Builder(original).representation(
+						rep.build()).build(), baos);
 		newMetadata = baos.toString();
 	}
 }

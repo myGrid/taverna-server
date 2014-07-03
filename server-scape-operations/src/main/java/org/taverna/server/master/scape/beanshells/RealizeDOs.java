@@ -1,5 +1,8 @@
 package org.taverna.server.master.scape.beanshells;
 
+import static java.lang.management.ManagementFactory.getRuntimeMXBean;
+import static java.util.Arrays.asList;
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -7,19 +10,17 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.lang.management.ManagementFactory;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class RealizeDOs extends Support<RealizeDOs> {
 	private static final String pid;
 	private static volatile int ids;
 	static {
-		pid = ManagementFactory.getRuntimeMXBean().getName().replaceFirst("@.*", "");
+		pid = getRuntimeMXBean().getName().replaceFirst("@.*", "");
 		ids = 0;
 	}
 	@Input
@@ -115,7 +116,7 @@ public class RealizeDOs extends Support<RealizeDOs> {
 	}
 
 	private List<String> cleanUpObjectHandle(String obj) {
-		List<String> bits = Arrays.asList(obj.split("/"));
+		List<String> bits = asList(obj.split("/"));
 		return bits.subList(bits.size()-3, bits.size());
 	}
 
