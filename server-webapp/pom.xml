@@ -31,6 +31,10 @@
 		<splice.groupId>${project.groupId}</splice.groupId>
 		<splice.artifactId>scape-operations</splice.artifactId>
 		<splice.version>123.456</splice.version>
+		<!-- Deployment configuration -->
+		<deploy.name>execute</deploy.name>
+		<deploy.type>tomcat6x</deploy.type>
+		<deploy.config>deployhost</deploy.config>
 	</properties>
 
 	<repositories>
@@ -470,6 +474,35 @@
 						</dependency>
 					</dependencies>
 				</plugin>
+	            <plugin>
+					<groupId>org.codehaus.cargo</groupId>
+					<artifactId>cargo-maven2-plugin</artifactId>
+					<version>1.0.6</version>
+					<configuration>
+						<container>
+							<containerId>${deploy.type}</containerId>
+							<type>remote</type>
+						</container>
+						<configuration>
+							<type>runtime</type>
+							<properties>
+								<cargo.server.settings>${deploy.config}</cargo.server.settings>
+							</properties>
+						</configuration>
+						<deployer>
+							<deployables>
+								<deployable>
+									<groupId>${project.groupId}</groupId>
+									<artifactId>${project.artifactId}</artifactId>
+									<type>war</type>
+									<properties>
+										<context>${deploy.name}</context>
+									</properties>
+								</deployable>
+							</deployables>
+						</deployer>
+					</configuration>
+	            </plugin>
 				<!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
 				<plugin>
 					<groupId>org.eclipse.m2e</groupId>
