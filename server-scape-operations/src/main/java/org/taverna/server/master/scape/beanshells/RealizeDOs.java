@@ -28,7 +28,7 @@ public class RealizeDOs extends Support<RealizeDOs> {
 	}
 	@Input
 	private String repository;
-	@Input
+	@Input(required = false)
 	private String workDirectory;
 	@Input
 	private List<String> objects;
@@ -56,15 +56,9 @@ public class RealizeDOs extends Support<RealizeDOs> {
 	}
 
 	@Override
-	public void perform() throws Exception {
+	public void op() throws Exception {
+		initOutputs();
 		File wd = (workDirectory == null ? getCWD() : new File(workDirectory));
-		files = new ArrayList<>();
-		objectList = new ArrayList<>();
-		resolvedObjectList = new ArrayList<>();
-		representationList = new ArrayList<>();
-		representationUriList = new ArrayList<>();
-		entityList = new ArrayList<>();
-		entityUriList = new ArrayList<>();
 		if (!repository.endsWith("/"))
 			repository += "/";
 		URL rURL = new URL(repository);
@@ -75,12 +69,24 @@ public class RealizeDOs extends Support<RealizeDOs> {
 			realizeOneDO(wd, ++ids, obj);
 	}
 
+	/** Set up the output lists */
+	private void initOutputs() {
+		files = new ArrayList<>();
+		objectList = new ArrayList<>();
+		resolvedObjectList = new ArrayList<>();
+		representationList = new ArrayList<>();
+		representationUriList = new ArrayList<>();
+		entityList = new ArrayList<>();
+		entityUriList = new ArrayList<>();
+	}
+
 	private InputStream connect(URL url) throws IOException {
 		HttpURLConnection huc = (HttpURLConnection) url.openConnection();
 		huc.setConnectTimeout(2000);
-		huc.setReadTimeout(10000);
+		huc.setReadTimeout(20000);
 		return huc.getInputStream();
 	}
+
 	private void realizeOneDO(File wd, int id, String obj)
 			throws MalformedURLException, IOException, FileNotFoundException {
 		List<String>objBits = cleanUpObjectHandle(obj);

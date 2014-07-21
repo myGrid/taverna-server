@@ -31,7 +31,7 @@ public class AssessMetrics extends Support<AssessMetrics> {
 	private static final String NS = "http://purl.oclc.org/dsdl/svrl";
 
 	@Override
-	public void perform() throws Exception {
+	public void op() throws Exception {
 		String id = randomUUID().toString();
 		File schematron = new File("schematron_" + id + ".xml");
 		File measuresDoc = new File("measures_" + id + ".xml");

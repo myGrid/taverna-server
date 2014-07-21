@@ -8,14 +8,14 @@ public class CopyDataToRepository extends Support<CopyDataToRepository> {
 	@Input
 	private boolean doWrite;
 	@Input
-	private boolean isSatisfied;
+	private Boolean isSatisfied;
 	@Input
 	private String temporaryFile;
 	@Input
 	private String repositoryFile;
 
 	@Override
-	public void perform() throws Exception {
+	public void op() throws Exception {
 		if (doWrite && isSatisfied)
 			copy(new File(temporaryFile).toPath(),
 					new File(repositoryFile).toPath());

@@ -34,7 +34,7 @@ public class ConstructNewMetadata extends Support<ConstructNewMetadata> {
 	private String newMetadata;
 
 	@Override
-	public void perform() throws Exception {
+	public void op() throws Exception {
 		ScapeMarshaller sm = ScapeMarshaller.newInstance();
 		String id1 = randomUUID().toString();
 		String id2 = randomUUID().toString();

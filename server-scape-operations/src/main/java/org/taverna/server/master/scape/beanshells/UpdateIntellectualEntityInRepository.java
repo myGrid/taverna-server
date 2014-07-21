@@ -16,7 +16,7 @@ public class UpdateIntellectualEntityInRepository extends
 	private String error, written;
 	@Input
 	private String src, repository, meta;
-	@Input
+	@Input(required = false)
 	private boolean sat = true;
 	@Input
 	private boolean doWrite;
@@ -25,7 +25,7 @@ public class UpdateIntellectualEntityInRepository extends
 		written = format("%s;%s", src, repository);
 	}
 	@Override
-	public void perform() throws Exception {
+	public void op() throws Exception {
 		error = written = "";
 		URL url = new URL(new URL(repository), src);
 		if (!sat)

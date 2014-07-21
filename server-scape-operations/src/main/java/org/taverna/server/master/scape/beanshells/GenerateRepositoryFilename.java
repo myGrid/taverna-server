@@ -5,6 +5,7 @@ import static org.taverna.server.master.scape.beanshells.utils.RECache.match;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
 
 import org.apache.tika.Tika;
@@ -13,34 +14,42 @@ import org.apache.tika.mime.MimeTypes;
 
 public class GenerateRepositoryFilename extends Support<GenerateRepositoryFilename> {
 	@Input
-	private String repositoryDirectory, temporaryFile, contentType;
+	private String repositoryDirectory, temporaryFile;
+	@Input(required = false)
+	private String contentType;
 	@Output
 	private String repositoryFile;
-	private static SoftReference<Tika> tika;
-	private static SoftReference<MimeTypes> mimes;
+	private static SoftReference<Tika> tikaCache;
+	private static SoftReference<MimeTypes> mtdbCache;
+
+	private static <T> T get(Reference<T> ref) {
+		if (ref == null)
+			return null;
+		return ref.get();
+	}
 
 	private String detectMimeType(File file) throws IOException {
-		Tika detector;
+		Tika tika;
 		synchronized (getClass()) {
-			detector = tika.get();
-			if (detector == null)
-				tika = new SoftReference<>(detector = new Tika());
+			tika = get(tikaCache);
+			if (tika == null)
+				tikaCache = new SoftReference<>(tika = new Tika());
 		}
-		return detector.detect(file);
+		return tika.detect(file);
 	}
 
 	private String getExtension(String contentType) throws MimeTypeException {
 		MimeTypes mtdb;
 		synchronized (getClass()) {
-			mtdb = mimes.get();
+			mtdb = get(mtdbCache);
 			if (mtdb == null)
-				mimes = new SoftReference<>(mtdb = getDefaultMimeTypes());
+				mtdbCache = new SoftReference<>(mtdb = getDefaultMimeTypes());
 		}
 		return mtdb.forName(contentType).getExtension();
 	}
 
 	@Override
-	public void perform() throws Exception {
+	public void op() throws Exception {
 		File tmp = new File(temporaryFile);
 		String ext = "";
 		if (!match(".[.].", tmp.getName()) && tmp.exists() && tmp.isFile()

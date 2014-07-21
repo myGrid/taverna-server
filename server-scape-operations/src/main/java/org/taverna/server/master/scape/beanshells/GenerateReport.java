@@ -14,7 +14,7 @@ public class GenerateReport extends Support<GenerateReport> {
 	private boolean doWrite;
 	@Input
 	private List<String> objects, writtenInfo, writeErrors;
-	@Input
+	@Input(required = false)
 	@Nullable
 	private List<List<String>> assessErrors;
 	private boolean wasCharacterise;
@@ -28,7 +28,7 @@ public class GenerateReport extends Support<GenerateReport> {
 	}
 
 	@Override
-	public void perform() throws Exception {
+	public void op() throws Exception {
 		Iterator<String> ob_it = objects.iterator();
 		Iterator<String> wi_it = writtenInfo.iterator();
 		Iterator<String> we_it = writeErrors.iterator();
