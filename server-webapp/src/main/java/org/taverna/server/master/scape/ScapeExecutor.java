@@ -113,6 +113,7 @@ public class ScapeExecutor implements ScapeExecutionService {
 	private ScapeSplicingEngine splicer;
 	ScapeJobDAO dao;
 	private String notifyService;
+	private String repositoryService;
 	private String notifyUser;
 	private String notifyPass;
 	private FilenameUtils fileUtils;
@@ -187,6 +188,14 @@ public class ScapeExecutor implements ScapeExecutionService {
 	 */
 	public void setNotifyService(String serviceURL) {
 		this.notifyService = serviceURL;
+	}
+
+	/**
+	 * The plan management service that contains the data being processed.
+	 * Usually closely related to the notify service.
+	 */
+	public void setRepositoryService(String serviceURL) {
+		this.repositoryService = serviceURL;
 		if (serviceURL == null) {
 			this.notifyUser = null;
 			this.notifyPass = null;
@@ -650,12 +659,12 @@ public class ScapeExecutor implements ScapeExecutionService {
 	}
 
 	protected Password synthesizeLoginCredential() {
-		log.info("issuing credential to access repository " + notifyService);
+		log.info("issuing credential to access repository " + repositoryService);
 		Password pw = new Password();
 		pw.id = "urn:scape:repository-credential";
 		pw.username = notifyUser;
 		pw.password = notifyPass;
-		pw.serviceURI = URI.create(notifyService);
+		pw.serviceURI = URI.create(repositoryService);
 		return pw;
 	}
 }

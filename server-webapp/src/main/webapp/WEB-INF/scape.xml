@@ -25,6 +25,7 @@
 		<property name="certificateChainFetcher" ref="certificateChainFetcher" />
 		<property name="contentsDescriptorBuilder" ref="contentsDescriptorBuilder" />
 		<property name="notifyService" value="${scape.planManagementService}" />
+		<property name="repositoryService" value="${scape.repositoryAuthBase}" />
 		<property name="notifyUser" value="${scape.planManagementUser}" />
 		<property name="notifyPassword" value="${scape.planManagementPassword}" />
 		<property name="timeoutHours" value="${scape.timeoutHours}" />
