@@ -1,6 +1,7 @@
 package org.taverna.server.master.scape.beanshells;
 
 import static java.lang.management.ManagementFactory.getRuntimeMXBean;
+import static java.net.URLEncoder.encode;
 import static java.util.Arrays.asList;
 
 import java.io.ByteArrayOutputStream;
@@ -10,6 +11,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -124,11 +126,17 @@ public class RealizeDOs extends Support<RealizeDOs> {
 		return bits.subList(bits.size()-3, bits.size());
 	}
 
+	@SuppressWarnings("deprecation")
 	private String join(List<String> list) {
 		StringBuilder sb = new StringBuilder();
 		String sep = "";
 		for (String bit : list) {
-			sb.append(sep).append(bit);
+			try {
+				sb.append(sep).append(encode(bit, "UTF-8"));
+			} catch (UnsupportedEncodingException e) {
+				// Bleah fallback; should be unreachable
+				sb.append(sep).append(encode(bit));
+			}
 			sep = "/";
 		}
 		return sb.toString();
