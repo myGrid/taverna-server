@@ -12,7 +12,8 @@ import org.apache.tika.Tika;
 import org.apache.tika.mime.MimeTypeException;
 import org.apache.tika.mime.MimeTypes;
 
-public class GenerateRepositoryFilename extends Support<GenerateRepositoryFilename> {
+public class GenerateRepositoryFilename extends
+		Support<GenerateRepositoryFilename> {
 	@Input
 	private String repositoryDirectory, temporaryFile;
 	@Input(required = false)
@@ -52,13 +53,15 @@ public class GenerateRepositoryFilename extends Support<GenerateRepositoryFilena
 	public void op() throws Exception {
 		File tmp = new File(temporaryFile);
 		String ext = "";
-		if (!match(".[.].", tmp.getName()) && tmp.exists() && tmp.isFile()
+		if (!match("[^.]+[.][^.]+", tmp.getName()) && tmp.exists() && tmp.isFile()
 				&& tmp.canRead()) {
 			if (contentType == null)
 				contentType = detectMimeType(tmp);
 			ext = getExtension(contentType);
 		}
-		repositoryFile = new File(repositoryDirectory,
-				tmp.getName() + ext).toString();
+		String name = tmp.getName();
+		while (name.endsWith("."))
+			name = name.substring(0, name.length()-1);
+		repositoryFile = new File(repositoryDirectory, name + ext).toString();
 	}
 }
