@@ -34,6 +34,11 @@
 				<enabled>true</enabled>
 			</snapshots>
 		</repository>
+		<repository>
+			<id>KEEP Artifacts</id>
+			<name>KEEP Artifacts-releases</name>
+			<url>http://artifactory.keep.pt/keep</url>
+		</repository>
 	</repositories>
 	<dependencies>
 		<dependency>

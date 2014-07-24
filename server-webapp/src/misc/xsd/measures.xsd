@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema xmlns="http://www.w3.org/2001/XMLSchema" targetNamespace="http://ns.taverna.org.uk/2014/scape"
+	xmlns:tns="http://ns.taverna.org.uk/2014/scape" elementFormDefault="qualified">
+	<element name="measures">
+        <complexType>
+            <sequence>
+                <element name="measures" type="tns:Measure" minOccurs="0"
+                    maxOccurs="unbounded" />
+            </sequence>
+        </complexType>
+    </element>
+	<complexType name="Measure">
+		<simpleContent>
+			<extension base="string">
+				<attribute name="subject" type="string" />
+				<attribute name="type" type="string" />
+			</extension>
+		</simpleContent>
+	</complexType>
+</schema>

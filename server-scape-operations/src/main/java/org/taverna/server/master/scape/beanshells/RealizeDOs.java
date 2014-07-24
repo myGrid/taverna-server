@@ -17,7 +17,9 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class RealizeDOs extends Support<RealizeDOs> {
 	private static final String pid;
@@ -31,14 +33,14 @@ public class RealizeDOs extends Support<RealizeDOs> {
 	@Input(required = false)
 	private String workDirectory;
 	@Input
-	private List<String> objects;
+	private String objects;
 
 	@Output
-	private List<String> files;
+	private List<List<String>> files;
 	@Output
-	private List<String> objectList;
+	private List<List<String>> objectList;
 	@Output
-	private List<String> resolvedObjectList;
+	private List<List<String>> resolvedObjectList;
 	@Output
 	private List<String> entityList;
 	@Output
@@ -48,6 +50,8 @@ public class RealizeDOs extends Support<RealizeDOs> {
 	@Output
 	private List<String> representationUriList;
 
+	private Map<String,List<URL>> objectsInEntity;
+
 	private final byte[] buffer = new byte[4096];
 	URL entBase, repBase, fileBase;
 
@@ -56,7 +60,7 @@ public class RealizeDOs extends Support<RealizeDOs> {
 	}
 
 	@Override
-	public void op() throws Exception {
+	protected void op() throws Exception {
 		initOutputs();
 		File wd = (workDirectory == null ? getCWD() : new File(workDirectory));
 		if (!repository.endsWith("/"))
@@ -65,8 +69,11 @@ public class RealizeDOs extends Support<RealizeDOs> {
 		entBase = new URL(rURL, "entity/");
 		repBase = new URL(rURL, "representation/");
 		fileBase = new URL(rURL, "file/");
-		for (String obj : objects)
+		objectsInEntity = new HashMap<>();
+		for (String obj : objects.split("\n"))
 			realizeOneDO(wd, ++ids, obj);
+		for (String rep : representationUriList)
+			realizeDOFiles(wd, ++ids, rep);
 	}
 
 	/** Set up the output lists */
@@ -90,40 +97,54 @@ public class RealizeDOs extends Support<RealizeDOs> {
 	private void realizeOneDO(File wd, int id, String obj)
 			throws MalformedURLException, IOException, FileNotFoundException {
 		List<String>objBits = cleanUpObjectHandle(obj);
-		objectList.add(obj);
 		URL url = resolveContent(objBits);
 		URL repUrl = resolveRepresentation(objBits);
+		String repkey = repUrl.toString();
 		URL entUrl = resolveEntity(objBits);
-		resolvedObjectList.add(url.toString());
-		representationUriList.add(repUrl.toString());
-		entityUriList.add(entUrl.toString());
-		File f = new File(wd, "data." + pid + "." + id);
+		if (!objectsInEntity.containsKey(repkey)) {
+			objectsInEntity.put(repkey, new ArrayList<URL>());
+			entityUriList.add(entUrl.toString());
+			representationUriList.add(repkey);
+			// Download metadata
+			try (ByteArrayOutputStream sw = new ByteArrayOutputStream();
+					InputStream is = connect(repUrl)) {
+				int bytesRead = 0;
+				while ((bytesRead = is.read(buffer)) != -1)
+					sw.write(buffer, 0, bytesRead);
+				representationList.add(sw.toString());
+			}
 
-		// Download file
-		try (InputStream is = connect(url);
-				OutputStream os = new FileOutputStream(f)) {
-			int bytesRead = 0;
-			while ((bytesRead = is.read(buffer)) != -1)
-				os.write(buffer, 0, bytesRead);
-			files.add(f.toString());
+			// Download metadata
+			try (ByteArrayOutputStream sw = new ByteArrayOutputStream();
+					InputStream is = connect(entUrl)) {
+				int bytesRead = 0;
+				while ((bytesRead = is.read(buffer)) != -1)
+					sw.write(buffer, 0, bytesRead);
+				entityList.add(sw.toString());
+			}
 		}
+		objectsInEntity.get(repkey).add(url);
+	}
 
-		// Download metadata
-		try (ByteArrayOutputStream sw = new ByteArrayOutputStream();
-				InputStream is = connect(repUrl)) {
-			int bytesRead = 0;
-			while ((bytesRead = is.read(buffer)) != -1)
-				sw.write(buffer, 0, bytesRead);
-			representationList.add(sw.toString());
-		}
+	private void realizeDOFiles(File wd, int id, String obj) throws IOException {
+		int idx = resolvedObjectList.size();
+		resolvedObjectList.add(new ArrayList<String>());
+		files.add(new ArrayList<String>());
+		List<String> objs;
+		objectList.add(objs = new ArrayList<String>());
+		for (URL url : objectsInEntity.get(obj)) {
+			objs.add(join(cleanUpObjectHandle(url.toString()).subList(0, 3)));
+			resolvedObjectList.get(idx).add(url.toString());
+			File f = new File(wd, "data." + pid + "." + id);
 
-		// Download metadata
-		try (ByteArrayOutputStream sw = new ByteArrayOutputStream();
-				InputStream is = connect(entUrl)) {
-			int bytesRead = 0;
-			while ((bytesRead = is.read(buffer)) != -1)
-				sw.write(buffer, 0, bytesRead);
-			entityList.add(sw.toString());
+			// Download file
+			try (InputStream is = connect(url);
+					OutputStream os = new FileOutputStream(f)) {
+				int bytesRead = 0;
+				while ((bytesRead = is.read(buffer)) != -1)
+					os.write(buffer, 0, bytesRead);
+				files.get(idx).add(f.toString());
+			}
 		}
 	}
 
@@ -148,19 +169,19 @@ public class RealizeDOs extends Support<RealizeDOs> {
 		return sb.toString();
 	}
 
-	public URL resolveEntity(List<String> obj) throws MalformedURLException {
+	protected URL resolveEntity(List<String> obj) throws MalformedURLException {
 		if (obj.size() < 1)
 			return new URL(entBase, join(obj));
 		return new URL(entBase, join(obj.subList(0, 1)));
 	}
 
-	public URL resolveRepresentation(List<String> obj) throws MalformedURLException {
+	protected URL resolveRepresentation(List<String> obj) throws MalformedURLException {
 		if (obj.size() < 2)
 			return new URL(repBase, join(obj));
 		return new URL(repBase, join(obj.subList(0, 2)));
 	}
 
-	public URL resolveContent(List<String> obj) throws MalformedURLException {
+	protected URL resolveContent(List<String> obj) throws MalformedURLException {
 		if (obj.size() < 3)
 			return new URL(fileBase, join(obj));
 		return new URL(fileBase, join(obj.subList(0, 3)));

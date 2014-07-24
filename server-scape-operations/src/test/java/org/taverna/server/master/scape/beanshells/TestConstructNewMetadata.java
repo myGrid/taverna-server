@@ -1,7 +1,8 @@
 package org.taverna.server.master.scape.beanshells;
 
 import static java.nio.file.Files.readAllBytes;
-import static org.junit.Assert.assertEquals;
+import static java.util.Arrays.asList;
+import static org.junit.Assert.*;
 
 import java.nio.file.Paths;
 import java.util.HashMap;
@@ -46,11 +47,12 @@ public class TestConstructNewMetadata {
 	@Test
 	public void test() throws Exception {
 		ConstructNewMetadata op = new ConstructNewMetadata()
-				.init("contentType", "text/plain")
+				.init("contentType", asList("text/plain"))
 				.init("creator", getClass().toString())
-				.init("generatedFilename", "/tmp/example/BCD.txt")
+				.init("generatedFilename", asList("/tmp/example/BCD.txt"))
 				.init("originalMetadata", originalMetadata)
-				.init("newInformation", newInformation);
+				.init("originalFileID", asList("F9"))
+				.init("newInformation", asList(newInformation));
 		op.perform();
 		assertEquals(mapUUIDs(createdMetadata), mapUUIDs(op.getResult("newMetadata").toString()));
 	}

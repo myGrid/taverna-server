@@ -8,6 +8,7 @@ import java.io.Writer;
 import java.net.HttpURLConnection;
 import java.net.ProtocolException;
 import java.net.URL;
+import java.util.List;
 import java.util.Scanner;
 
 public class UpdateIntellectualEntityInRepository extends
@@ -15,34 +16,47 @@ public class UpdateIntellectualEntityInRepository extends
 	@Output
 	private String error, written;
 	@Input
-	private String src, repository, meta;
+	private String src;
+	@Input
+	private String repository;
+	@Input
+	private String meta;
 	@Input(required = false)
-	private boolean sat = true;
+	private List<String> sat;
 	@Input
 	private boolean doWrite;
 
 	private void success() {
 		written = format("%s;%s", src, repository);
 	}
+
 	@Override
 	public void op() throws Exception {
 		error = written = "";
+		boolean anySat = false;
+		for (String s : sat)
+			if (Boolean.parseBoolean(s)) {
+				anySat = true;
+				break;
+			}
+		// TODO Should this be a NEW ID?
 		URL url = new URL(new URL(repository), src);
-		if (!sat)
+		if (!anySat)
 			error = "failed quality check";
 		else if (!doWrite)
 			success();
 		else
-			writeIEUpdate(url);
+			writeIEUpdate(url, meta);
 	}
 
-	private void writeIEUpdate(URL url) throws IOException, ProtocolException {
+	private void writeIEUpdate(URL url, String content) throws IOException,
+			ProtocolException {
 		HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 		try {
 			conn.setRequestMethod("PUT");
 			conn.setDoOutput(true);
 			try (Writer w = new OutputStreamWriter(conn.getOutputStream())) {
-				w.write(meta);
+				w.write(content);
 			}
 			if (conn.getResponseCode() >= 400) {
 				StringBuilder sb = new StringBuilder("failed during write: ")

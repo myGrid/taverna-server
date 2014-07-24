@@ -1,1 +1,1 @@
-<measures><measure subject="inputFile" type="compressionRatio">95</measure><measure subject="inputFile" type="width">1400</measure><measure subject="inputFile" type="height">1800</measure></measures>
+<measures xmlns="http://ns.taverna.org.uk/2014/scape"><measure subject="inputFile" type="compressionRatio">95</measure><measure subject="inputFile" type="width">1400</measure><measure subject="inputFile" type="height">1800</measure></measures>

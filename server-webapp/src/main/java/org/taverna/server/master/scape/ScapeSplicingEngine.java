@@ -100,9 +100,9 @@ public class ScapeSplicingEngine extends SplicingEngine {
 	private String repository = "http://www.myexperiment.org/";
 	private String utilityFamily = "SCAPE Utility Components";
 	private String builderName = "MeasuresDocBuilder";
-	private String builderVersion = "3";
+	private String builderVersion = "4";
 	private String joinerName = "MeasuresDocCombiner";
-	private String joinerVersion = "1";
+	private String joinerVersion = "2";
 	private String dummyProcessorName;
 	private String wrapperDirectory;
 	private String workflowInputName = "inputFile"; // TODO parameterize

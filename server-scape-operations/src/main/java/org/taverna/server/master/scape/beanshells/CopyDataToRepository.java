@@ -12,10 +12,11 @@ public class CopyDataToRepository extends Support<CopyDataToRepository> {
 	@Input
 	private String temporaryFile;
 	@Input
+	@Output
 	private String repositoryFile;
 
 	@Override
-	public void op() throws Exception {
+	protected void op() throws Exception {
 		if (doWrite && isSatisfied)
 			copy(new File(temporaryFile).toPath(),
 					new File(repositoryFile).toPath());

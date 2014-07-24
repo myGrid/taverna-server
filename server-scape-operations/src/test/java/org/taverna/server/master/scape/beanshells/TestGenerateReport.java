@@ -1,10 +1,9 @@
 package org.taverna.server.master.scape.beanshells;
 
+import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
-
-import java.util.ArrayList;
-import java.util.Arrays;
 
 import org.junit.Test;
 
@@ -14,9 +13,9 @@ public class TestGenerateReport {
 		GenerateReport op = new GenerateReport();
 		assertNull(op.getResult("report"));
 		op.init("doWrite", false);
-		op.init("objects", Arrays.asList("a", "b"));
-		op.init("writtenInfo", Arrays.asList("1.txt;http://example.com/", "2.txt;http://example.com/"));
-		op.init("writeErrors", Arrays.asList(null, null));
+		op.init("objects", asList("a", "b"));
+		op.init("writtenInfo", asList("1.txt;http://example.com/", "2.txt;http://example.com/"));
+		op.init("writeErrors", asList(null, null));
 		op.perform();
 		assertEquals("<h2>Summary</h2>There were 2 successful writes and 0 errors."
 				+ "<h2>Written</h2><ul>"
@@ -31,9 +30,9 @@ public class TestGenerateReport {
 		GenerateReport op = new GenerateReport();
 		assertNull(op.getResult("report"));
 		op.init("doWrite", "false");
-		op.init("objects", Arrays.asList("a", "b"));
-		op.init("writtenInfo", Arrays.asList("1.txt;http://example.com/", "2.txt;http://example.com/"));
-		op.init("writeErrors", Arrays.asList(null, null));
+		op.init("objects", asList("a", "b"));
+		op.init("writtenInfo", asList("1.txt;http://example.com/", "2.txt;http://example.com/"));
+		op.init("writeErrors", asList(null, null));
 		op.perform();
 		assertEquals("<h2>Summary</h2>There were 2 successful writes and 0 errors."
 				+ "<h2>Written</h2><ul>"
@@ -48,10 +47,10 @@ public class TestGenerateReport {
 		GenerateReport op = new GenerateReport();
 		assertNull(op.getResult("report"));
 		op.init("doWrite", false);
-		op.init("objects", Arrays.asList("a", "b"));
-		op.init("writtenInfo", Arrays.asList("1.txt;http://example.com/", "2.txt;http://example.com/"));
-		op.init("writeErrors", Arrays.asList(null, null));
-		op.init("assessErrors", Arrays.asList(new ArrayList<>(), new ArrayList<>()));
+		op.init("objects", asList("a", "b"));
+		op.init("writtenInfo", asList("1.txt;http://example.com/", "2.txt;http://example.com/"));
+		op.init("writeErrors", asList(null, null));
+		op.init("assessErrors", asList(asList(emptyList()), asList(emptyList())));
 		op.perform();
 		assertEquals("<h2>Summary</h2>There were 2 successful writes and 0 errors."
 				+ "<h2>Written</h2><ul>"
@@ -66,9 +65,9 @@ public class TestGenerateReport {
 		GenerateReport op = new GenerateReport();
 		assertNull(op.getResult("report"));
 		op.init("doWrite", false);
-		op.init("objects", Arrays.asList("a", "b"));
-		op.init("writtenInfo", Arrays.asList("1.txt;http://example.com/", "2.txt;http://example.com/"));
-		op.init("writeErrors", Arrays.asList("foo", "bar"));
+		op.init("objects", asList("a", "b"));
+		op.init("writtenInfo", asList("1.txt;http://example.com/", "2.txt;http://example.com/"));
+		op.init("writeErrors", asList("foo", "bar"));
 		op.perform();
 		assertEquals("<h2>Summary</h2>There were 0 successful writes and 2 errors."
 				+ "<h2>Written</h2><ul></ul>"
@@ -83,10 +82,10 @@ public class TestGenerateReport {
 		GenerateReport op = new GenerateReport();
 		assertNull(op.getResult("report"));
 		op.init("doWrite", false);
-		op.init("objects", Arrays.asList("a", "b"));
-		op.init("writtenInfo", Arrays.asList("1.txt;http://example.com/", "2.txt;http://example.com/"));
-		op.init("writeErrors", Arrays.asList("foo", "bar"));
-		op.init("assessErrors", Arrays.asList(new ArrayList<>(), new ArrayList<>()));
+		op.init("objects", asList("a", "b"));
+		op.init("writtenInfo", asList("1.txt;http://example.com/", "2.txt;http://example.com/"));
+		op.init("writeErrors", asList("foo", "bar"));
+		op.init("assessErrors", asList(asList(emptyList()), asList(emptyList())));
 		op.perform();
 		assertEquals("<h2>Summary</h2>There were 0 successful writes and 2 errors."
 				+ "<h2>Written</h2><ul></ul>"
@@ -101,10 +100,10 @@ public class TestGenerateReport {
 		GenerateReport op = new GenerateReport();
 		assertNull(op.getResult("report"));
 		op.init("doWrite", false);
-		op.init("objects", Arrays.asList("a", "b"));
-		op.init("writtenInfo", Arrays.asList("1.txt;http://example.com/", "2.txt;http://example.com/"));
-		op.init("writeErrors", Arrays.asList("foo", "bar"));
-		op.init("assessErrors", Arrays.asList(Arrays.asList("sp", "qr"), new ArrayList<>()));
+		op.init("objects", asList("a", "b"));
+		op.init("writtenInfo", asList("1.txt;http://example.com/", "2.txt;http://example.com/"));
+		op.init("writeErrors", asList("foo", "bar"));
+		op.init("assessErrors", asList(asList(asList("sp", "qr")), asList(emptyList())));
 		op.perform();
 		assertEquals("<h2>Summary</h2>There were 0 successful writes and 2 errors."
 				+ "<h2>Written</h2><ul></ul>"
@@ -119,10 +118,10 @@ public class TestGenerateReport {
 		GenerateReport op = new GenerateReport();
 		assertNull(op.getResult("report"));
 		op.init("doWrite", true);
-		op.init("objects", Arrays.asList("a", "b"));
-		op.init("writtenInfo", Arrays.asList("1.txt;http://example.com/", "2.txt;http://example.com/"));
-		op.init("writeErrors", Arrays.asList(null, null));
-		op.init("assessErrors", Arrays.asList(new ArrayList<>(), new ArrayList<>()));
+		op.init("objects", asList("a", "b"));
+		op.init("writtenInfo", asList("1.txt;http://example.com/", "2.txt;http://example.com/"));
+		op.init("writeErrors", asList(null, null));
+		op.init("assessErrors", asList(asList(emptyList()), asList(emptyList())));
 		op.perform();
 		assertEquals("<h2>Summary</h2>There were 2 successful writes and 0 errors."
 				+ "<h2>Written</h2><ul>"
@@ -138,10 +137,10 @@ public class TestGenerateReport {
 		GenerateReport op = new GenerateReport();
 		assertNull(op.getResult("report"));
 		op.init("doWrite", true);
-		op.init("objects", Arrays.asList("a", "b"));
-		op.init("writtenInfo", Arrays.asList("1.txt;http://example.com/", "2.txt;http://example.com/"));
-		op.init("writeErrors", Arrays.asList("foo", "bar"));
-		op.init("assessErrors", Arrays.asList(new ArrayList<>(), new ArrayList<>()));
+		op.init("objects", asList("a", "b"));
+		op.init("writtenInfo", asList("1.txt;http://example.com/", "2.txt;http://example.com/"));
+		op.init("writeErrors", asList("foo", "bar"));
+		op.init("assessErrors", asList(asList(emptyList()), asList(emptyList())));
 		op.perform();
 		assertEquals("<h2>Summary</h2>There were 0 successful writes and 2 errors."
 				+ "<h2>Written</h2><ul></ul>"
@@ -156,10 +155,10 @@ public class TestGenerateReport {
 		GenerateReport op = new GenerateReport();
 		assertNull(op.getResult("report"));
 		op.init("doWrite", true);
-		op.init("objects", Arrays.asList("a", "b"));
-		op.init("writtenInfo", Arrays.asList("1.txt;http://example.com/", "2.txt;http://example.com/"));
-		op.init("writeErrors", Arrays.asList("foo", "bar"));
-		op.init("assessErrors", Arrays.asList(Arrays.asList("sp", "qr"), new ArrayList<>()));
+		op.init("objects", asList("a", "b"));
+		op.init("writtenInfo", asList("1.txt;http://example.com/", "2.txt;http://example.com/"));
+		op.init("writeErrors", asList("foo", "bar"));
+		op.init("assessErrors", asList(asList(asList("sp", "qr")), asList(emptyList())));
 		op.perform();
 		assertEquals("<h2>Summary</h2>There were 0 successful writes and 2 errors."
 				+ "<h2>Written</h2><ul></ul>"
@@ -174,10 +173,10 @@ public class TestGenerateReport {
 		GenerateReport op = new GenerateReport();
 		assertNull(op.getResult("report"));
 		op.init("doWrite", false);
-		op.init("objects", Arrays.asList("a", "b", "c"));
-		op.init("writtenInfo", Arrays.asList("1.txt;http://example.com/", "2.txt;http://example.com/", "3.txt;http://example.com/"));
-		op.init("writeErrors", Arrays.asList(null, "kaboom", null));
-		op.init("assessErrors", Arrays.asList(new ArrayList<>(), new ArrayList<>(), Arrays.asList("foo bar and grill")));
+		op.init("objects", asList("a", "b", "c"));
+		op.init("writtenInfo", asList("1.txt;http://example.com/", "2.txt;http://example.com/", "3.txt;http://example.com/"));
+		op.init("writeErrors", asList(null, "kaboom", null));
+		op.init("assessErrors", asList(asList(emptyList()), asList(emptyList()), asList(asList("foo bar and grill"))));
 		op.perform();
 		assertEquals("<h2>Summary</h2>There were 1 successful writes and 2 errors."
 				+ "<h2>Written</h2><ul>"

@@ -2,6 +2,7 @@ package org.taverna.server.master.scape.beanshells;
 
 import static java.lang.String.format;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
@@ -16,7 +17,7 @@ public class GenerateReport extends Support<GenerateReport> {
 	private List<String> objects, writtenInfo, writeErrors;
 	@Input(required = false)
 	@Nullable
-	private List<List<String>> assessErrors;
+	private List<List<List<String>>> assessErrors;
 	private boolean wasCharacterise;
 	private int nout, nerr;
 
@@ -28,11 +29,11 @@ public class GenerateReport extends Support<GenerateReport> {
 	}
 
 	@Override
-	public void op() throws Exception {
+	protected void op() throws Exception {
 		Iterator<String> ob_it = objects.iterator();
 		Iterator<String> wi_it = writtenInfo.iterator();
 		Iterator<String> we_it = writeErrors.iterator();
-		Iterator<List<String>> ae_it = (assessErrors != null ? assessErrors
+		Iterator<List<List<String>>> ae_it = (assessErrors != null ? assessErrors
 				.iterator() : null);
 		StringBuilder errorsBuffer = new StringBuilder();
 		StringBuilder writtenBuffer = new StringBuilder();
@@ -56,13 +57,24 @@ public class GenerateReport extends Support<GenerateReport> {
 
 	private void generateReportLine(StringBuilder errorsBuffer,
 			StringBuilder writtenBuffer, String ob, String wi, String we,
-			List<String> ae) {
+			List<List<String>> ae) {
 		// Errors in assessment
-		if (ae != null && !ae.isEmpty()) {
+		List<String>assessments = new ArrayList<>();
+		if (ae != null)
+			for (List<String> errorList : ae)
+				if (errorList != null)
+					for (String error : errorList)
+						if (error != null)
+							assessments.add(error);
+		if (!assessments.isEmpty()) {
 			errorsBuffer.append("<li>Object ").append(ob)
 					.append(" failed assessment.<ul>");
-			for (String e : ae)
-				errorsBuffer.append("<li>").append(e).append("</li>");
+			for (String e : assessments)
+				errorsBuffer
+						.append("<li>")
+						.append(e.replaceAll("[&]", "&amp;")
+								.replaceAll("[<]", "&lt;")
+								.replaceAll("[>]", "&gt;")).append("</li>");
 			errorsBuffer.append("</ul></li>");
 			nerr++;
 			return;
