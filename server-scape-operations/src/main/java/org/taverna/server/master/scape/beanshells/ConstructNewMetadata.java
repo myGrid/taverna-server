@@ -55,13 +55,12 @@ public class ConstructNewMetadata extends Support<ConstructNewMetadata> {
 		Representation original = sm.deserialize(Representation.class,
 				new ByteArrayInputStream(originalMetadata.getBytes()));
 
-		Representation newrep = original;
 		Map<String, Integer> fileindexmap = new HashMap<>();
 		int idx = 0;
-		for (eu.scape_project.model.File f : newrep.getFiles())
+		for (eu.scape_project.model.File f : original.getFiles())
 			fileindexmap.put(f.getIdentifier().getValue(), idx++);
 
-		Representation.Builder rep = new Representation.Builder(newrep)
+		Representation.Builder rep = new Representation.Builder(original)
 				.identifier(new Identifier(id2))
 				.title("output from " + creator);
 		StringBuilder overallFileInfo = new StringBuilder();
@@ -78,9 +77,9 @@ public class ConstructNewMetadata extends Support<ConstructNewMetadata> {
 						ct == null ? null : ct.next(), updatedFiles, f);
 			rep.files(updatedFiles);
 		}
-		newrep = rep.build();
+
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		sm.serialize(newrep, baos);
+		sm.serialize(rep.build(), baos);
 		newMetadata = baos.toString();
 		payloadForPremisEvent = overallFileInfo.toString();
 	}
