@@ -21,9 +21,11 @@ public class TestGenerateRepositoryFilename {
 	public void testNoRealFile() throws Exception {
 		GenerateRepositoryFilename op = new GenerateRepositoryFilename();
 		op.init("repositoryDirectory", "/foo/bar");
+		op.init("repositoryAccessUri", "file:/barfoo");
 		op.init("temporaryFile", "/tmp/foobarfoobar");
 		op.perform();
 		assertEquals("/foo/bar/foobarfoobar", op.getResult("repositoryFile"));
+		assertEquals("file:/barfoo/foobarfoobar", op.getResult("fileAccessUri"));
 	}
 
 	@Test
@@ -38,10 +40,13 @@ public class TestGenerateRepositoryFilename {
 			assertTrue(tmp.exists());
 			GenerateRepositoryFilename op = new GenerateRepositoryFilename();
 			op.init("repositoryDirectory", "/foo/bar");
+			op.init("repositoryAccessUri", "file:/barfoo");
 			op.init("temporaryFile", tmp.getAbsolutePath());
 			op.perform();
 			assertEquals("/foo/bar/foobarfoobar.txt",
 					op.getResult("repositoryFile"));
+			assertEquals("file:/barfoo/foobarfoobar.txt",
+					op.getResult("fileAccessUri"));
 		} finally {
 			tmp.delete();
 		}
@@ -59,10 +64,13 @@ public class TestGenerateRepositoryFilename {
 			assertTrue(tmp.exists());
 			GenerateRepositoryFilename op = new GenerateRepositoryFilename();
 			op.init("repositoryDirectory", "/foo/bar");
+			op.init("repositoryAccessUri", "file:/barfoo");
 			op.init("temporaryFile", tmp.getAbsolutePath());
 			op.perform();
 			assertEquals("/foo/bar/foobarfoobar.txt",
 					op.getResult("repositoryFile"));
+			assertEquals("file:/barfoo/foobarfoobar.txt",
+					op.getResult("fileAccessUri"));
 		} finally {
 			tmp.delete();
 		}
@@ -80,10 +88,13 @@ public class TestGenerateRepositoryFilename {
 			assertTrue(tmp.exists());
 			GenerateRepositoryFilename op = new GenerateRepositoryFilename();
 			op.init("repositoryDirectory", "/foo/bar");
+			op.init("repositoryAccessUri", "file:/barfoo");
 			op.init("temporaryFile", tmp.getAbsolutePath());
 			op.perform();
 			assertEquals("/foo/bar/foobarfoobar.txt",
 					op.getResult("repositoryFile"));
+			assertEquals("file:/barfoo/foobarfoobar.txt",
+					op.getResult("fileAccessUri"));
 		} finally {
 			tmp.delete();
 		}
@@ -101,10 +112,13 @@ public class TestGenerateRepositoryFilename {
 			assertTrue(tmp.exists());
 			GenerateRepositoryFilename op = new GenerateRepositoryFilename();
 			op.init("repositoryDirectory", "/foo/bar");
+			op.init("repositoryAccessUri", "file:/barfoo");
 			op.init("temporaryFile", tmp.getAbsolutePath());
 			op.perform();
 			assertEquals("/foo/bar/foobarfoobar.txt",
 					op.getResult("repositoryFile"));
+			assertEquals("file:/barfoo/foobarfoobar.txt",
+					op.getResult("fileAccessUri"));
 		} finally {
 			tmp.delete();
 		}
@@ -122,10 +136,13 @@ public class TestGenerateRepositoryFilename {
 			assertTrue(tmp.exists());
 			GenerateRepositoryFilename op = new GenerateRepositoryFilename();
 			op.init("repositoryDirectory", "/foo/bar");
+			op.init("repositoryAccessUri", "file:/barfoo");
 			op.init("temporaryFile", tmp.getAbsolutePath());
 			op.perform();
 			assertEquals("/foo/bar/foobarfoobar.txt",
 					op.getResult("repositoryFile"));
+			assertEquals("file:/barfoo/foobarfoobar.txt",
+					op.getResult("fileAccessUri"));
 		} finally {
 			tmp.delete();
 		}

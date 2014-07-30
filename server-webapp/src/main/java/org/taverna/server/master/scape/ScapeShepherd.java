@@ -1,7 +1,10 @@
 package org.taverna.server.master.scape;
 
 import static java.lang.Thread.sleep;
+import static java.util.regex.Pattern.compile;
+import static javax.ws.rs.core.UriBuilder.fromUri;
 import static org.taverna.server.master.common.Status.Operating;
+import static org.taverna.server.master.identity.WorkflowInternalAuthProvider.PREFIX;
 import static org.taverna.server.master.scape.ScapeExecutor.serializeXml;
 
 import java.io.IOException;
@@ -11,9 +14,12 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import javax.xml.transform.TransformerException;
 
@@ -29,6 +35,8 @@ import org.taverna.server.master.interfaces.TavernaRun;
 import org.taverna.server.master.interfaces.TavernaSecurityContext;
 import org.taverna.server.master.rest.scape.ExecutionStateChange.State;
 import org.taverna.server.master.utils.CertificateChainFetcher;
+import org.taverna.server.master.worker.RunDatabaseDAO;
+import org.taverna.server.master.worker.SecurityContextDelegate;
 import org.taverna.server.port_description.InputDescription;
 import org.taverna.server.port_description.InputDescription.InputPort;
 import org.w3c.dom.Element;
@@ -43,7 +51,7 @@ import at.ac.tuwien.ifs.dp.plato.Object;
 class ScapeShepherd implements Runnable {
 	public static final String SLA_INPUT = "SLA";
 	public static final String OBJECT_LIST_INPUT = "digitalObjects";
-	public static final String REPOSITORY_DIRECTORY_INPUT = "RepositoryDirectory";
+	public static final String REPOSITORY_STAGING_URL_INPUT = "RepositoryStagingURL";
 	public static final String DESTINATION_REPOSITORY_INPUT = "DestinationRepository";
 	public static final String SOURCE_REPOSITORY_INPUT = "SourceRepository";
 	public static final String CREATOR_IDENTITY_INPUT = "CreatorIdentity";
@@ -66,10 +74,14 @@ class ScapeShepherd implements Runnable {
 	private final TavernaRun run;
 	@Nonnull
 	private final InputDescription inDesc;
+	@Nonnull
+	private final RunDatabaseDAO dao;
+	private final String uriScheme;
 
 	ScapeShepherd(@Nonnull ScapeExecutor context, @Nonnull String planId,
 			@Nonnull List<Object> objs, @Nullable Element schematron,
-			@Nonnull Workflow w, @Nonnull UriInfo ui) throws NoCreateException,
+			@Nonnull Workflow w, @Nonnull UriInfo ui,
+			@Nonnull RunDatabaseDAO dao) throws NoCreateException,
 			UnknownRunException {
 		this.context = context;
 		this.ccf = context.ccf;
@@ -77,8 +89,10 @@ class ScapeShepherd implements Runnable {
 		this.planId = planId;
 		this.objs = objs;
 		this.schematron = schematron;
+		this.dao = dao;
 		jobId = context.support.buildWorkflow(w);
 		context.initForJob(jobId, planId);
+		uriScheme = ui.getBaseUri().getScheme();
 		/* Warning: do not move UriInfo across threads */
 		base = ui.getBaseUri();
 		run = context.run(jobId);
@@ -112,7 +126,7 @@ class ScapeShepherd implements Runnable {
 		if (inputs.contains(CREATOR_IDENTITY_INPUT))
 			initCreatorIdentity();
 		run.setGenerateProvenance(true);
-		initRepositories();
+		initRepositories(PREFIX + jobId, dao.getSecurityToken(jobId));
 		initObjects();
 		if (schematron != null)
 			initSLA(schematron);
@@ -131,11 +145,25 @@ class ScapeShepherd implements Runnable {
 		run.makeInput(CREATOR_IDENTITY_INPUT).setValue(planId);
 	}
 
-	private void initRepositories() throws BadStateChangeException {
+	private void initRepositories(String user, String pass)
+			throws BadStateChangeException {
 		run.makeInput(SOURCE_REPOSITORY_INPUT).setValue(context.repository);
 		run.makeInput(DESTINATION_REPOSITORY_INPUT)
 				.setValue(context.repository);
-		run.makeInput(REPOSITORY_DIRECTORY_INPUT).setValue(context.repoDir);
+		Matcher m = compile("^(?:(https?):)?//(?:[^/@]*@)?([^@/:]+(?::[^:/@]+))/(.*)$").matcher(
+				context.dataPublishUrlTemplate);
+		if (!m.matches())
+			throw new IllegalStateException(
+					"bad scape.dataPublishUrlTemplate config: "
+							+ context.dataPublishUrlTemplate);
+		String scheme = m.group(1);
+		if (scheme == null || scheme.isEmpty())
+			scheme = uriScheme;
+		String host = m.group(2);
+		String pathTemplate = m.group(3);
+		URI uri = fromUri(scheme + "://" + host + "/").path(pathTemplate)
+				.userInfo(user + ":" + pass).build(jobId);
+		run.makeInput(REPOSITORY_STAGING_URL_INPUT).setValue(uri.toString());
 	}
 
 	private void initObjects() throws BadStateChangeException {

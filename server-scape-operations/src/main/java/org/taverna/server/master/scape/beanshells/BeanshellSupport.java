@@ -66,14 +66,16 @@ abstract class Support<T extends BeanshellSupport<?>> implements
 
 	protected Support() {
 		currentThread().setContextClassLoader(getClass().getClassLoader());
-		for (Field f : getClass().getDeclaredFields())
+		for (Field f : getClass().getDeclaredFields()) {
 			if (f.getAnnotation(Input.class) != null) {
 				f.setAccessible(true);
 				inputs.put(f.getName(), f);
-			} else if (f.getAnnotation(Output.class) != null) {
+			}
+			if (f.getAnnotation(Output.class) != null) {
 				f.setAccessible(true);
 				outputs.put(f.getName(), f);
 			}
+		}
 	}
 
 	@SuppressWarnings("unchecked")
@@ -81,7 +83,7 @@ abstract class Support<T extends BeanshellSupport<?>> implements
 	public final T init(String name, Object value) {
 		Field f = inputs.get(name);
 		if (f == null)
-			throw new UnsupportedOperationException();
+			throw new UnsupportedOperationException("no field called " + name);
 		try {
 			if (f.getType().equals(Boolean.TYPE))
 				f.setBoolean(this, parseBoolean(value.toString()));
@@ -94,8 +96,10 @@ abstract class Support<T extends BeanshellSupport<?>> implements
 			else
 				f.set(this, value);
 			return (T) this;
-		} catch (IllegalArgumentException | IllegalAccessException e) {
-			throw new UnsupportedOperationException(e);
+		} catch (NumberFormatException e) {
+			throw e;
+		} catch (Exception e) {
+			throw new UnsupportedOperationException("could not write to field " + name, e);
 		}
 	}
 
@@ -103,15 +107,15 @@ abstract class Support<T extends BeanshellSupport<?>> implements
 	public final Object getResult(String name) {
 		Field f = outputs.get(name);
 		if (f == null)
-			throw new UnsupportedOperationException();
+			throw new UnsupportedOperationException("no field called " + name);
 		try {
 			if (f.getType().equals(Boolean.TYPE))
 				return f.getBoolean(this);
 			if (f.getType().equals(Integer.TYPE))
 				return f.getInt(this);
 			return f.get(this);
-		} catch (IllegalArgumentException | IllegalAccessException e) {
-			throw new UnsupportedOperationException(e);
+		} catch (Exception e) {
+			throw new UnsupportedOperationException("could not read from field " + name, e);
 		}
 	}
 }

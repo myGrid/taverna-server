@@ -32,7 +32,8 @@ public class TestConstructNewMetadata {
 			.compile("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}");
 
 	private String mapUUIDs(String s) {
-		Matcher m = UUID.matcher(s);
+		Matcher m = UUID.matcher(s.replaceAll("eventDateTime>[^<>]+<",
+				"eventDateTime>TIMESTAMP<"));
 		StringBuffer buffer = new StringBuffer();
 		Map<String, Integer> map = new HashMap<>();
 		while (m.find()) {
@@ -49,7 +50,8 @@ public class TestConstructNewMetadata {
 		ConstructNewMetadata op = new ConstructNewMetadata()
 				.init("contentType", asList("text/plain"))
 				.init("creator", getClass().toString())
-				.init("generatedFilename", asList("/tmp/example/BCD.txt"))
+				.init("planID", "abcdef")
+				.init("generatedFileUri", asList("file:/tmp/example/BCD.txt"))
 				.init("originalMetadata", originalMetadata)
 				.init("originalFileID", asList("F9"))
 				.init("newInformation", asList(newInformation));

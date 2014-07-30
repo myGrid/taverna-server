@@ -59,6 +59,7 @@ public class WorkflowInternalAuthProvider extends
 	public static final String PREFIX = "wfrun_";
 	private RunDatabaseDAO dao;
 	private Map<String, String> cache;
+	private boolean restrictToLocal = true;
 
 	@Required
 	public void setDao(RunDatabaseDAO dao) {
@@ -80,6 +81,10 @@ public class WorkflowInternalAuthProvider extends
 		authorizedAddresses = new HashSet<>(localAddresses);
 		for (String s : addresses)
 			authorizedAddresses.add(s);
+	}
+
+	public void setRestrictToLocal(boolean flag) {
+		restrictToLocal = flag;
 	}
 
 	@PostConstruct
@@ -138,7 +143,7 @@ public class WorkflowInternalAuthProvider extends
 				.getRequest();
 
 		// Are we coming from a "local" address?
-		if (!req.getLocalAddr().equals(req.getRemoteAddr())
+		if (restrictToLocal && !req.getLocalAddr().equals(req.getRemoteAddr())
 				&& !authorizedAddresses.contains(req.getRemoteAddr())) {
 			if (logDecisions)
 				log.info("attempt to use workflow magic token from untrusted address:"

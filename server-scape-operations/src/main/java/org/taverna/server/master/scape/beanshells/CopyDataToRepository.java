@@ -1,12 +1,13 @@
 package org.taverna.server.master.scape.beanshells;
 
 import static java.nio.file.Files.copy;
+import static java.nio.file.Files.move;
+import static java.nio.file.StandardCopyOption.ATOMIC_MOVE;
 
 import java.io.File;
+import java.nio.file.Path;
 
 public class CopyDataToRepository extends Support<CopyDataToRepository> {
-	@Input
-	private boolean doWrite;
 	@Input
 	private Boolean isSatisfied;
 	@Input
@@ -17,8 +18,13 @@ public class CopyDataToRepository extends Support<CopyDataToRepository> {
 
 	@Override
 	protected void op() throws Exception {
-		if (doWrite && isSatisfied)
-			copy(new File(temporaryFile).toPath(),
-					new File(repositoryFile).toPath());
+		Path from = new File(temporaryFile).toPath();
+		Path to = new File(repositoryFile).toPath();
+		if (isSatisfied)
+			try {
+				move(from, to, ATOMIC_MOVE);
+			} catch (Exception e) {
+				copy(from, to);
+			}
 	}
 }

@@ -14,9 +14,9 @@ import java.util.Scanner;
 public class UpdateIntellectualEntityInRepository extends
 		Support<UpdateIntellectualEntityInRepository> {
 	@Output
-	private String error, written;
+	private String error, written, url;
 	@Input
-	private String src;
+	private String representationId, entityId;
 	@Input
 	private String repository;
 	@Input
@@ -27,7 +27,7 @@ public class UpdateIntellectualEntityInRepository extends
 	private boolean doWrite;
 
 	private void success() {
-		written = format("%s;%s", src, repository);
+		written = format("%s/%s;%s", entityId, representationId, repository);
 	}
 
 	@Override
@@ -39,8 +39,9 @@ public class UpdateIntellectualEntityInRepository extends
 				anySat = true;
 				break;
 			}
-		// TODO Should this be a NEW ID?
-		URL url = new URL(new URL(repository), src);
+		URL url = new URL(new URL(repository + "/representation/"), entityId
+				+ "/" + representationId);
+		this.url = url.toString();
 		if (!anySat)
 			error = "failed quality check";
 		else if (!doWrite)

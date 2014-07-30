@@ -19,6 +19,7 @@
 		<property name="support" ref="webapp.support" />
 		<property name="policy" ref="worker.policy" />
 		<property name="runStore" ref="worker.rundb" />
+		<property name="runDB" ref="worker.runDAO" />
 		<property name="splicer" ref="scape.splicer" />
 		<property name="dao" ref="scape.dao" />
 		<property name="fileUtils" ref="fileUtils" />
@@ -30,7 +31,7 @@
 		<property name="notifyPassword" value="${scape.planManagementPassword}" />
 		<property name="timeoutHours" value="${scape.timeoutHours}" />
 		<property name="repository" value="${scape.repository}" />
-		<property name="repositoryDirectory" value="${scape.repositoryDirectory}" />
+		<property name="dataPublicationUrlTemplate" value="${scape.dataPublicationUrlTemplate}" />
 	</bean>
 
 	<bean id="scape.splicer" class="org.taverna.server.master.scape.ScapeSplicingEngine">

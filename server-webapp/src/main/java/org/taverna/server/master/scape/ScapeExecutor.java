@@ -87,6 +87,7 @@ import org.taverna.server.master.utils.CallTimeLogger.PerfLogged;
 import org.taverna.server.master.utils.CertificateChainFetcher;
 import org.taverna.server.master.utils.FilenameUtils;
 import org.taverna.server.master.utils.InvocationCounter.CallCounted;
+import org.taverna.server.master.worker.RunDatabaseDAO;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
@@ -121,8 +122,9 @@ public class ScapeExecutor implements ScapeExecutionService {
 	private URI serviceUri;
 	long timeout;
 	String repository;
-	String repoDir;
+	String dataPublishUrlTemplate;
 	CertificateChainFetcher ccf;
+	RunDatabaseDAO rundb;
 
 	public ScapeExecutor() throws JAXBException {
 		context = JAXBContext.newInstance(ExecutionStateChange.class);
@@ -172,6 +174,12 @@ public class ScapeExecutor implements ScapeExecutionService {
 		this.dao = dao;
 	}
 
+	/** The connection to the database. */
+	@Required
+	public void setRunDB(RunDatabaseDAO dao) {
+		this.rundb = dao;
+	}
+
 	/** Credentials for the PMS. */
 	public void setNotifyUser(String user) {
 		this.notifyUser = user;
@@ -210,8 +218,8 @@ public class ScapeExecutor implements ScapeExecutionService {
 
 	/** The place that holds files that are the data in digital objects. */
 	@Required
-	public void setRepositoryDirectory(String repositoryDirectory) {
-		this.repoDir = repositoryDirectory;
+	public void setDataPublicationUrlTemplate(String dataPublishUrlTemplate) {
+		this.dataPublishUrlTemplate = dataPublishUrlTemplate;
 	}
 
 	/** How long an execution is given to run. */
@@ -313,7 +321,7 @@ public class ScapeExecutor implements ScapeExecutionService {
 			log.info(format(
 					"constructed merged execution workflow for plan (id=%s)",
 					planId));
-			id = new ScapeShepherd(this, planId, objectList, sla, wf, ui)
+			id = new ScapeShepherd(this, planId, objectList, sla, wf, ui, rundb)
 					.startTask();
 			log.info(format(
 					"instantiated execution for plan (id=%s) as workflow run (id=%s)",

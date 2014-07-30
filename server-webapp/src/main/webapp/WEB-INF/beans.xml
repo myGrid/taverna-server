@@ -497,6 +497,7 @@
 		class="org.taverna.server.master.identity.WorkflowInternalAuthProvider">
 		<property name="dao" ref="worker.runDAO" />
 		<property name="cacheBound" value="${default.runlimit}" />
+		<property name="restrictToLocal" value="false" />
 	</bean>
 	<bean id="velocity" class="org.apache.velocity.app.VelocityEngine"
 		init-method="init" lazy-init="false">
