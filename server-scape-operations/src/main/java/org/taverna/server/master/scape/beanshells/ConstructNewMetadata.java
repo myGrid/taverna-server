@@ -165,7 +165,7 @@ public class ConstructNewMetadata extends Support<ConstructNewMetadata> {
 				.technical(m);
 		if (contentType != null)
 			file.mimetype(contentType);
-		Integer i = fileindexmap.get(originalFileID);
+		Integer i = fileindexmap.get(originalFileID.replaceFirst("^.*/", ""));
 		if (i == null)
 			updatedFiles.add(file.build());
 		else
