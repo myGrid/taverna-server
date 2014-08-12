@@ -143,11 +143,14 @@ public class ConstructNewMetadata extends Support<ConstructNewMetadata> {
 			String generatedFileUri) throws ParserConfigurationException,
 			SAXException, IOException, TransformerFactoryConfigurationError,
 			TransformerException {
-		String newID = randomUUID().toString();
+		String id = originalFileID.replaceFirst("^.*/", "");
+		Integer idx = fileindexmap.get(id);
+		if (idx == null)
+			id = randomUUID().toString();
 		Element m = parseDocument(newInformation).getDocumentElement();
 
 		Element fileInfo = doc.createElement("file");
-		fileInfo.setAttribute("id", newID);
+		fileInfo.setAttribute("id", id);
 		NodeList nl = m.getElementsByTagNameNS(
 				"http://ns.taverna.org.uk/2014/scape", "measure");
 		for (int i = 0; i < nl.getLength(); i++) {
@@ -159,16 +162,15 @@ public class ConstructNewMetadata extends Support<ConstructNewMetadata> {
 		}
 		overallFileInfo.append(serializeDocument(fileInfo));
 
-		Builder file = new Builder().identifier(new Identifier(newID))
+		Builder file = new Builder().identifier(new Identifier(id))
 				.uri(URI.create(generatedFileUri))
 				//.filename(fileHandle.getName())
 				.technical(m);
 		if (contentType != null)
 			file.mimetype(contentType);
-		Integer i = fileindexmap.get(originalFileID.replaceFirst("^.*/", ""));
-		if (i == null)
+		if (idx == null)
 			updatedFiles.add(file.build());
 		else
-			updatedFiles.set(i, file.build());
+			updatedFiles.set(idx, file.build());
 	}
 }
