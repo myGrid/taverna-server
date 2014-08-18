@@ -17,6 +17,7 @@ import static org.taverna.server.master.rest.TavernaServerRunREST.PathNames.DIR;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.net.URI;
 import java.net.URL;
 import java.rmi.MarshalledObject;
 import java.rmi.RMISecurityManager;
@@ -29,6 +30,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.annotation.Resource;
 import javax.xml.bind.JAXBException;
 
@@ -57,8 +60,6 @@ import org.taverna.server.master.utils.UsernamePrincipal;
 import org.taverna.server.master.worker.FactoryBean;
 import org.taverna.server.master.worker.RemoteRunDelegate;
 import org.taverna.server.master.worker.RunFactoryConfiguration;
-
-import javax.annotation.Nonnull;
 
 /**
  * Bridge to remote runs via RMI.
@@ -338,11 +339,15 @@ public abstract class AbstractRemoteRunFactory extends RunFactoryConfiguration
 					state.getGenerateProvenance(), this);
 			run.setSecurityContext(securityFactory.create(run, creator));
 			@Nonnull
-			URL feedUrl = interactionFeedSupport.getFeedURI(run).toURL();
+			URI feed = interactionFeedSupport.getFeedURI(run);
+			@Nonnull
+			URL feedUrl = feed.toURL();
 			@Nonnull
 			URL webdavUrl = baseurifactory.getRunUriBuilder(run)
 					.path(DIR + "/interactions").build().toURL();
-			rsr.setInteractionServiceDetails(feedUrl, webdavUrl);
+			@Nullable
+			URL pub = interactionFeedSupport.getLocalFeedBase(feed);
+			rsr.setInteractionServiceDetails(feedUrl, webdavUrl, pub);
 			return run;
 		} catch (NoCreateException e) {
 			log.warn("failed to build run instance", e);

@@ -188,6 +188,7 @@ public class LocalWorker extends UnicastRemoteObject implements RemoteSingleRun 
 	final List<String> runtimeSettings = new ArrayList<>();
 	URL interactionFeedURL;
 	URL webdavURL;
+	URL publishURL;//FIXME
 	private boolean doProvenance = true;
 
 	// ----------------------- METHODS -----------------------
@@ -789,9 +790,10 @@ public class LocalWorker extends UnicastRemoteObject implements RemoteSingleRun 
 	}
 
 	@Override
-	public void setInteractionServiceDetails(URL feed, URL webdav) {
+	public void setInteractionServiceDetails(URL feed, URL webdav, URL publish) {
 		interactionFeedURL = feed;
 		webdavURL = webdav;
+		publishURL = publish;
 	}
 
 	@Override
