@@ -1,5 +1,6 @@
 package org.taverna.server.master.scape.beanshells;
 
+import static java.net.URLDecoder.decode;
 import static java.util.UUID.randomUUID;
 import static javax.xml.bind.DatatypeConverter.printDateTime;
 import static org.taverna.server.master.scape.beanshells.utils.XmlUtils.makeNewDocument;
@@ -45,6 +46,8 @@ public class ConstructNewMetadata extends Support<ConstructNewMetadata> {
 	private String originalMetadata;
 	@Input
 	private List<String> originalFileID;
+	@Input
+	private String entityId;
 	@Input
 	private List<String> newInformation;
 	@Input(required = false)
@@ -102,7 +105,7 @@ public class ConstructNewMetadata extends Support<ConstructNewMetadata> {
 			rep.files(updatedFiles);
 		}
 		overallFileInfo.append("</planExecutionDetails>");
-		rep.provenance(generatePremisEvent(original.getIdentifier().getValue(),
+		rep.provenance(generatePremisEvent(decode(entityId, "UTF-8"),
 				overallFileInfo.toString()));
 
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -110,7 +113,7 @@ public class ConstructNewMetadata extends Support<ConstructNewMetadata> {
 		newMetadata = baos.toString();
 	}
 
-	private JAXBElement<?> generatePremisEvent(String sourceRepID, String details) {
+	private JAXBElement<?> generatePremisEvent(String contextID, String details) {
 		Element p = doc.createElementNS("http://www.w3.org/1999.xhtml", "p");
 		p.appendChild(doc.createCDATASection(details));
 
@@ -133,7 +136,7 @@ public class ConstructNewMetadata extends Support<ConstructNewMetadata> {
 
 		LinkingObjectIdentifierComplexType loid = factory.createLinkingObjectIdentifierComplexType();
 		loid.setLinkingObjectIdentifierType("RODAObjectPID");
-		loid.setLinkingObjectIdentifierValue(sourceRepID);
+		loid.setLinkingObjectIdentifierValue(contextID);
 		loid.getLinkingObjectRole().add("target");
 		ev.getLinkingObjectIdentifier().add(loid);
 
