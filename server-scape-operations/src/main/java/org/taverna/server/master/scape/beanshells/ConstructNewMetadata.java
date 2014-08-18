@@ -9,6 +9,7 @@ import info.lc.xmlns.premis_v2.EventComplexType;
 import info.lc.xmlns.premis_v2.EventOutcomeDetailComplexType;
 import info.lc.xmlns.premis_v2.EventOutcomeInformationComplexType;
 import info.lc.xmlns.premis_v2.ExtensionComplexType;
+import info.lc.xmlns.premis_v2.LinkingObjectIdentifierComplexType;
 import info.lc.xmlns.premis_v2.ObjectFactory;
 import info.lc.xmlns.premis_v2.PremisComplexType;
 
@@ -101,14 +102,15 @@ public class ConstructNewMetadata extends Support<ConstructNewMetadata> {
 			rep.files(updatedFiles);
 		}
 		overallFileInfo.append("</planExecutionDetails>");
-		rep.provenance(generatePremisEvent(overallFileInfo.toString()));
+		rep.provenance(generatePremisEvent(original.getIdentifier().getValue(),
+				overallFileInfo.toString()));
 
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		sm.serialize(rep.build(), baos);
 		newMetadata = baos.toString();
 	}
 
-	private JAXBElement<?> generatePremisEvent(String details) {
+	private JAXBElement<?> generatePremisEvent(String sourceRepID, String details) {
 		Element p = doc.createElementNS("http://www.w3.org/1999.xhtml", "p");
 		p.appendChild(doc.createCDATASection(details));
 
@@ -129,7 +131,11 @@ public class ConstructNewMetadata extends Support<ConstructNewMetadata> {
 		detail.getEventOutcomeDetailExtension().add(ext);
 		ext.getAny().add(p);
 
-		// TODO There are other parts of the event in there!
+		LinkingObjectIdentifierComplexType loid = factory.createLinkingObjectIdentifierComplexType();
+		loid.setLinkingObjectIdentifierType("RODAObjectPID");
+		loid.setLinkingObjectIdentifierValue(sourceRepID);
+		loid.getLinkingObjectRole().add("target");
+		ev.getLinkingObjectIdentifier().add(loid);
 
 		PremisComplexType premis = factory.createPremisComplexType();
 		premis.getEvent().add(ev);
