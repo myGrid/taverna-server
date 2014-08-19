@@ -105,7 +105,7 @@ public class ConstructNewMetadata extends Support<ConstructNewMetadata> {
 			rep.files(updatedFiles);
 		}
 		overallFileInfo.append("</planExecutionDetails>");
-		rep.provenance(generatePremisEvent(decode(entityId, "UTF-8"),
+		rep.provenance(generatePremisEvent(original.getIdentifier().getValue(),
 				overallFileInfo.toString()));
 
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
