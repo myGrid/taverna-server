@@ -42,6 +42,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.annotation.Nonnull;
+import javax.annotation.PreDestroy;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.ws.Holder;
 import javax.xml.xpath.XPathException;
@@ -64,7 +65,13 @@ import org.xml.sax.SAXException;
  * 
  */
 public class ScapeSplicingEngine extends SplicingEngine {
-	private static final Log log = getLog("Taverna.Server.WorkflowSplicing.Scape");
+	private Log log;
+
+	@PreDestroy
+	private void clearLog() {
+		log = null;
+	}
+
 	private static final Pattern PORT_INFO_EXTRACT = Pattern
 			.compile("^measure_([a-zA-Z0-9]+)_([a-zA-Z0-9]+)$");
 
@@ -110,7 +117,8 @@ public class ScapeSplicingEngine extends SplicingEngine {
 	private String defaultSubject = "TargetObject"; // TODO parameterize
 
 	public ScapeSplicingEngine() throws ParserConfigurationException {
-		super(log);
+		super(getLog("Taverna.Server.WorkflowSplicing.Scape"));
+		log = getLog("Taverna.Server.WorkflowSplicing.Scape");
 	}
 
 	/** Where components are stored. Probably myExperiment. */
@@ -481,14 +489,18 @@ public class ScapeSplicingEngine extends SplicingEngine {
 	static {
 		Properties p = new Properties();
 		try {
-			try (InputStream is = ScapeSplicingEngine.class.getResourceAsStream("scape-splice.properties")) {
+			try (InputStream is = ScapeSplicingEngine.class
+					.getResourceAsStream("scape-splice.properties")) {
 				p.load(is);
 			}
 		} catch (IOException e) {
-			log.warn("failed to read scape-splice.properties", e);
+			getLog("Taverna.Server.WorkflowSplicing.Scape").warn(
+					"failed to read scape-splice.properties", e);
 		}
-		SCAPE_BEANSHELLS_GROUP = p.getProperty("splice.groupId", "uk.org.taverna.server");
-		SCAPE_BEANSHELLS_ARTIFACT = p.getProperty("splice.artifactId", "scape-operations");
+		SCAPE_BEANSHELLS_GROUP = p.getProperty("splice.groupId",
+				"uk.org.taverna.server");
+		SCAPE_BEANSHELLS_ARTIFACT = p.getProperty("splice.artifactId",
+				"scape-operations");
 		SCAPE_BEANSHELLS_VERSION = p.getProperty("splice.version", "123.456");
 		SCAPE_BEANSHELLS_PATTERN = Pattern
 				.compile("(var\\s+\\w+\\s*=)\\s*new\\s+("
@@ -515,8 +527,8 @@ public class ScapeSplicingEngine extends SplicingEngine {
 			String script = text(config, "script");
 			if (!script.contains(SCAPE_BEANSHELLS_PACKAGE))
 				continue;
-			String newscript = SCAPE_BEANSHELLS_PATTERN.matcher(script).replaceFirst(
-					SCAPE_BEANSHELLS_REPLACEMENT);
+			String newscript = SCAPE_BEANSHELLS_PATTERN.matcher(script)
+					.replaceFirst(SCAPE_BEANSHELLS_REPLACEMENT);
 			if (script.equals(newscript)) {
 				log.warn("Failed to extend script:\n" + script);
 				continue;

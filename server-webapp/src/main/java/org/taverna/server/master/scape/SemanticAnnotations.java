@@ -18,7 +18,7 @@ import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.Statement;
 
 class SemanticAnnotations {
-	private static final Log log = getLog("Taverna.Server.WorkflowSplicing.Scape");
+	private final Log log = getLog("Taverna.Server.WorkflowSplicing.Scape");
 	private static final Pattern NAME_EXTRACT = Pattern
 			.compile("[a-zA-Z0-9]+$");
 	Model annotationModel;

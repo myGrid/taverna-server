@@ -13,7 +13,9 @@ import java.net.URI;
 import org.apache.tika.Tika;
 import org.apache.tika.mime.MimeTypeException;
 import org.apache.tika.mime.MimeTypes;
+import org.taverna.server.master.scape.beanshells.BeanshellSupport.Name;
 
+@Name("GenerateRepositoryFilename")
 public class GenerateRepositoryFilename extends
 		Support<GenerateRepositoryFilename> {
 	@Input

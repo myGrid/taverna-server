@@ -14,6 +14,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.taverna.server.master.scape.beanshells.BeanshellSupport.Name;
+
+@Name("GenerateStructuredURLs")
 public class RealizeDOs extends Support<RealizeDOs> {
 	private static final String pid;
 	private static volatile int ids;

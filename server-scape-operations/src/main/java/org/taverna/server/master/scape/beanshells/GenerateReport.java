@@ -8,6 +8,9 @@ import java.util.List;
 
 import javax.annotation.Nullable;
 
+import org.taverna.server.master.scape.beanshells.BeanshellSupport.Name;
+
+@Name("GenerateReport")
 public class GenerateReport extends Support<GenerateReport> {
 	@Output
 	private String report;
@@ -59,7 +62,7 @@ public class GenerateReport extends Support<GenerateReport> {
 			StringBuilder writtenBuffer, String ob, String wi, String we,
 			List<List<String>> ae) {
 		// Errors in assessment
-		List<String>assessments = new ArrayList<>();
+		List<String> assessments = new ArrayList<>();
 		if (ae != null)
 			for (List<String> errorList : ae)
 				if (errorList != null)

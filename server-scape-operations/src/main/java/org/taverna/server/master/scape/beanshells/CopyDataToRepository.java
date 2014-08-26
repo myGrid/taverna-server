@@ -7,6 +7,9 @@ import static java.nio.file.StandardCopyOption.ATOMIC_MOVE;
 import java.io.File;
 import java.nio.file.Path;
 
+import org.taverna.server.master.scape.beanshells.BeanshellSupport.Name;
+
+@Name("CopyDataToRepositoryStaging")
 public class CopyDataToRepository extends Support<CopyDataToRepository> {
 	@Input
 	private Boolean isSatisfied;

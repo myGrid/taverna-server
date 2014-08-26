@@ -4,6 +4,7 @@ import static java.lang.Boolean.parseBoolean;
 import static java.lang.Integer.parseInt;
 import static java.lang.Thread.currentThread;
 import static java.lang.annotation.ElementType.FIELD;
+import static java.lang.annotation.ElementType.TYPE;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 import java.lang.annotation.Retention;
@@ -89,6 +90,17 @@ public interface BeanshellSupport<T extends BeanshellSupport<?>> {
 	@Target(FIELD)
 	@Retention(RUNTIME)
 	public @interface Output {
+	}
+
+	/**
+	 * What the beanshell ought to be called in the workflow.
+	 * 
+	 * @author Donal Fellows
+	 */
+	@Target(TYPE)
+	@Retention(RUNTIME)
+	public @interface Name {
+		String value();
 	}
 }
 

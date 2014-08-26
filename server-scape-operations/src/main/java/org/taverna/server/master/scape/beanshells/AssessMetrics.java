@@ -10,12 +10,14 @@ import java.util.List;
 
 import javax.xml.transform.stream.StreamSource;
 
+import org.taverna.server.master.scape.beanshells.BeanshellSupport.Name;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
 import com.phloc.schematron.ISchematronResource;
 
+@Name("AssessMetricsWithSchematron")
 public class AssessMetrics extends Support<AssessMetrics> {
 	@Input
 	private String QLD;
