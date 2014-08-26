@@ -167,9 +167,11 @@ public class ScapeSplicingEngine extends SplicingEngine {
 	/** The name of the directory holding wrapping workflows. */
 	public void setWrapperDirectory(String directory) {
 		if (directory == null || directory.isEmpty()
+				|| "DEFAULT_LOCATION".equals(directory)
 				|| !new File(directory).isDirectory())
 			wrapperDirectory = null;
-		wrapperDirectory = directory;
+		else
+			wrapperDirectory = directory;
 	}
 
 	@Nonnull
