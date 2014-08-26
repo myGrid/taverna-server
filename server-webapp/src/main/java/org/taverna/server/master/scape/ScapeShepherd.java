@@ -35,6 +35,7 @@ import org.taverna.server.master.interfaces.TavernaRun;
 import org.taverna.server.master.interfaces.TavernaSecurityContext;
 import org.taverna.server.master.rest.scape.ExecutionStateChange.State;
 import org.taverna.server.master.utils.CertificateChainFetcher;
+import org.taverna.server.master.utils.OneShotThread;
 import org.taverna.server.master.worker.RunDatabaseDAO;
 import org.taverna.server.master.worker.SecurityContextDelegate;
 import org.taverna.server.port_description.InputDescription;
@@ -101,10 +102,7 @@ class ScapeShepherd implements Runnable {
 
 	@Nonnull
 	String startTask() {
-		Thread worker = new Thread(this);
-		worker.setDaemon(true);
-		worker.setName("Taverna Server: SCAPE job initialization: " + jobId);
-		worker.start();
+		new OneShotThread("Taverna Server: SCAPE job initialization: " + jobId, this);
 		return jobId;
 	}
 

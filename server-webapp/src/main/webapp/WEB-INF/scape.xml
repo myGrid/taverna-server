@@ -49,7 +49,7 @@
 	</bean>
 
 	<bean id="scape.dao" class="org.taverna.server.master.scape.ScapeJobDAO">
-		<property name="persistenceManagerFactory" ref="pmf" />
+		<property name="persistenceManagerBuilder" ref="pmb" />
 	</bean>
 
 	<task:scheduled-tasks>
