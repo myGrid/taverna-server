@@ -115,8 +115,9 @@ public interface BeanshellSupport<T extends BeanshellSupport<?>> {
  */
 abstract class Support<T extends BeanshellSupport<?>> implements
 		BeanshellSupport<T> {
-	private Map<String, Field> inputs = new HashMap<>(),
-			outputs = new HashMap<>();
+	private final Map<String, Field> inputs = new HashMap<>();
+	private final Map<String, Field> outputs = new HashMap<>();
+	private final String processorName;
 
 	protected abstract void op() throws Exception;
 
@@ -128,20 +129,22 @@ abstract class Support<T extends BeanshellSupport<?>> implements
 			Input i = f.getAnnotation(Input.class);
 			if (i.required() && f.get(this) == null && !i.nullable())
 				throw new IllegalStateException("input " + e.getKey()
-						+ " was not supplied (or is null)");
+						+ " was not supplied (or is null) in " + processorName);
 		}
 		try {
 			op();
 		} catch (Exception e) {
 			e.printStackTrace();
-			throw e;
+			throw new Exception("problem with execution of " + processorName
+					+ ": " + e.getMessage(), e);
 		}
 	}
 
 	protected Support() {
+		Class<?> c = getClass();
 		// Oh god! What a horrible hack! (Makes JAXB work in Taverna.)
-		currentThread().setContextClassLoader(getClass().getClassLoader());
-		for (Field f : getClass().getDeclaredFields()) {
+		currentThread().setContextClassLoader(c.getClassLoader());
+		for (Field f : c.getDeclaredFields()) {
 			if (f.getAnnotation(Input.class) != null) {
 				f.setAccessible(true);
 				inputs.put(f.getName(), f);
@@ -151,6 +154,13 @@ abstract class Support<T extends BeanshellSupport<?>> implements
 				outputs.put(f.getName(), f);
 			}
 		}
+		Name name = c.getAnnotation(Name.class);
+		if (name != null)
+			processorName = name.value();
+		else {
+			String className = c.getSimpleName();
+			processorName = className.substring(className.lastIndexOf('.') + 1);
+		}
 	}
 
 	@SuppressWarnings("unchecked")
@@ -158,7 +168,8 @@ abstract class Support<T extends BeanshellSupport<?>> implements
 	public final T init(String name, Object value) {
 		Field f = inputs.get(name);
 		if (f == null)
-			throw new UnsupportedOperationException("no field called " + name);
+			throw new UnsupportedOperationException("no field called " + name
+					+ " in " + processorName);
 		try {
 			if (f.getType().equals(Boolean.TYPE))
 				f.setBoolean(this, parseBoolean(value.toString()));
@@ -175,7 +186,7 @@ abstract class Support<T extends BeanshellSupport<?>> implements
 			throw e;
 		} catch (Exception e) {
 			throw new UnsupportedOperationException("could not write to field "
-					+ name, e);
+					+ name + " in " + processorName, e);
 		}
 	}
 
@@ -183,7 +194,8 @@ abstract class Support<T extends BeanshellSupport<?>> implements
 	public final Object getResult(String name) {
 		Field f = outputs.get(name);
 		if (f == null)
-			throw new UnsupportedOperationException("no field called " + name);
+			throw new UnsupportedOperationException("no field called " + name
+					+ " in " + processorName);
 		try {
 			if (f.getType().equals(Boolean.TYPE))
 				return f.getBoolean(this);
@@ -192,7 +204,8 @@ abstract class Support<T extends BeanshellSupport<?>> implements
 			return f.get(this);
 		} catch (Exception e) {
 			throw new UnsupportedOperationException(
-					"could not read from field " + name, e);
+					"could not read from field " + name + " in "
+							+ processorName, e);
 		}
 	}
 }
