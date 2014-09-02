@@ -51,7 +51,7 @@ public class TestConstructNewMetadata {
 				.init("contentType", asList("text/plain"))
 				.init("creator", getClass().toString())
 				.init("planID", "abcdef")
-				.init("entityId", "roda%3A92")
+				.init("representationId", "roda:92")
 				.init("generatedFileUri", asList("file:/tmp/example/BCD.txt"))
 				.init("originalMetadata", originalMetadata)
 				.init("originalFileID", asList("F9"))
