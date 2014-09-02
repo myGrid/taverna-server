@@ -43,6 +43,8 @@ public class RealizeDOs extends Support<RealizeDOs> {
 	private List<String> entityUriList;
 	@Output
 	private List<String> representationUriList;
+	@Output
+	private List<String> representationIdList;
 
 	private Map<String, List<URL>> objectsInEntity;
 
@@ -75,6 +77,7 @@ public class RealizeDOs extends Support<RealizeDOs> {
 		objectList = new ArrayList<>();
 		resolvedObjectList = new ArrayList<>();
 		representationUriList = new ArrayList<>();
+		representationIdList = new ArrayList<>();
 		entityIdList = new ArrayList<>();
 		entityUriList = new ArrayList<>();
 	}
@@ -91,6 +94,7 @@ public class RealizeDOs extends Support<RealizeDOs> {
 			entityIdList.add(join(objBits.subList(0, 1)));
 			entityUriList.add(entUrl.toString());
 			representationUriList.add(repkey);
+			representationIdList.add(objBits.get(1));
 		}
 		objectsInEntity.get(repkey).add(url);
 	}

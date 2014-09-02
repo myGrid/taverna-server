@@ -49,7 +49,7 @@ public class ConstructNewMetadata extends Support<ConstructNewMetadata> {
 	@Input
 	private List<String> originalFileID;
 	@Input
-	private String entityId;
+	private String representationId;
 	@Input
 	private List<String> newInformation;
 	@Input(required = false)
@@ -117,7 +117,7 @@ public class ConstructNewMetadata extends Support<ConstructNewMetadata> {
 			rep.files(updatedFiles);
 		}
 		overallFileInfo.append("</planExecutionDetails>");
-		rep.provenance(generatePremisEvent(original.getIdentifier().getValue(),
+		rep.provenance(generatePremisEvent(representationId,
 				overallFileInfo.toString()));
 
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
