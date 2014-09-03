@@ -40,12 +40,6 @@
 		<property name="innerProcessorName" value="${scape.innerProcessor}" />
 		<property name="wrapperPrefix" value="${scape.wrapperPrefix}" />
 		<property name="wrapperDirectory" value="${scape.wrapperDirectory}" />
-		<property name="componentRepositoryAddress" value="${scape.componentRepository}" />
-		<property name="utilityComponentFamily" value="${scape.utilityComponentFamily}" />
-		<property name="builderComponentName" value="${scape.builderComponent}" />
-		<property name="builderComponentVersion" value="${scape.builderComponentVersion}" />
-		<property name="joinerComponentName" value="${scape.joinerComponent}" />
-		<property name="joinerComponentVersion" value="${scape.joinerComponentVersion}" />
 	</bean>
 
 	<bean id="scape.dao" class="org.taverna.server.master.scape.ScapeJobDAO">

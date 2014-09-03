@@ -1,0 +1,1 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?><profile xmlns="http://ns.taverna.org.uk/2012/component/profile"><id>net.sf.taverna.t2.component.profile.empty</id><name>Empty profile</name><description>A basic empty profile that does not allow additional semantic annotation</description><component/></profile>

@@ -104,21 +104,23 @@ public class ScapeSplicingEngine extends SplicingEngine {
 		}
 	}
 
-	private String repository = "http://www.myexperiment.org/";
+	private String repository;
 	private String utilityFamily = "SCAPE Utility Components";
 	private String builderName = "MeasuresDocBuilder";
-	private String builderVersion = "4";
+	private String builderVersion = "1";
 	private String joinerName = "MeasuresDocCombiner";
-	private String joinerVersion = "2";
+	private String joinerVersion = "1";
 	private String dummyProcessorName;
 	private String wrapperDirectory;
 	private String workflowInputName = "inputFile"; // TODO parameterize
 	private String workflowOutputName = "outputFile"; // TODO parameterize
 	private String defaultSubject = "TargetObject"; // TODO parameterize
 
-	public ScapeSplicingEngine() throws ParserConfigurationException {
+	public ScapeSplicingEngine() throws ParserConfigurationException,
+			URISyntaxException {
 		super(getLog("Taverna.Server.WorkflowSplicing.Scape"));
 		log = getLog("Taverna.Server.WorkflowSplicing.Scape");
+		repository = getClass().getResource("/components").toURI().toString();
 	}
 
 	/** Where components are stored. Probably myExperiment. */
