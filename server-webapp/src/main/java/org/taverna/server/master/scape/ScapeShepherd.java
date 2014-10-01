@@ -165,7 +165,7 @@ class ScapeShepherd implements Runnable {
 	}
 
 	private void initObjects() throws BadStateChangeException {
-		StringBuffer sb = new StringBuffer();
+		StringBuilder sb = new StringBuilder();
 		for (Object object : objs)
 			sb.append(object.getUid()).append('\n');
 		run.makeInput(OBJECT_LIST_INPUT).setValue(sb.toString());
